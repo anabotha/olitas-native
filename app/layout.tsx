@@ -7,9 +7,8 @@ const dmSans = DM_Sans({ subsets: ["latin"], variable: "--font-dm-sans" });
 const geistMono = Geist_Mono({ subsets: ["latin"], variable: "--font-geist-mono" });
 
 export const metadata: Metadata = {
-  title: 'Swell Check - Know Before You Go',
-  description: 'Check wave, wind, and temperature conditions for surfing, SUP, and open water swimming. Simple, intuitive, and chill.',
-  generator: 'v0.app',
+  title: 'Olitas - ¿Como esta hoy?',
+  description: 'Oleaje, viento y temperatura para tu proxima sesion.',
   icons: {
     icon: [
       {

@@ -35,11 +35,10 @@ export default function Home() {
         <section className="mb-8 flex flex-col gap-6 md:flex-row md:items-end md:justify-between">
           <div className="flex flex-col gap-2">
             <h2 className="text-balance text-3xl font-bold tracking-tight text-foreground md:text-4xl">
-              How is it looking today?
+              Como esta hoy?
             </h2>
             <p className="text-pretty text-base text-muted-foreground">
-              Real-time wave, wind, and temperature conditions for your next
-              session.
+              Oleaje, viento y temperatura para tu proxima sesion.
             </p>
           </div>
           <SpotSelector
@@ -55,10 +54,10 @@ export default function Home() {
             <AlertCircle className="h-5 w-5 text-destructive" />
             <div>
               <p className="text-sm font-medium text-foreground">
-                Could not load conditions
+                No se pudieron cargar los datos :${"("}
               </p>
               <p className="text-xs text-muted-foreground">
-                Please try again in a moment. The ocean is not going anywhere.
+                Intenta de nuevo en un momento. El mar no se va a ningun lado.
               </p>
             </div>
           </div>
