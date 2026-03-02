@@ -1,0 +1,23 @@
+import useSWR from "swr";
+import { getForecast } from "@/app/api/conditions/getForecast";
+import type { SpotLocation } from "@/lib/types";
+
+export function useForecast({ latitude, longitude }: SpotLocation) {
+    const swr = useSWR(
+        latitude && longitude
+            ? ["forecast", latitude, longitude]
+            : null,
+        () => getForecast(latitude, longitude),
+        {
+            refreshInterval: 1000 * 60 * 60 * 12, // cada 12 horas
+            revalidateOnFocus: false,
+        }
+    );
+    // Renombramos `data` a `forecastData` aquí mismo
+    return {
+        forecastData: swr.data,
+        forecastError: swr.error,
+        forecastIsLoading: swr.isLoading,
+        mutate: swr.mutate, // si quieres poder revalidar manualmente
+    };
+}

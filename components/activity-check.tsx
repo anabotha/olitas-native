@@ -14,7 +14,6 @@ const ActivityCheck = (
   { selectedActivity, setSelectedActivity, data }: ActivityCheckProps
 ): JSX.Element => {
   const processedData = processData(data);
-  console.log(data, "data", processedData, "processedData")
   if (!processedData) return <div>Hubo un error, proba mas tarde!</div>;
   return (
     <section>

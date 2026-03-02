@@ -2,28 +2,26 @@ import React from 'react'
 import { CombinedConditions, MarineWeatherData } from '@/lib/types'
 import { ConditionsPanel } from './conditions-panel'
 import { HourlyForecast } from './hourly-forecast'
+import { ForecastData } from '@/lib/types'
 
-const CurrentConditions = (
-    data: CombinedConditions,
-    clima: MarineWeatherData,
+export const CurrentConditions = (
+    forecast: ForecastData
 ) => {
     return (
         <>
-            <section>
+            {/* <section>
                 <h3 className="mb-4 text-xs font-semibold uppercase tracking-widest text-muted-foreground">
                     Condiciones actuales
                 </h3>
                 <ConditionsPanel conditions={data} />
-            </section>
+            </section> */}
 
             <section>
                 <h3 className="mb-4 text-xs font-semibold uppercase tracking-widest text-muted-foreground">
                     Pronostico
                 </h3>
-                <HourlyForecast forecast={clima.hourlyForecast} />
+                <HourlyForecast {...forecast} />
             </section>
         </>
     )
 }
-
-export default CurrentConditions

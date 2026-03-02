@@ -1,26 +1,52 @@
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import type { HourlyForecast as HourlyForecastType } from "@/lib/types";
+import type { ForecastData, HourlyForecast as HourlyForecastType } from "@/lib/types";
 import { Clock } from "lucide-react";
+import { useProcessForecast } from "@/hooks/use-proccessForecast";
+
+
 
 interface HourlyForecastProps {
-  forecast: HourlyForecastType[];
+  forecast: ForecastData | undefined;
 }
 
 export function HourlyForecast({ forecast }: HourlyForecastProps) {
-  if (!forecast.length) return null;
 
+  if (!forecast?.hourly) return null;
+  const { hoy, semana } = useProcessForecast(forecast);
+
+  const degToCompass = (deg: number) => {
+    const directions = ["N", "NE", "E", "SE", "S", "SO", "O", "NO"];
+    const index = Math.round(deg / 45) % 8;
+    return directions[index];
+  };
+
+  const ordenarHora = (hoy: HourlyForecastType) => {
+    const ahora = new Date().getHours();
+    const ordenado = hoy
+      .sort((a, b) => {
+        const ha = parseInt(a.hora.split(":")[0], 10);
+        const hb = parseInt(b.hora.split(":")[0], 10);
+        return ha - hb;
+      })
+      .filter(hour => {
+        const hNum = parseInt(hour.hora.split(":")[0], 10);
+        return hNum >= ahora;
+      });
+    return ordenado;
+  };
+  const ordenado = ordenarHora(hoy);
   return (
     <Card>
       <CardHeader>
         <CardTitle className="flex items-center gap-2 text-sm font-medium text-muted-foreground">
           <Clock className="h-4 w-4" />
-          Upcoming hours
+          Proximas horas
         </CardTitle>
       </CardHeader>
       <CardContent>
         <div className="overflow-x-auto">
           <div className="flex gap-3 pb-2" style={{ minWidth: "max-content" }}>
-            {forecast.map((hour, i) => {
+            {ordenado?.map((hour, i) => {
               const time = new Date(hour.time);
               const hourStr = time.toLocaleTimeString([], {
                 hour: "2-digit",
@@ -34,26 +60,32 @@ export function HourlyForecast({ forecast }: HourlyForecastProps) {
                   className="flex min-w-[80px] flex-col items-center gap-2 rounded-xl bg-secondary/50 px-3 py-3"
                 >
                   <span className="text-xs font-medium text-muted-foreground">
-                    {hourStr}
+                    {hour.hora}
                   </span>
                   <div className="flex flex-col items-center gap-1">
                     <span className="text-lg font-bold text-foreground">
-                      {hour.waveHeight.toFixed(1)}
-                      <span className="text-xs font-normal text-muted-foreground">
+
+                      {/* <span className="text-xs font-normal text-muted-foreground">
                         m
-                      </span>
+                      </span> */}
                     </span>
                     <span className="text-xs text-muted-foreground">
-                      {hour.windSpeed.toFixed(0)} km/h
+                      Temperatura:
+                      {hour.temperatura_2m.toFixed(0)}     {"\u00B0C"}
                     </span>
                     <span className="text-xs text-muted-foreground">
-                      {hour.temperature.toFixed(0)}
-                      {"\u00B0C"}
+                      Velocidad del viento:
+                      {hour.wind_speed_10m.toFixed(0)}
+                      km/h
+                    </span>
+                    <span className="text-xs text-muted-foreground">
+                      Direccion del viento:
+                      {degToCompass(hour.wind_direction_10m)}
                     </span>
                   </div>
-                  {hour.uvIndex > 0 && (
+                  {semana[0].uvIndex > 0 && (
                     <span className="rounded-full bg-accent/50 px-2 py-0.5 text-[10px] font-medium text-accent-foreground">
-                      UV {hour.uvIndex.toFixed(0)}
+                      UV {semana[0].uvIndex.toFixed(0)}
                     </span>
                   )}
                 </div>

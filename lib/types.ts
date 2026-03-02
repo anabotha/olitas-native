@@ -89,3 +89,21 @@ export interface SpotLocation {
   country?: string;
 }
 type ActivityType = "surf" | "sup" | "swimming";
+
+export interface ForecastData {
+  hourly: {
+    time: Date[];
+    temperature_2m: number[];
+    relative_humidity_2m: number[];
+    wind_speed_10m: number[];
+    pressure_msl: number[];
+    wind_speed_120m: number[];
+    wind_direction_10m: number[];
+    wind_direction_120m: number[];
+    temperature_80m: number[];
+  },
+  daily: {
+    time: Date[];
+    uv_index_max: number[];
+  },
+}

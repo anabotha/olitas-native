@@ -14,7 +14,8 @@ import { PersonStanding, Ship, Waves as WavesIcon } from "lucide-react";
 import { AlertCircle } from "lucide-react";
 import { useMarineWeather } from "@/hooks/use-marineWeather";
 import ActivityCheck from "@/components/activity-check";
-
+import { useForecast } from "@/hooks/use-forecast";
+import { CurrentConditions } from "@/components/current-conditions";
 const fetcher = (url: string) => fetch(url).then((res) => res.json());
 
 export default function Home() {
@@ -24,8 +25,7 @@ export default function Home() {
   const [selectedActivity, setSelectedActivity] = useState<string>("surf");
 
   const { data, error, isLoading } = useMarineWeather(selectedSpot)
-
-
+  const { forecastData, forecastError, forecastIsLoading } = useForecast(selectedSpot)
   return (
     <div className="min-h-screen bg-background">
       <Header />
@@ -72,22 +72,19 @@ export default function Home() {
               data={data}
             />
 
-            {/* Current conditions
+            {/* Current conditions */}
             <section>
               <h3 className="mb-4 text-xs font-semibold uppercase tracking-widest text-muted-foreground">
-                Current conditions
+                Ahora
               </h3>
-              <ConditionsPanel conditions={data} />
+              <ConditionsPanel forecast={forecastData} conditions={data} />
             </section>
-
-             Hourly forecast 
             <section>
               <h3 className="mb-4 text-xs font-semibold uppercase tracking-widest text-muted-foreground">
-                Forecast
+                Pronostico
               </h3>
-              <HourlyForecast forecast={data.hourlyForecast} />
-            </section> */}
-
+              <HourlyForecast forecast={forecastData} />
+            </section>
             {/* Footer note */}
             <footer className="pb-4 text-center">
               <p className="text-xs text-muted-foreground">

@@ -7,19 +7,50 @@ import {
   Eye,
 } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import type { CombinedConditions } from "@/lib/types";
+import type { CombinedConditions, ForecastData, MarineWeatherData } from "@/lib/types";
 import {
   getWindDirectionLabel,
   getWeatherDescription,
 } from "@/lib/conditions";
+import { useProcessForecast } from "@/hooks/use-proccessForecast";
+import { processData } from '@/hooks/use-processData';
 
-interface ConditionsPanelProps {
-  conditions: CombinedConditions;
+interface ConditionsProps {
+  forecast: ForecastData | undefined;
+  conditions: MarineWeatherData;
 }
 
-export function ConditionsPanel({ conditions }: ConditionsPanelProps) {
-  const c = conditions.current;
+export function ConditionsPanel({ forecast, conditions }: ConditionsProps) {
+  if (!forecast?.hourly) return null;
+  if (!conditions) return null;
 
+  const { hoy } = useProcessForecast(forecast);
+  console.log(conditions, "conditions");
+  const processedData = processData(conditions);
+  console.log(processedData, "processedData");
+  if (!processedData) return <div>Hubo un error, proba mas tarde!</div>;
+
+  const degToCompass = (deg: number) => {
+    const directions = ["Norte", "Noreste", "Este", "Sureste", "Sur", "Suroeste", "Oeste", "Noroeste"];
+    const index = Math.round(deg / 45) % 8;
+    return directions[index];
+  };
+
+  const ordenarHora = (hoy: any) => {
+    const ahora = new Date().getHours();
+    const ordenado = hoy
+      .sort((a, b) => {
+        const ha = parseInt(a.hora.split(":")[0], 10);
+        const hb = parseInt(b.hora.split(":")[0], 10);
+        return ha - hb;
+      })
+      .filter(hour => {
+        const hNum = parseInt(hour.hora.split(":")[0], 10);
+        return hNum == ahora;
+      });
+    return ordenado;
+  };
+  const ordenado = ordenarHora(hoy);
   return (
     <div className="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-3">
       {/* Waves */}
@@ -33,26 +64,45 @@ export function ConditionsPanel({ conditions }: ConditionsPanelProps) {
         <CardContent className="flex flex-col gap-3">
           <div className="flex items-baseline gap-2">
             <span className="text-3xl font-bold tracking-tight text-foreground">
-              {c.waveHeight.toFixed(1)}
+              {processedData.current.waveHeight?.toFixed(2)}
             </span>
             <span className="text-sm text-muted-foreground">m</span>
           </div>
           <div className="grid grid-cols-2 gap-3">
-            <ConditionItem label="Period" value={`${c.wavePeriod.toFixed(0)}s`} />
+            <ConditionItem label="Periodo" value={`${processedData.current.wavePeriod?.toFixed(1)}s`} />
             <ConditionItem
-              label="Direction"
+              label="Direccion de las olas"
               value={
                 <span className="flex items-center gap-1">
                   <ArrowUp
                     className="h-3 w-3"
-                    style={{ transform: `rotate(${c.waveDirection}deg)` }}
+                    style={{ transform: `rotate(${processedData.current.waveDirection}deg)` }}
                   />
-                  {c.waveDirection.toFixed(0)}
+                  {processedData.current.waveDirection?.toFixed(0)}
                 </span>
               }
             />
-            <ConditionItem label="Swell" value={`${c.swellHeight.toFixed(1)}m`} />
-            <ConditionItem label="Swell Period" value={`${c.swellPeriod.toFixed(0)}s`} />
+            <ConditionItem label="Swell" value={`${processedData.current.swellHeight?.toFixed(1)}m`} />
+            {processedData.current.swellPeriod != null && !isNaN(processedData.current.swellPeriod) && (
+              <ConditionItem
+                label="Swell Period"
+                value={`${processedData.current.swellPeriod.toFixed(0)}s`}
+              />
+            )}
+            {processedData.current.swellDirection != null && !isNaN(processedData.current.swellDirection) && (
+              <ConditionItem
+                label="Direccion del swell"
+                value={
+                  <span className="flex items-center gap-1">
+                    <ArrowUp
+                      className="h-3 w-3"
+                      style={{ transform: `rotate(${processedData.current.swellDirection}deg)` }}
+                    />
+                    {processedData.current.swellDirection?.toFixed(0)}
+                  </span>
+                }
+              />
+            )}
           </div>
         </CardContent>
       </Card>
@@ -62,22 +112,22 @@ export function ConditionsPanel({ conditions }: ConditionsPanelProps) {
         <CardHeader className="pb-2">
           <CardTitle className="flex items-center gap-2 text-sm font-medium text-muted-foreground">
             <Wind className="h-4 w-4" />
-            Wind
+            Viento
           </CardTitle>
         </CardHeader>
         <CardContent className="flex flex-col gap-3">
           <div className="flex items-baseline gap-2">
             <span className="text-3xl font-bold tracking-tight text-foreground">
-              {c.windSpeed.toFixed(0)}
+              {ordenado[0].wind_speed_10m.toFixed(0)}
             </span>
             <span className="text-sm text-muted-foreground">km/h</span>
           </div>
           <div className="grid grid-cols-2 gap-3">
             <ConditionItem
-              label="Direction"
-              value={getWindDirectionLabel(c.windDirection)}
+              label="Direccion"
+              value={degToCompass(ordenado[0].wind_direction_10m)}
             />
-            <ConditionItem label="Gusts" value={`${c.windGusts.toFixed(0)} km/h`} />
+            <ConditionItem label="Racha" value={`${ordenado[0].wind_speed_10m.toFixed(0)} km/h`} />
           </div>
         </CardContent>
       </Card>
@@ -87,18 +137,18 @@ export function ConditionsPanel({ conditions }: ConditionsPanelProps) {
         <CardHeader className="pb-2">
           <CardTitle className="flex items-center gap-2 text-sm font-medium text-muted-foreground">
             <Thermometer className="h-4 w-4" />
-            Temperature
+            Temperatura
           </CardTitle>
         </CardHeader>
         <CardContent className="flex flex-col gap-3">
           <div className="flex items-baseline gap-2">
             <span className="text-3xl font-bold tracking-tight text-foreground">
-              {c.airTemperature.toFixed(0)}
+              {ordenado[0].temperatura_2m.toFixed(0)}
             </span>
             <span className="text-sm text-muted-foreground">{"\u00B0C"}</span>
           </div>
           <div className="grid grid-cols-2 gap-3">
-            <ConditionItem
+            {/* <ConditionItem
               label="Feels like"
               value={`${c.feelsLike.toFixed(0)}\u00B0C`}
             />
@@ -123,12 +173,12 @@ export function ConditionsPanel({ conditions }: ConditionsPanelProps) {
                   <Eye className="h-3 w-3" />
                   {getWeatherDescription(c.weatherCode)}
                 </span>
-              }
-            />
+              } */}
+            {/* /> */}
           </div>
         </CardContent>
       </Card>
-    </div>
+    </div >
   );
 }
 
