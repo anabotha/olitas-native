@@ -11,7 +11,7 @@ export function Header() {
           <h1 className="text-lg font-semibold tracking-tight text-foreground">
             Olitas
           </h1>
-          <p className="text-xs text-muted-foreground">Enterate antes de ir</p>
+          <p className="text-xs text-muted-foreground">No te comas el viaje</p>
         </div>
       </div>
     </header>
