@@ -25,9 +25,7 @@ export function ConditionsPanel({ forecast, conditions }: ConditionsProps) {
   if (!conditions) return null;
 
   const { hoy } = useProcessForecast(forecast);
-  console.log(conditions, "conditions");
   const processedData = processData(conditions);
-  console.log(processedData, "processedData");
   if (!processedData) return <div>Hubo un error, proba mas tarde!</div>;
 
   const degToCompass = (deg: number) => {
@@ -58,7 +56,7 @@ export function ConditionsPanel({ forecast, conditions }: ConditionsProps) {
         <CardHeader className="pb-2">
           <CardTitle className="flex items-center gap-2 text-sm font-medium text-muted-foreground">
             <Waves className="h-4 w-4" />
-            Waves
+            Olitas
           </CardTitle>
         </CardHeader>
         <CardContent className="flex flex-col gap-3">
@@ -148,10 +146,10 @@ export function ConditionsPanel({ forecast, conditions }: ConditionsProps) {
             <span className="text-sm text-muted-foreground">{"\u00B0C"}</span>
           </div>
           <div className="grid grid-cols-2 gap-3">
-            {/* <ConditionItem
-              label="Feels like"
-              value={`${c.feelsLike.toFixed(0)}\u00B0C`}
-            />
+            <ConditionItem
+              label="Sensacion termica"
+              value={`${ordenado[0].apparent_temperature.toFixed(0)}\u00B0C`}
+            />{/* 
             <ConditionItem
               label="Sea temp"
               value={
@@ -165,16 +163,20 @@ export function ConditionsPanel({ forecast, conditions }: ConditionsProps) {
                   <span className="text-muted-foreground">N/A</span>
                 )
               }
-            />
-            <ConditionItem
-              label="Weather"
-              value={
-                <span className="flex items-center gap-1">
-                  <Eye className="h-3 w-3" />
-                  {getWeatherDescription(c.weatherCode)}
-                </span>
-              } */}
-            {/* /> */}
+            />*/}
+            {
+              ordenado[0].weatherCode && (
+                <ConditionItem
+                  label="Weather"
+                  value={
+                    <span className="flex items-center gap-1">
+                      <Eye className="h-3 w-3" />
+                      {getWeatherDescription(ordenado[0].weatherCode)}
+                    </span>
+                  }
+                />
+              )
+            }
           </div>
         </CardContent>
       </Card>

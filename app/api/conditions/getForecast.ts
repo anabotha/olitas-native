@@ -17,6 +17,7 @@ export async function getForecast(latitude: number, longitude: number): Promise<
             "wind_direction_10m",
             "wind_direction_120m",
             "temperature_80m",
+            "apparent_temperature"
         ],
     };
 
@@ -52,6 +53,7 @@ export async function getForecast(latitude: number, longitude: number): Promise<
             wind_direction_10m: Array.from(hourly.variables(5)?.valuesArray() ?? []),
             wind_direction_120m: Array.from(hourly.variables(6)?.valuesArray() ?? []),
             temperature_80m: Array.from(hourly.variables(7)?.valuesArray() ?? []),
+            apparent_temperature: Array.from(hourly.variables(8)?.valuesArray() ?? []),
         },
         daily: {
             time: Array.from(

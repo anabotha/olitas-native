@@ -3,17 +3,19 @@ import { ActivityCard } from './activity-card'
 import { WavesIcon, Ship, PersonStanding } from 'lucide-react'
 import { MarineWeatherData } from '@/lib/types'
 import { processData } from '@/hooks/use-processData'
+import { SpotLocation } from '@/lib/types'
 
 interface ActivityCheckProps {
   selectedActivity: string,
   setSelectedActivity: (activity: string) => void,
   data: MarineWeatherData | undefined;
+  selectedSpot: SpotLocation | undefined;
 }
 
 const ActivityCheck = (
-  { selectedActivity, setSelectedActivity, data }: ActivityCheckProps
+  { selectedActivity, setSelectedActivity, data, selectedSpot }: ActivityCheckProps
 ): JSX.Element => {
-  const processedData = processData(data);
+  const processedData = processData(data, selectedSpot?.orientation);
   if (!processedData) return <div>Hubo un error, proba mas tarde!</div>;
   return (
     <section>

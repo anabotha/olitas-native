@@ -64,6 +64,7 @@ export interface CombinedConditions {
     sup: ActivityRating;
     swimming: ActivityRating;
   };
+  beachOrientation?: number;
 }
 
 export interface HourlyForecast {
@@ -86,6 +87,7 @@ export interface SpotLocation {
   name: string;
   latitude: number;
   longitude: number;
+  orientation?: number;
   country?: string;
 }
 type ActivityType = "surf" | "sup" | "swimming";
@@ -101,6 +103,7 @@ export interface ForecastData {
     wind_direction_10m: number[];
     wind_direction_120m: number[];
     temperature_80m: number[];
+    apparent_temperature: number[];
   },
   daily: {
     time: Date[];

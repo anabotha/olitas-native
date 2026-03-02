@@ -3,9 +3,8 @@
 import { ActivityRating, CombinedConditions, MarineWeatherData, ActivityType } from "@/lib/types"
 import { useMemo } from "react"
 
-export const processData = (data?: MarineWeatherData): CombinedConditions | null => {
+export const processData = (data?: MarineWeatherData, beachOrientation?: number): CombinedConditions | null => {
     if (!data) return null;
-    console.log(data);
     const getTime = (date: Date) => {
         return date.toISOString().split("T")[1].split(":")[0]
     }
@@ -49,30 +48,30 @@ export const processData = (data?: MarineWeatherData): CombinedConditions | null
         if (score < 2) {
             return {
                 label: "Poor",
-                description: "Conditions are not suitable for this activity.",
+                description: "Condiciones no aptas para esta actividad.",
             }
         }
         if (score < 4) {
             return {
                 label: "Fair",
-                description: "Conditions are okay, but could be better.",
+                description: "Normalito, podria estar mejor.",
             }
         }
         if (score < 6) {
             return {
                 label: "Good",
-                description: "Conditions are good for this activity.",
+                description: "Condiciones buenas para esta actividad.",
             }
         }
         if (score < 8) {
             return {
                 label: "Great",
-                description: "Conditions are great for this activity.",
+                description: "Condiciones muy buenas para esta actividad.",
             }
         }
         return {
             label: "Epic",
-            description: "Conditions are epic for this activity.",
+            description: "Esta ideal",
         }
     }
     const getRating = (
@@ -100,244 +99,102 @@ export const processData = (data?: MarineWeatherData): CombinedConditions | null
             }
         }
     };
-    const getSurfRating = (stats: any) => {
-        const { waveHeight, waveDirection, wavePeriod, swellHeight, swellDirection, swellPeriod, windSpeed, windDirection, windGusts, seaTemperature, airTemperature, weatherCode } = stats;
-        let score = 0;
-        let factors = [];
-        if (waveHeight < 0.5) {
-            score -= 2;
-            factors.push("Wave height too small");
-        }
-        if (waveHeight > 1.2) {
-            score += 3;
-            factors.push("Wave height good");
-        }
-        if (waveDirection < 0 || waveDirection > 180) {
-            score -= 2;
-            factors.push("Wave direction too small");
-        }
-        if (wavePeriod < 5) {
-            score -= 2;
-            factors.push("Wave period too small");
-        }
-        if (wavePeriod > 10) {
-            score += 2;
-            factors.push("Wave period good");
-        }
-        if (swellHeight < 0.5) {
-            score -= 2;
-            factors.push("Swell height too small");
-        }
-        if (swellHeight > 1.2) {
-            score += 3;
-            factors.push("Swell height good");
-        }
-        if (swellDirection < 0 || swellDirection > 180) {
-            score -= 2;
-            factors.push("Swell direction too small");
-        }
-        if (swellPeriod < 5) {
-            score -= 2;
-            factors.push("Swell period too small");
-        }
-        if (swellPeriod > 10) {
-            score += 2;
-            factors.push("Swell period good");
-        }
-        if (windSpeed < 5) {
-            score -= 2;
-            factors.push("Wind speed too small");
-        }
-        if (windSpeed > 15) {
-            score += 2;
-            factors.push("Wind speed good");
-        }
-        if (windDirection < 0 || windDirection > 180) {
-            score -= 2;
-            factors.push("Wind direction too small");
-        }
-        if (windGusts && windGusts < 5) {
-            score -= 2;
-            factors.push("Wind gusts too small");
-        }
-        if (windGusts && windGusts > 15) {
-            score += 2;
-            factors.push("Wind gusts good");
-        }
-        if (seaTemperature < 15) {
-            score -= 2;
-            factors.push("Sea temperature too small");
-        }
-        if (seaTemperature > 25) {
-            score += 2;
-            factors.push("Sea temperature good");
-        }
-        if (airTemperature && airTemperature < 15) {
-            score -= 2;
-            factors.push("Air temperature too small");
-        }
-        if (airTemperature && airTemperature > 25) {
-            score += 2;
-            factors.push("Air temperature good");
-        }
-        // if (weatherCode && weatherCode < 0 || weatherCode > 180) {
-        //     score -= 2;
-        //     factors.push("Weather code too small");
-        // }
-        return { score, factors };
-    }
-    const getSupRating = (stats: any) => {
-        const {
-            waveHeight,
-            waveDirection,
-            wavePeriod,
-            swellHeight,
-            swellDirection,
-            swellPeriod,
-            windSpeed,
-            windDirection,
-            windGusts,
-            seaTemperature,
-            airTemperature,
-        } = stats;
-
-        let score = 0;
-        let factors: string[] = [];
-
-        // 🌊 Altura de ola (mejor baja)
-        if (waveHeight > 1) {
-            score -= 3;
-            factors.push("Waves too big for SUP");
-        }
-        if (waveHeight < 0.6) {
-            score += 3;
-            factors.push("Flat water ideal");
-        }
-
-        // 🌊 Período (mejor corto)
-        if (wavePeriod && wavePeriod > 10) {
-            score -= 2;
-            factors.push("Long period swell unstable");
-        }
-        if (wavePeriod && wavePeriod < 6) {
-            score += 1;
-            factors.push("Short period manageable");
-        }
-
-        // 🌊 Swell
-        if (swellHeight && swellHeight > 1) {
-            score -= 2;
-            factors.push("Swell too strong");
-        }
-
-        // 💨 Viento (clave en SUP)
-        if (windSpeed && windSpeed > 15) {
-            score -= 3;
-            factors.push("Wind too strong");
-        }
-        if (windSpeed && windSpeed < 8) {
-            score += 3;
-            factors.push("Light wind ideal");
-        }
-
-        if (windGusts && windGusts > 18) {
-            score -= 2;
-            factors.push("Gusty conditions unstable");
-        }
-
-        // 🌡 Temperatura (confort)
-        if (seaTemperature && seaTemperature > 18) {
-            score += 1;
-            factors.push("Comfortable sea temperature");
-        }
-
-        if (airTemperature && airTemperature > 18) {
-            score += 1;
-            factors.push("Comfortable air temperature");
-        }
-
-        return { score, factors };
+    // Normaliza diferencias de ángulos a 0–180
+    const angleDiff = (a: number, b: number) => {
+        let diff = Math.abs(a - b);
+        return diff > 180 ? 360 - diff : diff;
     };
-    const getSwimmingRating = (stats: any) => {
-        const {
-            waveHeight,
-            wavePeriod,
-            swellHeight,
-            swellPeriod,
-            windSpeed,
-            windGusts,
-            seaTemperature,
-            airTemperature,
-        } = stats;
 
+    // Determina condición del viento y si genera corderito
+    const evaluateWind = (windDir: number, beachDir: number, waveDir?: number, swellDir?: number, windSpeed?: number) => {
+        const diff = angleDiff(windDir, beachDir);
+
+        let windCond: "offshore" | "onshore" | "crossshore";
+        if (diff > 120) windCond = "offshore";
+        else if (diff < 60) windCond = "onshore";
+        else windCond = "crossshore";
+
+        // Determinar corderito solo si se pasan direcciones de ola y swell
+        let corderitoFlag = false;
+        if (waveDir !== undefined && swellDir !== undefined && windSpeed !== undefined) {
+            const swellDiff = angleDiff(waveDir, swellDir);
+            corderitoFlag = swellDiff > 120 && windSpeed > 15;
+        }
+
+        return { windCond, corderito: corderitoFlag };
+    };
+
+    // Rating de Surf
+    const getSurfRating = (stats: any, beachOrientation = 90) => {
+        const { waveHeight, swellPeriod, windSpeed, windDirection, waveDirection, swellDirection } = stats;
         let score = 0;
         let factors: string[] = [];
 
-        // 🌊 Altura de ola (clave para seguridad)
-        if (waveHeight && waveHeight > 0.8) {
-            score -= 4;
-            factors.push("Waves too high for safe swimming");
-        }
-        if (waveHeight && waveHeight < 0.5) {
-            score += 3;
-            factors.push("Calm surface ideal");
+        const { windCond, corderito: hayCorderito } = evaluateWind(
+            windDirection,
+            beachOrientation,
+            waveDirection,
+            swellDirection,
+            windSpeed
+        );
+
+        // Swell y período
+        if (swellPeriod > 10) { score += 4; factors.push("Gran período (mucha fuerza)"); }
+        else if (swellPeriod > 7) { score += 2; factors.push("Período aceptable"); }
+
+        // Altura
+        if (waveHeight > 0.8 && waveHeight < 2) { score += 3; factors.push("Altura ideal"); }
+
+        // Viento
+        if (windCond === "offshore" && windSpeed < 30) {
+            score += 5; factors.push("Viento de tierra (limpia la ola)");
+        } else if (windCond === "onshore" && hayCorderito) {
+            score -= 6; factors.push("Mucho corderito (viento del mar)");
         }
 
-        // 🌊 Swell
-        if (swellHeight && swellHeight > 1) {
-            score -= 3;
-            factors.push("Strong swell unsafe");
+        return { score: Math.max(0, score), factors };
+    };
+
+    // Rating de SUP
+    const getSupRating = (stats: any, beachOrientation = 90) => {
+        const { windSpeed, windDirection, waveHeight } = stats;
+        let score = 0;
+        let factors: string[] = [];
+
+        const { windCond } = evaluateWind(windDirection, beachOrientation);
+
+        if (windSpeed < 10) { score += 7; factors.push("Casi nada de viento"); }
+        else if (windSpeed < 18) { score += 2; factors.push("Viento moderado"); }
+        else { score -= 10; factors.push("Mucho viento para SUP"); }
+
+        if (waveHeight < 0.5) { score += 3; factors.push("Mar plato"); }
+        else if (waveHeight > 1.2) { score -= 5; factors.push("Mucha ola para equilibrio"); }
+
+        if (windCond === "offshore" && windSpeed < 25) {
+            score += 2; factors.push("Viento de tierra mantiene la orilla plana");
         }
 
-        // 🌊 Periodo (periodos largos generan energía potente)
-        if (wavePeriod && wavePeriod > 10) {
-            score -= 2;
-            factors.push("Long period swell strong energy");
-        }
-        if (wavePeriod && wavePeriod < 6) {
-            score += 2;
-            factors.push("Short period manageable");
+        return { score: Math.max(0, score), factors };
+    };
+
+    // Rating de Natación
+    const getSwimmingRating = (stats: any, beachOrientation = 90) => {
+        const { seaTemperature, windSpeed, windDirection, waveHeight } = stats;
+        let score = 0;
+        let factors: string[] = [];
+
+        const { windCond } = evaluateWind(windDirection, beachOrientation);
+
+        if (seaTemperature && seaTemperature < 13) { score -= 2; factors.push("Agua muy fría (usar neoprene grueso)"); }
+        else if (seaTemperature && seaTemperature > 16) { score += 4; factors.push("Temperatura agradable para la zona"); }
+
+        if (waveHeight && waveHeight < 0.6 && windSpeed && windSpeed < 15) { score += 5; factors.push("Condiciones calmas y seguras"); }
+
+        if (windCond === "onshore" && windSpeed && windSpeed > 20) {
+            score -= 5; factors.push("Mar picado/Corderito: difícil respirar al nadar");
         }
 
-        // 💨 Viento
-        if (windSpeed && windSpeed > 15) {
-            score -= 3;
-            factors.push("Wind too strong");
-        }
-        if (windSpeed && windSpeed < 8) {
-            score += 2;
-            factors.push("Light wind ideal");
-        }
-
-        // 💨 Ráfagas
-        if (windGusts && windGusts > 18) {
-            score -= 2;
-            factors.push("Gusty conditions unstable");
-        }
-
-        // 🌡 Temperatura del agua (muy importante)
-        if (seaTemperature) {
-            if (seaTemperature < 14) {
-                score -= 4;
-                factors.push("Water dangerously cold");
-            } else if (seaTemperature < 18) {
-                score -= 1;
-                factors.push("Cold water");
-            } else if (seaTemperature >= 18 && seaTemperature <= 24) {
-                score += 3;
-                factors.push("Comfortable water temperature");
-            } else if (seaTemperature > 26) {
-                score -= 1;
-                factors.push("Water too warm");
-            }
-        }
-
-        // 🌡 Temperatura ambiente (secundario)
-        if (airTemperature && airTemperature > 18) {
-            score += 1;
-        }
-
-        return { score, factors };
+        return { score: Math.max(0, score), factors };
     };
     return useMemo(() => {
         const todayStats = searchTodaysStats();

@@ -69,6 +69,7 @@ export default function Home() {
             <ActivityCheck
               selectedActivity={selectedActivity}
               setSelectedActivity={setSelectedActivity}
+              selectedSpot={selectedSpot}
               data={data}
             />
 

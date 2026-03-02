@@ -28,7 +28,6 @@ export async function getMarineWeather(latitude: number, longitude: number): Pro
 
     const responses = await fetchWeatherApi(url, params)
     const response = responses[0]
-    console.log(response)
     const utcOffsetSeconds = response.utcOffsetSeconds()
     const hourly = response.hourly()!
     const daily = response.daily()!

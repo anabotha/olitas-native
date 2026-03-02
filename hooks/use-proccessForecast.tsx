@@ -14,6 +14,7 @@ interface HourlySummary {
     wind_speed_10m: number;
     wind_direction_10m: number;
     humedad: number;
+    apparent_temperature: number;
 }
 
 interface ProcessedForecast {
@@ -48,6 +49,7 @@ export const useProcessForecast = (data?: ForecastData): ProcessedForecast | nul
                 wind_direction_10m: data.hourly.wind_direction_10m[i],
                 humedad: data.hourly.relative_humidity_2m[i],
                 fecha: date.toISOString().split("T")[0], // agregamos la fecha para filtrar
+                apparent_temperature: data.hourly.apparent_temperature[i],
             };
         })
         .filter(h => h.fecha === hoyStr);
