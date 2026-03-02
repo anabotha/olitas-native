@@ -9,9 +9,9 @@ export function Header() {
         </div>
         <div>
           <h1 className="text-lg font-semibold tracking-tight text-foreground">
-            Swell Check
+            Olitas
           </h1>
-          <p className="text-xs text-muted-foreground">Know before you go</p>
+          <p className="text-xs text-muted-foreground">Enterate antes de ir</p>
         </div>
       </div>
     </header>
