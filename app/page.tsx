@@ -16,6 +16,8 @@ import { useMarineWeather } from "@/hooks/use-marineWeather";
 import ActivityCheck from "@/components/activity-check";
 import { useForecast } from "@/hooks/use-forecast";
 import { CurrentConditions } from "@/components/current-conditions";
+import SeaState from "@/components/sea-state";
+import { processData } from "@/hooks/use-processData";
 const fetcher = (url: string) => fetch(url).then((res) => res.json());
 
 export default function Home() {
@@ -71,6 +73,7 @@ export default function Home() {
               setSelectedActivity={setSelectedActivity}
               selectedSpot={selectedSpot}
               data={data}
+              forecastData={forecastData}
             />
 
             {/* Current conditions */}
@@ -92,6 +95,7 @@ export default function Home() {
                 Informacion proveida por Open-Meteo. Siempre chequea las condiciones locales antes de salir.
               </p>
             </footer>
+            <SeaState data={data} forecast={forecastData} beach={selectedSpot} />
           </div>
         )}
       </main>

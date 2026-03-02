@@ -30,6 +30,7 @@ export interface MarineWeatherData {
     swell_wave_direction: number[] | null;
     wind_wave_period: number[] | null;
     wind_wave_direction: number[] | null;
+    sea_level_height_msl: number[] | null;
   };
   daily: {
     time: Date[];
@@ -58,6 +59,8 @@ export interface CombinedConditions {
     seaTemperature?: number;
     airTemperature?: number;
     weatherCode?: number;
+
+    seaLevelHeightMsl?: number;
   };
   activities: {
     surf: ActivityRating;
@@ -65,6 +68,34 @@ export interface CombinedConditions {
     swimming: ActivityRating;
   };
   beachOrientation?: number;
+  forecastData: ForecastData | undefined;
+  safety: {
+    color: string;
+    label: string;
+    message: string;
+  };
+  bestWindows: {
+    surf: {
+      time: string;
+      score: number;
+    };
+    sup: {
+      time: string;
+      score: number;
+    };
+    swimming: {
+      time: string;
+      score: number;
+    };
+  };
+  seaState: {
+    condition: string;
+    tideInfo: {
+      stage: 'high' | 'low' | 'mid';
+      isRising: boolean;
+    }
+  };
+
 }
 
 export interface HourlyForecast {
@@ -90,7 +121,7 @@ export interface SpotLocation {
   orientation?: number;
   country?: string;
 }
-type ActivityType = "surf" | "sup" | "swimming";
+export type ActivityType = "surf" | "sup" | "swimming";
 
 export interface ForecastData {
   hourly: {

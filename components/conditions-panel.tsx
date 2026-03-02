@@ -23,9 +23,9 @@ interface ConditionsProps {
 export function ConditionsPanel({ forecast, conditions }: ConditionsProps) {
   if (!forecast?.hourly) return null;
   if (!conditions) return null;
-
   const { hoy } = useProcessForecast(forecast);
   const processedData = processData(conditions);
+  console.log(processedData);
   if (!processedData) return <div>Hubo un error, proba mas tarde!</div>;
 
   const degToCompass = (deg: number) => {

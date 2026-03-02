@@ -22,6 +22,8 @@ export async function getMarineWeather(latitude: number, longitude: number): Pro
             "swell_wave_direction",
             "wind_wave_period",
             "wind_wave_direction",
+            "sea_level_height_msl"
+
         ],
         timezone: "America/Sao_Paulo",
     }
@@ -64,6 +66,9 @@ export async function getMarineWeather(latitude: number, longitude: number): Pro
                 : null,
             wind_wave_direction: hourly.variables(6)?.valuesArray()
                 ? Array.from(hourly.variables(6)!.valuesArray()!)
+                : null,
+            sea_level_height_msl: hourly.variables(7)?.valuesArray()
+                ? Array.from(hourly.variables(7)!.valuesArray()!)
                 : null,
         },
         daily: {
