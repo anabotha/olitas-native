@@ -1,9 +1,13 @@
 import React, { JSX, useState } from 'react'
 import { ActivityCard } from './activity-card'
-import { WavesIcon, Ship, PersonStanding } from 'lucide-react'
+import { WavesIcon, Ship, PersonStanding, AlertCircle } from 'lucide-react'
 import { MarineWeatherData, ForecastData } from '@/lib/types'
 import { processData } from '@/hooks/use-processData'
 import { SpotLocation } from '@/lib/types'
+import { HugeiconsIcon } from '@hugeicons/react'
+import { SwimmingIcon } from '@hugeicons/core-free-icons'
+import { SurfboardIcon } from '@hugeicons/core-free-icons'
+import { KayakIcon } from '@hugeicons/core-free-icons'
 
 interface ActivityCheckProps {
   selectedActivity: string,
@@ -24,23 +28,39 @@ const ActivityCheck = (
         Actividad
       </h3>
       <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
+        <div className="col-span-3">
+
+          {processedData.safety?.color === "red" || processedData.safety?.color === "yellow" && (
+            <div className="flex items-center gap-3 rounded-xl border border-destructive/20 bg-destructive/5 px-5 py-4">
+              <AlertCircle className="h-5 w-5 text-destructive" />
+              <div>
+                <p className="text-sm font-medium text-foreground">
+                  {processedData.safety.label}
+                </p>
+                <p className="text-xs text-muted-foreground">
+                  {processedData.safety.message}
+                </p>
+              </div>
+            </div>
+          )}
+        </div>
         <ActivityCard
           activity="Surfing"
-          icon={<WavesIcon className="h-5 w-5" />}
+          icon={<HugeiconsIcon icon={SurfboardIcon} />}
           rating={processedData.activities.surf}
           isSelected={selectedActivity === "surf"}
           onClick={() => setSelectedActivity("surf")}
         />
         <ActivityCard
           activity="SUP"
-          icon={<Ship className="h-5 w-5" />}
+          icon={<HugeiconsIcon icon={KayakIcon} />}
           rating={processedData.activities.sup}
           isSelected={selectedActivity === "sup"}
           onClick={() => setSelectedActivity("sup")}
         />
         <ActivityCard
           activity="Nado en aguas abiertas"
-          icon={<PersonStanding className="h-5 w-5" />}
+          icon={<HugeiconsIcon icon={SwimmingIcon} />}
           rating={processedData.activities.swimming}
           isSelected={selectedActivity === "swimming"}
           onClick={() => setSelectedActivity("swimming")}

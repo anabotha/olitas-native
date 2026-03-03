@@ -89,13 +89,18 @@ export default function Home() {
               </h3>
               <HourlyForecast forecast={forecastData} />
             </section>
+            <section>
+              {/* <h3 className="mb-4 text-xs font-semibold uppercase tracking-widest text-muted-foreground">
+                Estado del Mar
+              </h3> */}
+              <SeaState data={data} forecast={forecastData} beach={selectedSpot} />
+            </section>
             {/* Footer note */}
             <footer className="pb-4 text-center">
               <p className="text-xs text-muted-foreground">
                 Informacion proveida por Open-Meteo. Siempre chequea las condiciones locales antes de salir.
               </p>
             </footer>
-            <SeaState data={data} forecast={forecastData} beach={selectedSpot} />
           </div>
         )}
       </main>

@@ -12,6 +12,8 @@ import {
   getWindDirectionLabel,
   getWeatherDescription,
 } from "@/lib/conditions";
+import { HugeiconsIcon } from '@hugeicons/react'
+import { CelsiusIcon, FastWindIcon, ThermometerWarmIcon } from '@hugeicons/core-free-icons'
 import { useProcessForecast } from "@/hooks/use-proccessForecast";
 import { processData } from '@/hooks/use-processData';
 
@@ -55,7 +57,7 @@ export function ConditionsPanel({ forecast, conditions }: ConditionsProps) {
       <Card>
         <CardHeader className="pb-2">
           <CardTitle className="flex items-center gap-2 text-sm font-medium text-muted-foreground">
-            <Waves className="h-4 w-4" />
+            <Waves className="h-6 w-6" />
             Olitas
           </CardTitle>
         </CardHeader>
@@ -109,7 +111,7 @@ export function ConditionsPanel({ forecast, conditions }: ConditionsProps) {
       <Card>
         <CardHeader className="pb-2">
           <CardTitle className="flex items-center gap-2 text-sm font-medium text-muted-foreground">
-            <Wind className="h-4 w-4" />
+            <HugeiconsIcon icon={FastWindIcon} />
             Viento
           </CardTitle>
         </CardHeader>
@@ -134,7 +136,8 @@ export function ConditionsPanel({ forecast, conditions }: ConditionsProps) {
       <Card>
         <CardHeader className="pb-2">
           <CardTitle className="flex items-center gap-2 text-sm font-medium text-muted-foreground">
-            <Thermometer className="h-4 w-4" />
+            <HugeiconsIcon icon={ThermometerWarmIcon} />
+            <HugeiconsIcon icon={CelsiusIcon} />
             Temperatura
           </CardTitle>
         </CardHeader>

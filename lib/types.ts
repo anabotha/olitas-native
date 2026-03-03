@@ -90,10 +90,7 @@ export interface CombinedConditions {
   };
   seaState: {
     condition: string;
-    tideInfo: {
-      stage: 'high' | 'low' | 'mid';
-      isRising: boolean;
-    }
+    tideInfo: string;
   };
 
 }

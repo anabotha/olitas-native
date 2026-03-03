@@ -4,7 +4,171 @@ import { ActivityRating, CombinedConditions, MarineWeatherData, ActivityType, Fo
 import { use, useMemo } from "react"
 import { useForecast } from "./use-forecast";
 import { useProcessForecast } from "./use-proccessForecast";
+// =============================
+// Tipos
+// =============================
 
+type SafetyColor = "green" | "yellow" | "red";
+
+interface SafetyStatus {
+    color: SafetyColor;
+    label: string;
+    message: string;
+}
+
+interface HourSnapshot {
+    time: Date;
+    wind_speed: number;
+    wind_direction: number;
+    sea_level_height_msl?: number;
+}
+
+// =============================
+// Utils
+// =============================
+
+const isValid = (n: number) =>
+    typeof n === "number" && !Number.isNaN(n);
+
+const riskScore: Record<SafetyColor, number> = {
+    green: 0,
+    yellow: 1,
+    red: 2
+};
+
+// =============================
+// 1️⃣ Normalizar hourly
+// =============================
+
+const normalizeHourly = (hourly: any): HourSnapshot[] => {
+    return hourly.time.map((t: Date, i: number) => ({
+        time: new Date(t),
+        wind_speed: hourly.wind_speed_10m?.[i],
+        wind_direction: hourly.wind_direction_10m?.[i],
+        sea_level_height_msl: hourly.sea_level_height_msl?.[i]
+    }));
+};
+
+// =============================
+// 2️⃣ Evaluar seguridad por hora
+// =============================
+
+const getSafetyStatus = (
+    snapshot: HourSnapshot,
+    beachOrientation = 90
+): SafetyStatus => {
+
+    const { wind_speed, wind_direction, sea_level_height_msl } = snapshot;
+
+    if (!isValid(wind_speed)) {
+        return {
+            color: "green",
+            label: "SIN DATOS",
+            message: "Datos insuficientes."
+        };
+    }
+
+    const { windCond } = evaluateWind(wind_direction, beachOrientation);
+
+    // OFFSHORE
+    if (windCond === "offshore") {
+        if (wind_speed > 45) {
+            return {
+                color: "red",
+                label: "PELIGRO",
+                message: "Offshore muy fuerte. Riesgo de deriva mar adentro."
+            };
+        }
+        if (wind_speed > 30) {
+            return {
+                color: "yellow",
+                label: "PRECAUCIÓN",
+                message: "Offshore moderado. Atención a corrientes."
+            };
+        }
+    }
+
+    // ONSHORE
+    if (windCond === "onshore") {
+        if (wind_speed > 45) {
+            return {
+                color: "red",
+                label: "MUY PELIGROSO",
+                message: "Onshore fuerte. Shorebreak caótico."
+            };
+        }
+        if (wind_speed > 30) {
+            return {
+                color: "yellow",
+                label: "PRECAUCIÓN",
+                message: "Onshore moderado. Condiciones inestables."
+            };
+        }
+    }
+
+    // MAREA EXTREMA
+    if (isValid(sea_level_height_msl) && sea_level_height_msl > 2.2) {
+        return {
+            color: "yellow",
+            label: "MAREA ALTA",
+            message: "Marea elevada. Precaución en zonas bajas."
+        };
+    }
+
+    // VIENTO GENERAL
+    if (wind_speed > 38) {
+        return {
+            color: "yellow",
+            label: "ALERTA",
+            message: "Viento fuerte en la zona."
+        };
+    }
+
+    return {
+        color: "green",
+        label: "SEGURO",
+        message: "Condiciones de seguridad normales."
+    };
+};
+
+// =============================
+// 3️⃣ Peor riesgo próximas N horas
+// =============================
+
+const getWorstSafetyNextHours = (
+    hourly: any,
+    beachOrientation = 90,
+    hoursAhead = 6
+): SafetyStatus | null => {
+
+    const hours = normalizeHourly(hourly);
+
+    const now = new Date();
+    now.setMinutes(0, 0, 0);
+
+    const upcoming = hours.filter(h => {
+        const diff = (h.time.getTime() - now.getTime()) / (1000 * 60 * 60);
+        return diff >= 0 && diff <= hoursAhead;
+    });
+
+    if (!upcoming.length) return null;
+
+    let worst: SafetyStatus = {
+        color: "green",
+        label: "SEGURO",
+        message: "Condiciones de seguridad normales."
+    };
+
+    for (const hour of upcoming) {
+        const status = getSafetyStatus(hour, beachOrientation);
+
+        if (riskScore[status.color] > riskScore[worst.color]) {
+            worst = status;
+        }
+    }
+
+    return worst;
+};
 export const processData = (data?: MarineWeatherData, forecastData?: ForecastData, beachOrientation?: number): CombinedConditions | null => {
     if (!data) return null;
     // if (!forecastData) return null;
@@ -149,35 +313,142 @@ export const processData = (data?: MarineWeatherData, forecastData?: ForecastDat
 
         // Si la ola de viento es el doble que el swell, el mar está "picado"
         if (wave_height > swell_wave_height * 2) {
-            condition = "Picado (Viento dominante)";
+            condition = "Picado";
         }
 
         // Evaluación de Marea para Comodoro/RT
         let tideInfo = "Media";
-        if (sea_level_height_msl < -1.5) tideInfo = "Bajamar (Mucha playa)";
-        if (sea_level_height_msl > 1.5) tideInfo = "Pleamar (Poca playa)";
+        if (sea_level_height_msl < -1.5) tideInfo = "Bajamar";
+        if (sea_level_height_msl > 1.5) tideInfo = "Pleamar";
 
         return { condition, tideInfo };
     };
-    const getSafetyStatus = (stats: any, beachOrientation?: number) => {
-        const { wind_speed, wind_direction, sea_level_height_msl } = stats;
+    const getCurrentHourIndex = (timeArray: string[] | Date[]) => {
+        if (!Array.isArray(timeArray)) return -1;
+
+        const now = new Date();
+
+        let closestIndex = -1;
+        let smallestDiff = Infinity;
+
+        timeArray.forEach((t, i) => {
+            const date = new Date(t);
+            const diff = Math.abs(date.getTime() - now.getTime());
+
+            if (diff < smallestDiff) {
+                smallestDiff = diff;
+                closestIndex = i;
+            }
+        });
+
+        // Solo aceptamos si está dentro de 1 hora
+        if (smallestDiff <= 60 * 60 * 1000) {
+            return closestIndex;
+        }
+
+        return -1;
+    };
+    const getCurrentSafety = (
+        marine: MarineWeatherData,
+        forecast: ForecastData | undefined,
+        beachOrientation = 90
+    ): SafetyStatus => {
+        if (!marine?.hourly || !forecast?.hourly) return {
+            color: "green",
+            label: "SIN DATOS",
+            message: "Datos insuficientes."
+        };
+
+        const marineIdx = getCurrentHourIndex(marine.hourly.time);
+        const forecastIdx = getCurrentHourIndex(forecast.hourly.time);
+
+        if (marineIdx === -1 || forecastIdx === -1) return null;
+
+        const wind_speed = forecast.hourly.wind_speed_10m?.[forecastIdx];
+        const wind_direction = forecast.hourly.wind_direction_10m?.[forecastIdx];
+        const sea_level_height_msl = marine.hourly.sea_level_height_msl?.[marineIdx];
+
+        if (!isValid(wind_speed) || !isValid(wind_direction)) {
+            return {
+                color: "green",
+                label: "SIN DATOS",
+                message: "Datos insuficientes."
+            };
+        }
+
         const { windCond } = evaluateWind(wind_direction, beachOrientation);
 
-        // PELIGRO CRÍTICO: Viento de tierra fuerte (Típico "viento de los locos" en la zona)
-        if (windCond === "offshore" && wind_speed > 40) {
-            return { color: "red", label: "PELIGRO", message: "Viento de tierra extremo. Riesgo de deriva mar adentro." };
+        /* =========================
+           OFFSHORE
+        ========================== */
+
+        if (windCond === "offshore") {
+            if (wind_speed > 45) {
+                return {
+                    color: "red",
+                    label: "PELIGRO",
+                    message: "Offshore muy fuerte. Riesgo de deriva mar adentro."
+                };
+            }
+            if (wind_speed > 30) {
+                return {
+                    color: "yellow",
+                    label: "PRECAUCIÓN",
+                    message: "Offshore moderado. Atención a corrientes."
+                };
+            }
         }
 
-        // ADVERTENCIA: Marea alta golpeando muros
-        if (sea_level_height_msl > 2.0) {
-            return { color: "yellow", label: "PRECAUCIÓN", message: "Marea muy alta. Evitar zonas de acantilados o muros." };
+        /* =========================
+           ONSHORE
+        ========================== */
+
+        if (windCond === "onshore") {
+            if (wind_speed > 45) {
+                return {
+                    color: "red",
+                    label: "MUY PELIGROSO",
+                    message: "Viento fuerte entrando al mar. Shorebreak caótico."
+                };
+            }
+            if (wind_speed > 30) {
+                return {
+                    color: "yellow",
+                    label: "PRECAUCIÓN",
+                    message: "Viento entrando al mar. Condiciones inestables."
+                };
+            }
         }
 
-        if (wind_speed > 30) {
-            return { color: "yellow", label: "ALERTA", message: "Viento fuerte en la zona. Solo expertos." };
+        /* =========================
+           MAREA
+        ========================== */
+
+        if (isValid(sea_level_height_msl) && sea_level_height_msl > 2.2) {
+            return {
+                color: "yellow",
+                label: "MAREA ALTA",
+                message: "Marea elevada. Precaución en zonas bajas."
+            };
         }
 
-        return { color: "green", label: "SEGURO", message: "Condiciones de seguridad normales." };
+        /* =========================
+           VIENTO GENERAL
+        ========================== */
+
+        if (wind_speed > 38) {
+            return {
+                color: "yellow",
+                label: "ALERTA",
+                message: "Viento fuerte en la zona."
+            };
+        }
+
+        return {
+            color: "green",
+            label: "SEGURO",
+            message: "Condiciones de seguridad normales."
+        };
     };
     const getBestWindow = (data: any, activity: ActivityType, beachOrientation?: number) => {
         const nowIndex = data.hourly.time.findIndex(t => new Date(t) >= new Date());
@@ -214,10 +485,10 @@ export const processData = (data?: MarineWeatherData, forecastData?: ForecastDat
         };
     };
     // --- Refinamiento de Ratings ---
-
     const getSurfRating = (stats: any, beachOrientation = 90) => {
         const {
-            wind_wave_height_max, // Usamos el máximo para realismo
+            swell_wave_height,
+            swell_wave_period,
             swell_wave_period_max,
             wind_speed,
             wind_direction,
@@ -230,35 +501,89 @@ export const processData = (data?: MarineWeatherData, forecastData?: ForecastDat
         let score = 0;
         let factors: string[] = [];
 
-        const { windCond, corderito: hayCorderito } = evaluateWind(
-            wind_direction, beachOrientation, wave_direction, swell_direction, wind_speed
+        const { windCond, corderito } = evaluateWind(
+            wind_direction,
+            beachOrientation,
+            wave_direction,
+            swell_direction,
+            wind_speed
         );
+
         const tide = evaluateTide(sea_level_height_msl, previous_sea_level_height_msl);
 
-        // Swell: En CR si es < 0.5m casi no rompe
-        if (stats.swell_wave_height > 0.8) { score += 4; factors.push("Swell con altura suficiente"); }
+        /* =========================
+           1️⃣ HARD GATE: SIN OLA
+        ========================== */
 
-        if (swell_wave_period_max > 9) { score += 4; factors.push("Período largo (olas con fuerza)"); }
-        else if (swell_wave_period_max > 7) { score += 2; factors.push("Período aceptable"); }
-
-        if (windCond === "offshore") {
-            score += 5; factors.push("Viento de tierra: peina la ola");
-        } else if (hayCorderito) {
-            score -= 6; factors.push("Mar picado/Corderito");
+        if (swell_wave_height < 0.6 || swell_wave_period < 6) {
+            return {
+                score: 1,
+                factors: ["Sin energía suficiente para surfear"]
+            };
         }
 
-        if (tide.isRising && tide.stage === 'mid') {
-            score += 3; factors.push("Repunte de marea ideal");
+        /* =========================
+           2️⃣ ENERGÍA DEL SWELL
+        ========================== */
+
+        // Altura
+        if (swell_wave_height > 1.2) {
+            score += 5;
+            factors.push("Swell sólido");
+        } else if (swell_wave_height > 0.8) {
+            score += 3;
+            factors.push("Swell moderado");
         }
-        if (stats.swell_wave_height < 0.5) {
-            score -= 7; // Penalización pesada si no hay ola
-            factors.push("Mar muy bajo (Plato)");
+
+        // Período (clave real de potencia)
+        if (swell_wave_period_max > 10) {
+            score += 5;
+            factors.push("Período largo (olas con potencia)");
+        } else if (swell_wave_period_max > 8) {
+            score += 3;
+            factors.push("Período aceptable");
         }
-        if (stats.swell_wave_period < 5) {
+
+        /* =========================
+           3️⃣ VIENTO
+        ========================== */
+
+        if (windCond === "offshore" && wind_speed < 25) {
+            score += 4;
+            factors.push("Offshore limpio");
+        }
+
+        if (corderito) {
+            score -= 6;
+            factors.push("Mar desordenado por viento");
+        }
+
+        if (wind_speed > 35) {
             score -= 4;
-            factors.push("Sin fuerza (Periodo muy corto)");
+            factors.push("Viento demasiado fuerte");
         }
-        return { score: Math.max(0, score), factors };
+
+        /* =========================
+           4️⃣ MAREA
+        ========================== */
+
+        if (tide.isRising && tide.stage === "mid") {
+            score += 3;
+            factors.push("Repunte ideal");
+        }
+
+        if (tide.stage === "high") {
+            score -= 2;
+            factors.push("Marea demasiado alta");
+        }
+
+        /* =========================
+           5️⃣ NORMALIZACIÓN FINAL
+        ========================== */
+
+        score = Math.max(0, Math.min(10, score));
+
+        return { score, factors };
     };
 
     const getSupRating = (stats: any, beachOrientation = 90) => {
@@ -350,7 +675,7 @@ export const processData = (data?: MarineWeatherData, forecastData?: ForecastDat
                 sup: getRating(todayStats, "sup"),
                 swimming: getRating(todayStats, "swimming"),
             },
-            safety: getSafetyStatus(todayStats, beachOrientation ? beachOrientation : 90),
+            safety: getCurrentSafety(data, forecastData, beachOrientation ? beachOrientation : 90),
             bestWindows: {
                 surf: getBestWindow(data, "surf", beachOrientation ? beachOrientation : 90),
                 sup: getBestWindow(data, "sup", beachOrientation ? beachOrientation : 90),
@@ -359,5 +684,5 @@ export const processData = (data?: MarineWeatherData, forecastData?: ForecastDat
             seaState: analyzeSeaState(todayStats)
         }
         return processedData;
-    }, [data])
+    }, [data, forecastData])
 }
