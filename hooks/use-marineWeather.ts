@@ -15,7 +15,7 @@ export function useMarineWeather({ latitude, longitude }: SpotLocation) {
             : null,
         () => getMarineWeather(latitude, longitude),
         {
-            refreshInterval: 1000 * 60 * 60 * 12, // cada 12 horas busca info
+            refreshInterval: 1000 * 60 * 60 * 2, // cada 2 horas busca info
             revalidateOnFocus: false,
         }
     )

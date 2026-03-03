@@ -28,6 +28,8 @@ export default function Home() {
 
   const { data, error, isLoading } = useMarineWeather(selectedSpot)
   const { forecastData, forecastError, forecastIsLoading } = useForecast(selectedSpot)
+  console.log("data", data)
+  console.log("forecastData", forecastData)
   return (
     <div className="min-h-screen bg-background">
       <Header />

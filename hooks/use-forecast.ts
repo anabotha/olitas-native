@@ -9,7 +9,7 @@ export function useForecast({ latitude, longitude }: SpotLocation) {
             : null,
         () => getForecast(latitude, longitude),
         {
-            refreshInterval: 1000 * 60 * 60 * 12, // cada 12 horas
+            refreshInterval: 1000 * 60 * 60 * 2, // cada 2 horas
             revalidateOnFocus: false,
         }
     );

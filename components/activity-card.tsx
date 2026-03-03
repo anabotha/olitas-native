@@ -73,7 +73,7 @@ export function ActivityCard({
           </div>
         </div>
         <div className="flex flex-wrap gap-1.5">
-          {rating.factors.map((factor, i) => (
+          {rating?.factors?.map((factor, i) => (
             <span
               key={i}
               className="rounded-md bg-muted px-2 py-0.5 text-[11px] text-muted-foreground"

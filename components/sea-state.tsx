@@ -50,7 +50,7 @@ const SeaState = ({ data, forecast, beach }: SeaStateProps) => {
                 </div>
 
                 <div className="bg-muted/40 rounded-xl p-4">
-                    {validWindows.length > 0 ? (
+                    {seaState.condition !== "Malo" && processedData.safety.color !== "red" && validWindows.length > 0 ? (
                         <>
                             <p className="text-sm uppercase tracking-wide text-muted-foreground mb-3">
                                 Posibles Ventanas

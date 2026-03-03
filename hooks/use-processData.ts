@@ -383,6 +383,7 @@ export const processData = (data?: MarineWeatherData, forecastData?: ForecastDat
         ========================== */
 
         if (windCond === "offshore") {
+
             if (wind_speed > 45) {
                 return {
                     color: "red",
@@ -419,7 +420,21 @@ export const processData = (data?: MarineWeatherData, forecastData?: ForecastDat
                 };
             }
         }
-
+        //ALERTAS 
+        if (wind_speed > 80) {
+            return {
+                color: "red",
+                label: "PELIGRO",
+                message: "ALERTA ROJA POR VIENTO FUERTE"
+            };
+        }
+        if (wind_speed > 55) {
+            return {
+                color: "red",
+                label: "PELIGRO",
+                message: "ALERTA AMARILLA POR VIENTO FUERTE"
+            };
+        }
         /* =========================
            MAREA
         ========================== */
@@ -436,7 +451,7 @@ export const processData = (data?: MarineWeatherData, forecastData?: ForecastDat
            VIENTO GENERAL
         ========================== */
 
-        if (wind_speed > 38) {
+        if (wind_speed > 44) {
             return {
                 color: "yellow",
                 label: "ALERTA",

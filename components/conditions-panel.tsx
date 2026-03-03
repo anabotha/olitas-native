@@ -50,7 +50,21 @@ export function ConditionsPanel({ forecast, conditions }: ConditionsProps) {
       });
     return ordenado;
   };
+
+  const getHoyIndex = (forecast: ForecastData): number => {
+    const ahora = new Date();
+    return forecast.daily.time.findIndex((t) => {
+      const d = new Date(t);
+      return (
+        d.getFullYear() === ahora.getFullYear() &&
+        d.getMonth() === ahora.getMonth() &&
+        d.getDate() === ahora.getDate()
+      );
+    });
+  };
   const ordenado = ordenarHora(hoy);
+  const hoyIndex = getHoyIndex(forecast!);
+  console.log("hoyIndex", hoyIndex);
   return (
     <div className="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-3">
       {/* Waves */}
@@ -152,21 +166,21 @@ export function ConditionsPanel({ forecast, conditions }: ConditionsProps) {
             <ConditionItem
               label="Sensacion termica"
               value={`${ordenado[0].apparent_temperature.toFixed(0)}\u00B0C`}
-            />{/* 
+            />
             <ConditionItem
-              label="Sea temp"
+              label="UV"
               value={
-                c.seaTemperature > 0 ? (
+                forecast?.daily.uv_index_max[hoyIndex] > 0 ? (
                   <span className="flex items-center gap-1">
                     <Droplets className="h-3 w-3 text-primary" />
-                    {c.seaTemperature.toFixed(0)}
+                    {forecast?.daily.uv_index_max[hoyIndex].toFixed(0)}
                     {"\u00B0C"}
                   </span>
                 ) : (
                   <span className="text-muted-foreground">N/A</span>
                 )
               }
-            />*/}
+            />
             {
               ordenado[0].weatherCode && (
                 <ConditionItem
