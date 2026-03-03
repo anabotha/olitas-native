@@ -27,23 +27,24 @@ const ActivityCheck = (
       <h3 className="mb-4 text-xs font-semibold uppercase tracking-widest text-muted-foreground">
         Actividad
       </h3>
-      <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
-        <div className="col-span-3">
+      <div className="col-span-3">
 
-          {processedData.safety?.color === "red" || processedData.safety?.color === "yellow" && (
-            <div className="flex items-center gap-3 rounded-xl border border-destructive/20 bg-destructive/5 px-5 py-4">
-              <AlertCircle className="h-5 w-5 text-destructive" />
-              <div>
-                <p className="text-sm font-medium text-foreground">
-                  {processedData.safety.label}
-                </p>
-                <p className="text-xs text-muted-foreground">
-                  {processedData.safety.message}
-                </p>
-              </div>
+        {processedData.safety?.color === "red" || processedData.safety?.color === "yellow" && (
+          <div className="flex items-center gap-3 rounded-xl border border-destructive/20 bg-destructive/5 px-5 py-4">
+            <AlertCircle className="h-5 w-5 text-destructive" />
+            <div>
+              <p className="text-sm font-medium text-foreground">
+                {processedData.safety.label}
+              </p>
+              <p className="text-xs text-muted-foreground">
+                {processedData.safety.message}
+              </p>
             </div>
-          )}
-        </div>
+          </div>
+        )}
+      </div>
+      <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
+
         <ActivityCard
           activity="Surfing"
           icon={<HugeiconsIcon icon={SurfboardIcon} />}
