@@ -220,6 +220,12 @@ export const processData = (data?: MarineWeatherData, forecastData?: ForecastDat
                 description: "Condiciones no aptas para esta actividad.",
             }
         }
+        if (score < 3) {
+            return {
+                label: "Jodido",
+                description: "",
+            }
+        }
         if (score < 4) {
             return {
                 label: "Apto",

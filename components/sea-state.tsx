@@ -60,7 +60,10 @@ const SeaState = ({ data, forecast, beach }: SeaStateProps) => {
                                 {validWindows.map((activity) => {
                                     const hour = Number(activity.data.time)
                                     const ampm = hour <= 11 ? "AM" : "PM"
-
+                                    const now = new Date().getHours();
+                                    if (hour < now) {
+                                        return;
+                                    }
                                     return (
                                         <div
                                             key={activity.label}

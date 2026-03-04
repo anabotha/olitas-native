@@ -1,19 +1,17 @@
 import {
   Waves,
-  Wind,
-  Thermometer,
-  Droplets,
   ArrowUp,
   Eye,
+  Sun,
 } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import type { CombinedConditions, ForecastData, MarineWeatherData } from "@/lib/types";
+import type { ForecastData, MarineWeatherData } from "@/lib/types";
 import {
-  getWindDirectionLabel,
+
   getWeatherDescription,
 } from "@/lib/conditions";
 import { HugeiconsIcon } from '@hugeicons/react'
-import { CelsiusIcon, FastWindIcon, ThermometerWarmIcon } from '@hugeicons/core-free-icons'
+import { FastWindIcon, ThermometerWarmIcon } from '@hugeicons/core-free-icons'
 import { useProcessForecast } from "@/hooks/use-proccessForecast";
 import { processData } from '@/hooks/use-processData';
 
@@ -151,7 +149,6 @@ export function ConditionsPanel({ forecast, conditions }: ConditionsProps) {
         <CardHeader className="pb-2">
           <CardTitle className="flex items-center gap-2 text-sm font-medium text-muted-foreground">
             <HugeiconsIcon icon={ThermometerWarmIcon} />
-            <HugeiconsIcon icon={CelsiusIcon} />
             Temperatura
           </CardTitle>
         </CardHeader>
@@ -172,9 +169,8 @@ export function ConditionsPanel({ forecast, conditions }: ConditionsProps) {
               value={
                 forecast?.daily.uv_index_max[hoyIndex] > 0 ? (
                   <span className="flex items-center gap-1">
-                    <Droplets className="h-3 w-3 text-primary" />
+                    <Sun className="h-3 w-3 text-primary" />
                     {forecast?.daily.uv_index_max[hoyIndex].toFixed(0)}
-                    {"\u00B0C"}
                   </span>
                 ) : (
                   <span className="text-muted-foreground">N/A</span>

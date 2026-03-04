@@ -57,6 +57,9 @@ export function ActivityCard({
               </h3>
               <p className="text-xs text-muted-foreground">
                 {rating.description}
+                {activity === "swimming" && rating.score == 3 ? (
+                  <span> apto para avanzados</span>
+                ) : (<></>)}
               </p>
             </div>
           </div>
@@ -69,10 +72,12 @@ export function ActivityCard({
             <span
               className={cn("h-2 w-2 rounded-full", scoreDots[rating.score])}
             />
+
             {rating.label}
           </div>
         </div>
         <div className="flex flex-wrap gap-1.5">
+
           {rating?.factors?.map((factor, i) => (
             <span
               key={i}
