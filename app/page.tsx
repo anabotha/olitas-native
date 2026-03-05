@@ -17,6 +17,7 @@ import ActivityCheck from "@/components/activity-check";
 import { useForecast } from "@/hooks/use-forecast";
 import { CurrentConditions } from "@/components/current-conditions";
 import { SeaState } from "@/components/sea-state";
+import { CollapsibleSection } from "@/components/collapsible-section";
 import { processData } from "@/hooks/use-processData";
 const fetcher = (url: string) => fetch(url).then((res) => res.json());
 
@@ -24,7 +25,7 @@ export default function Home() {
   const [selectedSpot, setSelectedSpot] = useState<SpotLocation>(
     DEFAULT_SPOTS[0]
   );
-  const [selectedActivity, setSelectedActivity] = useState<string>("surf");
+  // const [selectedActivity, setSelectedActivity] = useState<string>("surf");
 
   const { data, error, isLoading } = useMarineWeather(selectedSpot)
   const { forecastData, forecastError, forecastIsLoading } = useForecast(selectedSpot)
@@ -71,8 +72,7 @@ export default function Home() {
           <div className="flex flex-col gap-8">
             {/* Activity cards */}
             <ActivityCheck
-              selectedActivity={selectedActivity}
-              setSelectedActivity={setSelectedActivity}
+
               selectedSpot={selectedSpot}
               data={data}
               forecastData={forecastData}
@@ -80,27 +80,24 @@ export default function Home() {
 
             {/* Current conditions */}
             <section>
-              <h3 className="mb-4 text-xs font-semibold uppercase tracking-widest text-muted-foreground">
-                Ahora
-              </h3>
-              <ConditionsPanel forecast={forecastData} conditions={data} />
+              <CollapsibleSection title="Ahora" defaultOpen={true}>
+                <ConditionsPanel forecast={forecastData} conditions={data} />
+              </CollapsibleSection>
             </section>
             <section>
-              <h3 className="mb-4 text-xs font-semibold uppercase tracking-widest text-muted-foreground">
-                Pronostico
-              </h3>
-              <HourlyForecast forecast={forecastData} />
+              <CollapsibleSection title="Pronostico" defaultOpen={true}>
+                <HourlyForecast forecast={forecastData} />
+              </CollapsibleSection>
             </section>
             <section>
-              {/* <h3 className="mb-4 text-xs font-semibold uppercase tracking-widest text-muted-foreground">
-                Estado del Mar
-              </h3> */}
-              <SeaState data={data} forecast={forecastData} beach={selectedSpot} />
+              <CollapsibleSection title="Estado del Mar" defaultOpen={true}>
+                <SeaState data={data} forecast={forecastData} beach={selectedSpot} />
+              </CollapsibleSection>
             </section>
             {/* Footer note */}
             <footer className="pb-4 text-center">
               <p className="text-xs text-muted-foreground">
-                Informacion proveida por Open-Meteo. Siempre chequea las condiciones locales antes de salir.
+                Informacion provista por Open-Meteo. <br /> Siempre chequea las condiciones antes de salir.
               </p>
             </footer>
           </div>

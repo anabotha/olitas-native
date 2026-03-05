@@ -24,12 +24,17 @@ export const SeaState = ({ data, forecast, beach }: SeaStateProps) => {
         { label: "SUP", data: bestWindows.sup, icon: KayakIcon },
         { label: "Natación", data: bestWindows.swimming, icon: SwimmingIcon },
     ];
-
+    console.log(bestWindows)
     // 2. Filtramos ANTES de renderizar para evitar arrays con 'undefined'
     const validWindows = activities.filter(a => {
-        const hour = Number(a.data.time);
-        // Lógica de ventana: si son las 23 y la actividad es a las 00, es válida
+        // 1. Extraemos solo la hora (ej: "15:00" -> 15)
+        const hour = Number(a.data.time.split(':')[0]);
+        const now = new Date().getHours();
+
+        // 2. Tu lógica de ventana horaria
         const isFuture = hour >= now || (now >= 22 && hour <= 5);
+
+        // 3. Score > 5
         return a.data.score > 5 && isFuture;
     });
 

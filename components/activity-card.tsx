@@ -8,8 +8,6 @@ interface ActivityCardProps {
   activity: string;
   icon: React.ReactNode;
   rating: ActivityRating;
-  isSelected: boolean;
-  onClick: () => void;
 }
 
 const scoreColors: Record<number, string> = {
@@ -32,18 +30,14 @@ export function ActivityCard({
   activity,
   icon,
   rating,
-  isSelected,
-  onClick,
 }: ActivityCardProps) {
   return (
     <Card
       className={cn(
         "cursor-pointer transition-all duration-200 hover:shadow-md",
-        isSelected
-          ? "ring-2 ring-primary shadow-md"
-          : "hover:ring-1 hover:ring-border"
+
+        "hover:ring-1 hover:ring-border"
       )}
-      onClick={onClick}
     >
       <CardContent className="flex flex-col gap-4 p-5">
         <div className="flex items-center justify-between">

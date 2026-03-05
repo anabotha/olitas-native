@@ -219,7 +219,7 @@ export const processData = (data?: MarineWeatherData, forecastData?: ForecastDat
         if (score < 2) {
             return {
                 label: "Horrible",
-                description: "Condiciones no aptas para esta actividad.",
+                description: "Condiciones no aptas para esta actividad",
             }
         }
         if (score < 3) {
@@ -231,19 +231,19 @@ export const processData = (data?: MarineWeatherData, forecastData?: ForecastDat
         if (score < 4) {
             return {
                 label: "Apto",
-                description: "Normalito, podria estar mejor.",
+                description: "Normalito, podria estar mejor",
             }
         }
         if (score < 6) {
             return {
                 label: "Buenisimo",
-                description: "Condiciones buenas para esta actividad.",
+                description: "Buenas condiciones",
             }
         }
         if (score < 8) {
             return {
                 label: "Ideal",
-                description: "Condiciones muy buenas para esta actividad.",
+                description: "Condiciones muy buenas",
             }
         }
         return {
@@ -315,14 +315,22 @@ export const processData = (data?: MarineWeatherData, forecastData?: ForecastDat
             swell_wave_height,
             wave_height,
             wind_wave_height_max,
-            sea_level_height_msl
+            sea_level_height_msl,
+            windSpeed
         } = stats;
+
+        console.log("windspeed", wind_wave_height_max)
+        const isLowWind = windSpeed < 8;
+        const isLowSwell = wave_height < 0.7;
+        const isShortWindWave = wind_wave_height_max < 0.5;
 
         let condition = "Normal";
 
-        // Si la ola de viento es el doble que el swell, el mar está "picado"
-        if (wave_height > swell_wave_height * 2) {
-            condition = "Picado";
+        if (isLowWind && isLowSwell && isShortWindWave) {
+            condition = "Planchado"; // Efecto espejo o "Glassy"
+        }
+        else if (windSpeed > 15 && wave_height > swell_wave_height * 1.5) {
+            condition = "Picado"; // "Choppy"
         }
 
         // Evaluación de Marea para Comodoro/RT
@@ -599,77 +607,70 @@ export const processData = (data?: MarineWeatherData, forecastData?: ForecastDat
             wind_direction,
             wind_wave_height_max,
             wind_wave_period,
-            wave_height,
-            sea_level_height_msl
+            wave_height
         } = stats;
 
-        let score = 5; // Base neutra
+        let score = 5;
         let factors: string[] = [];
 
-        // Cálculo de relación Viento vs Costa
+        // --- 1. CÁLCULO DE DIRECCIÓN (0 = Onshore, 180 = Offshore) ---
         const diff = Math.abs((wind_direction - beachOrientation + 180 + 360) % 360 - 180);
-        const isOnshore = diff < 45;   // Viento hacia la costa
-        const isOffshore = diff > 135; // Viento hacia el mar (PELIGRO)
+        const isOnshore = diff < 45;
+        const isOffshore = diff > 135;
         const isCrossshore = !isOnshore && !isOffshore;
 
-        // --- 1. EL VIENTO: Factor Crítico ---
-        if (wind_speed < 8) {
+        // --- 2. CONDICIÓN "ESPEJO" (PLANCHADO) ---
+        // Unificamos el criterio: poco viento + poca ola = Planchado
+        const isGlassy = wind_speed < 7 && wave_height < 0.5;
+
+        if (isGlassy) {
             score += 5;
-            factors.push("Mar planchado");
-        } else if (wind_speed < 15) {
-            score += 2;
-            factors.push("Viento leve");
-            factors.push("Navegable");
-        } else if (wind_speed > 22) {
-            score -= 8;
-            factors.push("Viento fuerte");
-            factors.push("Muy difícil avanzar");
+            factors.push("Mar planchado ");
+        } else {
+            // --- 3. IMPACTO DEL VIENTO ---
+            if (wind_speed < 12) {
+                score += 2;
+                factors.push("Viento leve");
+            } else if (wind_speed > 20) {
+                score -= 7;
+                factors.push("Viento fuerte: Muy difícil avanzar");
+            }
+
+            // --- 4. PENALIZACIÓN POR DIRECCIÓN ---
+            if (isOffshore && wind_speed > 12) {
+                score -= 10; // El SUP es una vela humana, el offshore es peligro de rescate
+                factors.push("PELIGRO: Viento de tierra (te aleja)");
+            } else if (isCrossshore && wind_speed > 10) {
+                score -= 3;
+                factors.push("Viento lateral: Difícil mantener rumbo");
+            }
         }
 
-        // --- 2. ALERTA DE SEGURIDAD (Offshore) ---
-        if (isOffshore && wind_speed > 15) {
-            // En SUP, el viento de tierra es el riesgo #1
-            score -= 10;
-            factors.push("ALERTA: Viento Offshore");
-            factors.push("Te aleja de la costa");
+        // --- 5. ESTABILIDAD (PERÍODO Y ALTURA) ---
+        // "Choppy" o Mar Picado
+        if (wind_wave_height_max > 0.7) {
+            if (wind_wave_period < 5) {
+                score -= 4;
+                factors.push("Mar picado");
+            } else {
+                score -= 2;
+                factors.push("Oleaje presente");
+            }
         }
 
-        // --- 3. EFECTO LAVARROPAS (Choppiness) ---
-        // Si el periodo es corto (< 4s) y hay altura, la tabla se vuelve inestable
-        if (wind_wave_period < 4.5 && wind_wave_height_max > 0.5) {
-            score -= 4;
-            factors.push("Mar picado");
-            factors.push("Inestabilidad lateral");
-        }
+        // --- 6. SEGURIDAD EXTRA ---
+        const dangerLevel = (isOffshore && wind_speed > 15) || wind_speed > 25 ? 'HIGH' : 'NORMAL';
+        if (dangerLevel === 'HIGH') score = 0; // Si es peligroso, el score es 0 sin importar lo demás
 
-        // --- 4. OLEAJE (Swell) ---
-        if (wave_height > 1.0) {
-            score -= 3;
-            factors.push("Oleaje alto");
-            factors.push("Difícil mantener el equilibrio");
-        } else if (wave_height < 0.4 && wind_speed < 10) {
-            score += 3;
-            factors.push("Mar planchado");
-            factors.push("Ideal para principiantes");
-        }
-
-        // --- 5. MAREA ---
-        if (sea_level_height_msl < -0.4) {
-            score += 1;
-            factors.push("Marea baja");
-            factors.push("Generalmente más reparado");
-        }
-
-        // Resultado final normalizado 0-10
         const finalScore = Math.min(Math.max(0, score), 10);
 
         return {
             score: finalScore,
-            factors,
-            dangerLevel: (isOffshore && wind_speed > 18) ? 'HIGH' : 'NORMAL'
+            factors: [...new Set(factors)], // Evita duplicados
+            dangerLevel,
+            isGlassy
         };
     };
-
     const getSwimmingRating = (stats: any, beachOrientation: number) => {
         const {
             sea_temperature,

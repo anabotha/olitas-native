@@ -10,15 +10,14 @@ import { SurfboardIcon } from '@hugeicons/core-free-icons'
 import { KayakIcon } from '@hugeicons/core-free-icons'
 
 interface ActivityCheckProps {
-  selectedActivity: string,
-  setSelectedActivity: (activity: string) => void,
+
   data: MarineWeatherData | undefined;
   selectedSpot: SpotLocation | undefined;
   forecastData: ForecastData | undefined;
 }
 
 const ActivityCheck = (
-  { selectedActivity, setSelectedActivity, data, selectedSpot, forecastData }: ActivityCheckProps
+  { data, selectedSpot, forecastData }: ActivityCheckProps
 ): JSX.Element => {
   const processedData = processData(data, forecastData, selectedSpot?.orientation);
   if (!processedData) return <div>Hubo un error, proba mas tarde!</div>;
@@ -49,22 +48,17 @@ const ActivityCheck = (
           activity="Surfing"
           icon={<HugeiconsIcon icon={SurfboardIcon} />}
           rating={processedData.activities.surf}
-          isSelected={selectedActivity === "surf"}
-          onClick={() => setSelectedActivity("surf")}
+
         />
         <ActivityCard
           activity="SUP"
           icon={<HugeiconsIcon icon={KayakIcon} />}
           rating={processedData.activities.sup}
-          isSelected={selectedActivity === "sup"}
-          onClick={() => setSelectedActivity("sup")}
         />
         <ActivityCard
           activity="Nado en aguas abiertas"
           icon={<HugeiconsIcon icon={SwimmingIcon} />}
           rating={processedData.activities.swimming}
-          isSelected={selectedActivity === "swimming"}
-          onClick={() => setSelectedActivity("swimming")}
         />
       </div>
     </section>
