@@ -602,72 +602,57 @@ export const processData = (data?: MarineWeatherData, forecastData?: ForecastDat
         };
     };
     const getSupRating = (stats: any, beachOrientation: number) => {
-        const {
-            wind_speed,
-            wind_direction,
-            wind_wave_height_max,
-            wind_wave_period,
-            wave_height
-        } = stats;
+        const { wind_speed, wind_direction, wave_height, wind_wave_period } = stats;
+
+        // 1. Cálculos de Dirección
+        const diff = Math.abs((wind_direction - beachOrientation + 180 + 360) % 360 - 180);
+        const isOffshore = diff > 135;
+        const isOnshore = diff < 45;
+        const isCrossshore = !isOnshore && !isOffshore;
+
+        // 2. Alerta de Seguridad Inmediata (Short-circuit)
+        const isDangerousOffshore = isOffshore && wind_speed > 12;
+        const isExtremeWind = wind_speed > 22;
+
+        if (isDangerousOffshore || isExtremeWind) {
+            return {
+                score: 0,
+                factors: [isDangerousOffshore ? "PELIGRO: Viento de tierra fuerte" : "Viento extremo"],
+                dangerLevel: 'HIGH',
+                isGlassy: false
+            };
+        }
 
         let score = 5;
         let factors: string[] = [];
 
-        // --- 1. CÁLCULO DE DIRECCIÓN (0 = Onshore, 180 = Offshore) ---
-        const diff = Math.abs((wind_direction - beachOrientation + 180 + 360) % 360 - 180);
-        const isOnshore = diff < 45;
-        const isOffshore = diff > 135;
-        const isCrossshore = !isOnshore && !isOffshore;
-
-        // --- 2. CONDICIÓN "ESPEJO" (PLANCHADO) ---
-        // Unificamos el criterio: poco viento + poca ola = Planchado
-        const isGlassy = wind_speed < 7 && wave_height < 0.5;
-
+        // 3. Condición Glassy
+        const isGlassy = wind_speed < 12 && wave_height < 0.4;
         if (isGlassy) {
-            score += 5;
-            factors.push("Mar planchado ");
+            score = 10; // El paraíso del SUP
+            factors.push("Condiciones espejo (Ideal)");
         } else {
-            // --- 3. IMPACTO DEL VIENTO ---
-            if (wind_speed < 12) {
-                score += 2;
-                factors.push("Viento leve");
-            } else if (wind_speed > 20) {
-                score -= 7;
-                factors.push("Viento fuerte: Muy difícil avanzar");
-            }
+            // Viento
+            if (wind_speed < 19) score += 3;
+            else if (wind_speed > 27) score -= 4;
 
-            // --- 4. PENALIZACIÓN POR DIRECCIÓN ---
-            if (isOffshore && wind_speed > 12) {
-                score -= 10; // El SUP es una vela humana, el offshore es peligro de rescate
-                factors.push("PELIGRO: Viento de tierra (te aleja)");
-            } else if (isCrossshore && wind_speed > 10) {
-                score -= 3;
-                factors.push("Viento lateral: Difícil mantener rumbo");
-            }
-        }
-
-        // --- 5. ESTABILIDAD (PERÍODO Y ALTURA) ---
-        // "Choppy" o Mar Picado
-        if (wind_wave_height_max > 0.7) {
-            if (wind_wave_period < 5) {
-                score -= 4;
-                factors.push("Mar picado");
-            } else {
+            // Dirección
+            if (isCrossshore) {
                 score -= 2;
-                factors.push("Oleaje presente");
+                factors.push("Viento lateral: Afecta el rumbo");
+            }
+
+            // Estabilidad del agua
+            if (wind_wave_period < 4 && wind_speed > 10) {
+                score -= 3;
+                factors.push("Mar picado (Choppy)");
             }
         }
-
-        // --- 6. SEGURIDAD EXTRA ---
-        const dangerLevel = (isOffshore && wind_speed > 15) || wind_speed > 25 ? 'HIGH' : 'NORMAL';
-        if (dangerLevel === 'HIGH') score = 0; // Si es peligroso, el score es 0 sin importar lo demás
-
-        const finalScore = Math.min(Math.max(0, score), 10);
 
         return {
-            score: finalScore,
-            factors: [...new Set(factors)], // Evita duplicados
-            dangerLevel,
+            score: Math.min(Math.max(0, score), 10),
+            factors: [...new Set(factors)],
+            dangerLevel: 'NORMAL',
             isGlassy
         };
     };
