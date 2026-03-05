@@ -1,10 +1,9 @@
-import React from 'react'
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { CombinedConditions, ForecastData, MarineWeatherData, SpotLocation } from '@/lib/types';
-import { processData } from '@/hooks/use-processData';
-import { se } from 'date-fns/locale';
-import { HugeiconsIcon } from '@hugeicons/react';
-import { KayakIcon, SwimmingIcon, SurfboardIcon } from '@hugeicons/core-free-icons';
+// import { Card } from "@hugeicons/core-free-icons";
+import { Card, CardHeader, CardTitle } from "./ui/card";
+import { processData } from "@/hooks/use-processData";
+import { ForecastData, MarineWeatherData, SpotLocation } from "@/lib/types";
+import { HugeiconsIcon } from "@hugeicons/react";
+import { KayakIcon, SwimmingIcon, SurfboardIcon } from "@hugeicons/core-free-icons";
 
 interface SeaStateProps {
     data: MarineWeatherData;
@@ -12,17 +11,28 @@ interface SeaStateProps {
     beach: SpotLocation;
 }
 
-const SeaState = ({ data, forecast, beach }: SeaStateProps) => {
+export const SeaState = ({ data, forecast, beach }: SeaStateProps) => {
     const processedData = processData(data, forecast, beach.orientation);
     if (!processedData) return null;
+
     const { seaState, bestWindows } = processedData;
+    const now = new Date().getHours();
+
+    // 1. IMPORTANTE: Guardamos la referencia del componente del icono, no el JSX
     const activities = [
-        { label: "Surf", data: bestWindows.surf, icon: <HugeiconsIcon icon={SurfboardIcon} /> },
-        { label: "SUP", data: bestWindows.sup, icon: <HugeiconsIcon icon={KayakIcon} /> },
-        { label: "Natación", data: bestWindows.swimming, icon: <HugeiconsIcon icon={SwimmingIcon} /> },
+        { label: "Surf", data: bestWindows.surf, icon: SurfboardIcon },
+        { label: "SUP", data: bestWindows.sup, icon: KayakIcon },
+        { label: "Natación", data: bestWindows.swimming, icon: SwimmingIcon },
     ];
 
-    const validWindows = activities.filter(a => a.data.score > 5);
+    // 2. Filtramos ANTES de renderizar para evitar arrays con 'undefined'
+    const validWindows = activities.filter(a => {
+        const hour = Number(a.data.time);
+        // Lógica de ventana: si son las 23 y la actividad es a las 00, es válida
+        const isFuture = hour >= now || (now >= 22 && hour <= 5);
+        return a.data.score > 5 && isFuture;
+    });
+
     return (
         <Card className="shadow-md">
             <CardHeader>
@@ -32,64 +42,43 @@ const SeaState = ({ data, forecast, beach }: SeaStateProps) => {
             </CardHeader>
 
             <section className="grid md:grid-cols-2 gap-6 p-4">
-
                 <div className="bg-muted/40 rounded-xl p-4 space-y-2">
-                    <p className="text-sm uppercase tracking-wide text-muted-foreground">
-                        Condición
-                    </p>
-                    <p className="text-xl font-semibold">
-                        {seaState.condition}
-                    </p>
-
-                    <p className="text-sm uppercase tracking-wide text-muted-foreground mt-4">
-                        Marea
-                    </p>
-                    <p className="text-xl font-semibold">
-                        {seaState.tideInfo}
-                    </p>
+                    <p className="text-sm uppercase tracking-wide text-muted-foreground">Condición</p>
+                    <p className="text-xl font-semibold">{seaState.condition}</p>
+                    <p className="text-sm uppercase tracking-wide text-muted-foreground mt-4">Marea</p>
+                    <p className="text-xl font-semibold">{seaState.tideInfo}</p>
                 </div>
 
                 <div className="bg-muted/40 rounded-xl p-4">
-                    {seaState.condition !== "Malo" && processedData.safety.color !== "red" && validWindows.length > 0 ? (
-                        <>
-                            <p className="text-sm uppercase tracking-wide text-muted-foreground mb-3">
-                                Posibles Ventanas
+                    <p className="text-sm uppercase tracking-wide text-muted-foreground mb-3">
+                        Posibles Ventanas
+                    </p>
+
+                    <div className="space-y-2">
+                        {validWindows.length > 0 ? (
+                            validWindows.map((activity) => (
+                                <div
+                                    key={activity.label}
+                                    className="flex justify-between items-center bg-background rounded-lg px-3 py-2 border"
+                                >
+                                    <span className="font-medium flex items-center gap-2">
+                                        {/* Renderizamos el componente del icono correctamente */}
+                                        <HugeiconsIcon icon={activity.icon} size={20} />
+                                        {activity.label}
+                                    </span>
+                                    <span className="text-sm text-muted-foreground">
+                                        {activity.data.time.toString().padStart(2, '0')}:00 hs
+                                    </span>
+                                </div>
+                            ))
+                        ) : (
+                            <p className="text-sm text-muted-foreground italic py-2">
+                                No hay actividades recomendadas para las próximas horas.
                             </p>
-
-                            <div className="space-y-2">
-                                {validWindows.map((activity) => {
-                                    const hour = Number(activity.data.time)
-                                    const ampm = hour <= 11 ? "AM" : "PM"
-                                    const now = new Date().getHours();
-                                    if (hour < now) {
-                                        return;
-                                    }
-                                    return (
-                                        <div
-                                            key={activity.label}
-                                            className="flex justify-between items-center bg-background rounded-lg px-3 py-2 border"
-                                        >
-                                            <span className="font-medium flex items-center gap-2">
-                                                {activity.icon} {activity.label}
-                                            </span>
-                                            <span className="text-sm text-muted-foreground">
-                                                {activity.data.time} {ampm}
-                                            </span>
-                                        </div>
-                                    )
-                                })}
-                            </div>
-                        </>
-                    ) : (
-                        <p className="text-muted-foreground">
-                            No se prevén buenas condiciones
-                        </p>
-                    )}
+                        )}
+                    </div>
                 </div>
-
             </section>
         </Card>
-    )
-}
-
-export default SeaState
+    );
+};

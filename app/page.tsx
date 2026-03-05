@@ -16,7 +16,7 @@ import { useMarineWeather } from "@/hooks/use-marineWeather";
 import ActivityCheck from "@/components/activity-check";
 import { useForecast } from "@/hooks/use-forecast";
 import { CurrentConditions } from "@/components/current-conditions";
-import SeaState from "@/components/sea-state";
+import { SeaState } from "@/components/sea-state";
 import { processData } from "@/hooks/use-processData";
 const fetcher = (url: string) => fetch(url).then((res) => res.json());
 

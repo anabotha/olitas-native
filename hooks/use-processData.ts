@@ -191,7 +191,7 @@ export const processData = (data?: MarineWeatherData, forecastData?: ForecastDat
         const hourly = data.hourly.time.findIndex((time) => getTime(time) === now)
 
         if (index === -1) return null
-
+        // console.log(forecastData)
         const processData = {
             wind_wave_height_max: data.daily.wind_wave_height_max?.[index] ?? null,
             wind_wave_direction_dominant:
@@ -208,8 +208,10 @@ export const processData = (data?: MarineWeatherData, forecastData?: ForecastDat
             wind_wave_period: data.hourly.wind_wave_period?.[hourly] ?? null,
             wind_wave_direction: data.hourly.wind_wave_direction?.[hourly] ?? null,
             sea_level_height_msl: data.hourly.sea_level_height_msl?.[hourly] ?? null,
+            windSpeed: forecastData?.hourly.wind_speed_10m[hourly] ?? null,
+            windDirection: forecastData?.hourly.wind_direction_10m[hourly] ?? null,
         }
-
+        console.log(processData);
         return processData ? processData : null;
     }
 
@@ -251,22 +253,23 @@ export const processData = (data?: MarineWeatherData, forecastData?: ForecastDat
     }
     const getRating = (
         data: CombinedConditions,
-        activity: ActivityType
+        activity: ActivityType,
+        beachOrientation: number
     ): ActivityRating | null => {
 
         switch (activity) {
             case "surf": {
-                const { score, factors } = getSurfRating(data);
+                const { score, factors } = getSurfRating(data, beachOrientation);
                 return { ...getLabel(score), factors };
             }
 
             case "sup": {
-                const { score, factors } = getSupRating(data);
+                const { score, factors } = getSupRating(data, beachOrientation);
                 return { ...getLabel(score), factors };
             }
 
             case "swimming": {
-                const { score, factors } = getSwimmingRating(data);
+                const { score, factors } = getSwimmingRating(data, beachOrientation);
                 return { ...getLabel(score), factors };
             }
             default: {
@@ -506,7 +509,7 @@ export const processData = (data?: MarineWeatherData, forecastData?: ForecastDat
         };
     };
     // --- Refinamiento de Ratings ---
-    const getSurfRating = (stats: any, beachOrientation = 90) => {
+    const getSurfRating = (stats: any, beachOrientation: number) => {
         const {
             swell_wave_height,
             swell_wave_period,
@@ -515,158 +518,244 @@ export const processData = (data?: MarineWeatherData, forecastData?: ForecastDat
             wind_direction,
             wave_direction,
             swell_direction,
-            sea_level_height_msl,
-            previous_sea_level_height_msl
+            sea_level_height_msl
         } = stats;
 
         let score = 0;
         let factors: string[] = [];
 
-        const { windCond, corderito } = evaluateWind(
-            wind_direction,
-            beachOrientation,
-            wave_direction,
-            swell_direction,
-            wind_speed
-        );
+        // 1. Cálculo de ángulos (Viento y Swell)
+        const windDiff = Math.abs((wind_direction - beachOrientation + 180 + 360) % 360 - 180);
+        const swellDiff = Math.abs((swell_direction - beachOrientation + 180 + 360) % 360 - 180);
 
-        const tide = evaluateTide(sea_level_height_msl, previous_sea_level_height_msl);
+        const isOffshore = windDiff > 135;
+        const isOnshore = windDiff < 45;
+        const swellComingToBeach = swellDiff < 60; // ¿El swell apunta a la costa?
 
         /* =========================
-           1️⃣ HARD GATE: SIN OLA
+           1️⃣ GATE DE VIABILIDAD
         ========================== */
-
-        if (swell_wave_height < 0.6 || swell_wave_period < 6) {
-            return {
-                score: 1,
-                factors: ["Sin energía suficiente para surfear"]
-            };
+        if (swell_wave_height < 0.5 || !swellComingToBeach) {
+            return { score: 1, factors: ["Mar calmo o swell en otra dirección"] };
         }
 
         /* =========================
-           2️⃣ ENERGÍA DEL SWELL
+           2️⃣ CALIDAD DEL SWELL (Energía)
         ========================== */
-
-        // Altura
-        if (swell_wave_height > 1.2) {
-            score += 5;
-            factors.push("Swell sólido");
-        } else if (swell_wave_height > 0.8) {
-            score += 3;
-            factors.push("Swell moderado");
-        }
-
-        // Período (clave real de potencia)
-        if (swell_wave_period_max > 10) {
-            score += 5;
-            factors.push("Período largo (olas con potencia)");
-        } else if (swell_wave_period_max > 8) {
-            score += 3;
-            factors.push("Período aceptable");
-        }
-
-        /* =========================
-           3️⃣ VIENTO
-        ========================== */
-
-        if (windCond === "offshore" && wind_speed < 25) {
+        // La energía real es (Altura^2 * Período). Aquí simplificamos:
+        if (swell_wave_height >= 1.0) score += 4;
+        if (swell_wave_period_max >= 10) {
             score += 4;
-            factors.push("Offshore limpio");
-        }
-
-        if (corderito) {
-            score -= 6;
-            factors.push("Mar desordenado por viento");
-        }
-
-        if (wind_speed > 35) {
-            score -= 4;
-            factors.push("Viento demasiado fuerte");
-        }
-
-        /* =========================
-           4️⃣ MAREA
-        ========================== */
-
-        if (tide.isRising && tide.stage === "mid") {
-            score += 3;
-            factors.push("Repunte ideal");
-        }
-
-        if (tide.stage === "high") {
+            factors.push("Período largo");
+            factors.push("Olas con fuerza");
+        } else if (swell_wave_period_max < 7) {
             score -= 2;
-            factors.push("Marea demasiado alta");
+            factors.push("Período corto");
+            factors.push("Ola débil");
+
         }
 
         /* =========================
-           5️⃣ NORMALIZACIÓN FINAL
+           3️⃣ EL "TOQUE" DEL VIENTO
         ========================== */
-
-        score = Math.max(0, Math.min(10, score));
-
-        return { score, factors };
-    };
-
-    const getSupRating = (stats: any, beachOrientation = 90) => {
-        const { wind_speed, wind_direction, wind_wave_height_max, wind_wave_period } = stats;
-        let score = 0;
-        let factors: string[] = [];
-
-        const { windCond } = evaluateWind(wind_direction, beachOrientation);
-        const tide = evaluateTide(stats.sea_level_height_msl, stats.previous_sea_level_height_msl);
-
-        // Viento: El enemigo principal
-        if (wind_speed < 12) { score += 8; factors.push("Viento calmo ideal"); }
-        else if (wind_speed > 25) { score -= 10; factors.push("Viento muy fuerte"); }
-
-        // PELIGRO: Viento offshore fuerte en la Patagonia
-        if (windCond === "offshore" && wind_speed > 22) {
-            score -= 5;
-            factors.push("PELIGRO: Viento de tierra te aleja de la costa");
-        }
-
-        // Lavarropas: Periodo corto = inestabilidad
-        if (wind_wave_period < 4 && wind_wave_height_max > 0.6) {
+        if (isOffshore) {
+            if (wind_speed < 20) {
+                score += 3;
+                factors.push("Offshore");
+                factors.push("Ola peinada");
+            } else {
+                score += 1; // Demasiado offshore dificulta bajar la ola
+                factors.push("Mucho viento de tierra");
+                factors.push("Cuesta entrar en la ola");
+            }
+        } else if (isOnshore && wind_speed > 12) {
             score -= 4;
-            factors.push("Efecto lavarropas: mar muy desordenado");
+            factors.push("Onshore");
+            factors.push("Mar picado");
         }
 
-        if (tide.stage === 'low') { score += 2; factors.push("Marea baja"); }
+        /* =========================
+           4️⃣ RELACIÓN MAREA (Punto de marea)
+        ========================== */
+        // Dependiendo de la playa, pero el "repunte" (subiendo) suele ser mejor
+        if (sea_level_height_msl > -0.2 && sea_level_height_msl < 0.4) {
+            score += 2;
+            factors.push("Marea media");
+            factors.push("Punto óptimo");
+        }
 
-        return { score: Math.max(0, score), factors };
+
+        const finalScore = Math.min(Math.max(0, score), 10);
+
+        return {
+            score: finalScore,
+            factors,
+            isEpic: finalScore >= 8 && isOffshore
+        };
     };
+    const getSupRating = (stats: any, beachOrientation: number) => {
+        const {
+            wind_speed,
+            wind_direction,
+            wind_wave_height_max,
+            wind_wave_period,
+            wave_height,
+            sea_level_height_msl
+        } = stats;
 
-    const getSwimmingRating = (stats: any, beachOrientation = 90) => {
-        const { sea_temperature, wind_speed, wind_direction, wind_wave_height_max, air_temperature } = stats;
-        let score = 0;
+        let score = 5; // Base neutra
         let factors: string[] = [];
 
-        const { windCond } = evaluateWind(wind_direction, beachOrientation);
-        const tide = evaluateTide(stats.sea_level_height_msl, stats.previous_sea_level_height_msl);
+        // Cálculo de relación Viento vs Costa
+        const diff = Math.abs((wind_direction - beachOrientation + 180 + 360) % 360 - 180);
+        const isOnshore = diff < 45;   // Viento hacia la costa
+        const isOffshore = diff > 135; // Viento hacia el mar (PELIGRO)
+        const isCrossshore = !isOnshore && !isOffshore;
 
-        // Temperatura (Wind Chill al salir)
-        if (sea_temperature < 14) { score -= 3; factors.push("Agua fría: requiere buen neoprene"); }
-        if (air_temperature < 12 && wind_speed > 20) {
-            score -= 2; factors.push("Mucho frío al salir del agua");
+        // --- 1. EL VIENTO: Factor Crítico ---
+        if (wind_speed < 8) {
+            score += 5;
+            factors.push("Mar planchado");
+        } else if (wind_speed < 15) {
+            score += 2;
+            factors.push("Viento leve");
+            factors.push("Navegable");
+        } else if (wind_speed > 22) {
+            score -= 8;
+            factors.push("Viento fuerte");
+            factors.push("Muy difícil avanzar");
         }
 
-        // Condición de nado
-        if (wind_wave_height_max > 1.0) {
-            score -= 5; factors.push("Oleaje de viento alto: difícil nadar");
+        // --- 2. ALERTA DE SEGURIDAD (Offshore) ---
+        if (isOffshore && wind_speed > 15) {
+            // En SUP, el viento de tierra es el riesgo #1
+            score -= 10;
+            factors.push("ALERTA: Viento Offshore");
+            factors.push("Te aleja de la costa");
         }
 
-        if (windCond === "onshore" && wind_speed > 18) {
-            score -= 4; factors.push("Corderitos: difícil respirar");
+        // --- 3. EFECTO LAVARROPAS (Choppiness) ---
+        // Si el periodo es corto (< 4s) y hay altura, la tabla se vuelve inestable
+        if (wind_wave_period < 4.5 && wind_wave_height_max > 0.5) {
+            score -= 4;
+            factors.push("Mar picado");
+            factors.push("Inestabilidad lateral");
         }
 
-        if (tide.stage === 'low') { score += 3; factors.push("Marea baja"); }
+        // --- 4. OLEAJE (Swell) ---
+        if (wave_height > 1.0) {
+            score -= 3;
+            factors.push("Oleaje alto");
+            factors.push("Difícil mantener el equilibrio");
+        } else if (wave_height < 0.4 && wind_speed < 10) {
+            score += 3;
+            factors.push("Mar planchado");
+            factors.push("Ideal para principiantes");
+        }
 
-        return { score: Math.max(0, score), factors };
+        // --- 5. MAREA ---
+        if (sea_level_height_msl < -0.4) {
+            score += 1;
+            factors.push("Marea baja");
+            factors.push("Generalmente más reparado");
+        }
+
+        // Resultado final normalizado 0-10
+        const finalScore = Math.min(Math.max(0, score), 10);
+
+        return {
+            score: finalScore,
+            factors,
+            dangerLevel: (isOffshore && wind_speed > 18) ? 'HIGH' : 'NORMAL'
+        };
+    };
+
+    const getSwimmingRating = (stats: any, beachOrientation: number) => {
+        const {
+            sea_temperature,
+            windSpeed,
+            windDirection,
+            wind_wave_height_max,
+            air_temperature,
+            wave_height,
+            sea_level_height_msl
+        } = stats;
+
+        let score = 5; // Empezamos en un punto medio (neutro)
+        let factors: string[] = [];
+
+        // 1. Cálculo de Diferencia de Ángulo (Viento vs Playa)
+        // 0° de diferencia = Onshore (viento hacia la costa)
+        // 180° de diferencia = Offshore (viento desde la costa)
+        const diff = Math.abs((windDirection - beachOrientation + 180 + 360) % 360 - 180);
+        const isOnshore = diff < 45;
+        const isOffshore = diff > 135;
+        const isCrossshore = !isOnshore && !isOffshore;
+
+        // --- TEMPERATURA ---
+        if (sea_temperature < 14) {
+            score -= 3;
+            factors.push("Agua muy fría (neoprene grueso)");
+        } else if (sea_temperature > 19) {
+            score += 2;
+            factors.push("Temperatura agradable");
+        }
+
+        if (air_temperature < 12 && windSpeed > 20) {
+            score -= 2;
+            factors.push("Riesgo de hipotermia al salir (Wind Chill)");
+        }
+
+        // --- CORDERITOS (Choppiness) ---
+        // Se producen por viento fuerte soplando contra la costa (Onshore) 
+        // o viento muy fuerte sin importar dirección.
+        if (windSpeed > 15) {
+            if (isOnshore) {
+                score -= 4;
+                factors.push("Corderitos");
+            } else if (isCrossshore && windSpeed > 22) {
+                score -= 2;
+                factors.push("Mar movido");
+            } else if (isOffshore) {
+                score += 1;
+                factors.push("Viento de tierra");
+                factors.push("Mar planchado");
+            }
+        }
+
+        // --- CORRIENTES FUERTES ---
+        // Estimación: Viento lateral sostenido + oleaje alto
+        if (isCrossshore && windSpeed > 20) {
+            score -= 3;
+            factors.push("Peligro: Corriente lateral fuerte");
+        }
+
+        // --- OLEAJE ---
+        if (wave_height > 1.2) {
+            score -= 3;
+            factors.push("Oleaje alto");
+            factors.push("Entrada difícil");
+        } else if (wave_height < 0.5 && isOffshore) {
+            score += 3;
+            factors.push("Condiciones ideales");
+            factors.push("Mar planchado");
+        }
+
+        // --- MAREA (Basado en tu lógica previa) ---
+        if (sea_level_height_msl < -0.3) {
+            score += 1;
+            factors.push("Marea baja");
+        }
+
+        // Asegurar que el score esté entre 0 y 10
+        const finalScore = Math.min(Math.max(0, score), 10);
+
+        return { score: finalScore, factors, windType: isOnshore ? 'Onshore' : isOffshore ? 'Offshore' : 'Cross-shore' };
     };
     return useMemo(() => {
         const todayStats = searchTodaysStats();
         if (!todayStats) return null;
-
+        // console.log(data)
         const processedData = {
             current: {
                 waveHeight: todayStats.wave_height ?? undefined,
@@ -692,9 +781,9 @@ export const processData = (data?: MarineWeatherData, forecastData?: ForecastDat
                 seaLevelHeightMsl: todayStats.sea_level_height_msl ?? undefined,
             },
             activities: {
-                surf: getRating(todayStats, "surf"),
-                sup: getRating(todayStats, "sup"),
-                swimming: getRating(todayStats, "swimming"),
+                surf: getRating(todayStats, "surf", beachOrientation ? beachOrientation : 90),
+                sup: getRating(todayStats, "sup", beachOrientation ? beachOrientation : 90),
+                swimming: getRating(todayStats, "swimming", beachOrientation ? beachOrientation : 90),
             },
             safety: getCurrentSafety(data, forecastData, beachOrientation ? beachOrientation : 90),
             bestWindows: {
