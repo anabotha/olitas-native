@@ -24,7 +24,6 @@ export const SeaState = ({ data, forecast, beach }: SeaStateProps) => {
         { label: "SUP", data: bestWindows.sup, icon: KayakIcon },
         { label: "Natación", data: bestWindows.swimming, icon: SwimmingIcon },
     ];
-    console.log(bestWindows)
     // 2. Filtramos ANTES de renderizar para evitar arrays con 'undefined'
     const validWindows = activities.filter(a => {
         // 1. Extraemos solo la hora (ej: "15:00" -> 15)

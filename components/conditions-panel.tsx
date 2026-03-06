@@ -25,7 +25,6 @@ export function ConditionsPanel({ forecast, conditions }: ConditionsProps) {
   if (!conditions) return null;
   const { hoy } = useProcessForecast(forecast);
   const processedData = processData(conditions);
-  console.log(processedData);
   if (!processedData) return <div>Hubo un error, proba mas tarde!</div>;
 
   const degToCompass = (deg: number) => {
@@ -62,7 +61,6 @@ export function ConditionsPanel({ forecast, conditions }: ConditionsProps) {
   };
   const ordenado = ordenarHora(hoy);
   const hoyIndex = getHoyIndex(forecast!);
-  console.log("hoyIndex", hoyIndex);
   return (
     <div className="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-3">
       {/* Waves */}
