@@ -201,6 +201,7 @@ export const processData = (data?: MarineWeatherData, forecastData?: ForecastDat
         return date.toISOString().split("T")[0]
     }
     const todaysforecast = useProcessForecast(forecastData);
+    console.log(todaysforecast)
     const searchTodaysStats = () => {
         if (!data) return null
 
@@ -319,7 +320,6 @@ export const processData = (data?: MarineWeatherData, forecastData?: ForecastDat
             windSpeed
         } = stats;
 
-        console.log("windspeed", windSpeed)
         const isLowWind = windSpeed < 8;
         const isLowSwell = wave_height < 0.7;
         const isShortWindWave = wind_wave_height_max < 0.5;
@@ -899,7 +899,6 @@ export const processData = (data?: MarineWeatherData, forecastData?: ForecastDat
         if (effectiveWind > 55) {
             return { score: 0, factors: ["⚠️ Viento extremo"], dangerLevel: 'HIGH', isGlassy: false };
         }
-        console.log("EFFECTIVE WIND", effectiveWind)
         const waveRef = wave_height ?? swell_wave_height ?? 0;
         const isGlassy = effectiveWind < 15 && waveRef < 0.3;
 
@@ -1034,7 +1033,7 @@ export const processData = (data?: MarineWeatherData, forecastData?: ForecastDat
         /* ── 6. MAREA (0–2) ──────────────────────────────────── */
         if (tide.phase === 'mid') { score += 2; factors.push("Marea cómoda"); }
         else if (tide.phase === 'high') { score += 1; }
-        else if (tide.phase === 'low') { score -= 1; factors.push("Marea muy baja"); }
+        else if (tide.phase === 'low') {  factors.push("Marea muy baja"); }
 
         /* ── 7. LLUVIA / UV (0–1) ────────────────────────────── */
         if (precipitation != null && precipitation > 2) {

@@ -10,9 +10,9 @@ interface HourlyForecastProps {
 }
 
 export function HourlyForecast({ forecast }: HourlyForecastProps) {
-
+console.log("FOrecast",forecast)
   if (!forecast?.hourly) return null;
-  const { hoy, semana } = useProcessForecast(forecast);
+  const { hoy, mañana,semana } = useProcessForecast(forecast);
 
   const degToCompass = (deg: number) => {
     const directions = ["N", "NE", "E", "SE", "S", "SO", "O", "NO"];
@@ -35,6 +35,7 @@ export function HourlyForecast({ forecast }: HourlyForecastProps) {
     return ordenado;
   };
   const ordenado = ordenarHora(hoy);
+  const mañanaOrdenado=ordenarHora(mañana);
   return (
     <Card>
       <CardHeader>
@@ -47,6 +48,51 @@ export function HourlyForecast({ forecast }: HourlyForecastProps) {
         <div className="overflow-x-auto">
           <div className="flex gap-3 pb-2" style={{ minWidth: "max-content" }}>
             {ordenado?.map((hour, i) => {
+              const time = new Date(hour.time);
+              const hourStr = time.toLocaleTimeString([], {
+                hour: "2-digit",
+                minute: "2-digit",
+                hour12: false,
+              });
+
+              return (
+                <div
+                  key={i}
+                  className="flex min-w-[80px] flex-col items-center gap-2 rounded-xl bg-secondary/50 px-3 py-3"
+                >
+                  <span className="text-xs font-medium text-muted-foreground">
+                    {hour.hora}
+                  </span>
+                  <div className="flex flex-col items-center gap-1">
+                    <span className="text-lg font-bold text-foreground">
+
+                      {/* <span className="text-xs font-normal text-muted-foreground">
+                        m
+                      </span> */}
+                    </span>
+                    <span className="text-xs text-muted-foreground">
+                      Temperatura:
+                      {hour.temperatura_2m.toFixed(0)}     {"\u00B0C"}
+                    </span>
+                    <span className="text-xs text-muted-foreground">
+                      Velocidad del viento:
+                      {hour.wind_speed_10m.toFixed(0)}
+                      km/h
+                    </span>
+                    <span className="text-xs text-muted-foreground">
+                      Direccion del viento:
+                      {degToCompass(hour.wind_direction_10m)}
+                    </span>
+                  </div>
+                  {semana[0].uvIndex > 0 && (
+                    <span className="rounded-full bg-accent/50 px-2 py-0.5 text-[10px] font-medium text-accent-foreground">
+                      UV {semana[0].uvIndex.toFixed(0)}
+                    </span>
+                  )}
+                </div>
+              );
+            })}
+            {mañanaOrdenado?.map((hour, i) => {
               const time = new Date(hour.time);
               const hourStr = time.toLocaleTimeString([], {
                 hour: "2-digit",

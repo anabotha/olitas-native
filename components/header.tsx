@@ -12,6 +12,7 @@ export function Header() {
             Olitas
           </h1>
           <p className="text-xs text-muted-foreground">No te comas el viaje</p>
+          <a href='https://forms.gle/H2A1v53kFRhHn8dE7' className='text-blue-600 hover:underline font-bold'>¡Click aca para ir al formulario!</a>
         </div>
       </div>
     </header>

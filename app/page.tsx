@@ -23,7 +23,7 @@ const fetcher = (url: string) => fetch(url).then((res) => res.json());
 
 export default function Home() {
   const [selectedSpot, setSelectedSpot] = useState<SpotLocation>(
-    DEFAULT_SPOTS[0]
+    DEFAULT_SPOTS[1]
   );
   // const [selectedActivity, setSelectedActivity] = useState<string>("surf");
 
