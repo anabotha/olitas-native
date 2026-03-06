@@ -10,9 +10,9 @@ interface HourlyForecastProps {
 }
 
 export function HourlyForecast({ forecast }: HourlyForecastProps) {
-console.log("FOrecast",forecast)
+  console.log("FOrecast", forecast)
   if (!forecast?.hourly) return null;
-  const { hoy, mañana,semana } = useProcessForecast(forecast);
+  const { hoy, mañana, semana } = useProcessForecast(forecast);
 
   const degToCompass = (deg: number) => {
     const directions = ["N", "NE", "E", "SE", "S", "SO", "O", "NO"];
@@ -34,8 +34,19 @@ console.log("FOrecast",forecast)
       });
     return ordenado;
   };
+  const ordenarMañana = (hoy: HourlyForecastType) => {
+    const ahora = new Date().getHours();
+    const ordenado = hoy
+      .sort((a, b) => {
+        const ha = parseInt(a.hora.split(":")[0], 10);
+        const hb = parseInt(b.hora.split(":")[0], 10);
+        return ha - hb;
+      })
+    return ordenado;
+  };
+
   const ordenado = ordenarHora(hoy);
-  const mañanaOrdenado=ordenarHora(mañana);
+  const mañanaOrdenado = ordenarMañana(mañana);
   return (
     <Card>
       <CardHeader>
@@ -93,12 +104,7 @@ console.log("FOrecast",forecast)
               );
             })}
             {mañanaOrdenado?.map((hour, i) => {
-              const time = new Date(hour.time);
-              const hourStr = time.toLocaleTimeString([], {
-                hour: "2-digit",
-                minute: "2-digit",
-                hour12: false,
-              });
+
 
               return (
                 <div

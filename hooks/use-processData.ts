@@ -201,7 +201,6 @@ export const processData = (data?: MarineWeatherData, forecastData?: ForecastDat
         return date.toISOString().split("T")[0]
     }
     const todaysforecast = useProcessForecast(forecastData);
-    console.log(todaysforecast)
     const searchTodaysStats = () => {
         if (!data) return null
 
@@ -1033,7 +1032,7 @@ export const processData = (data?: MarineWeatherData, forecastData?: ForecastDat
         /* ── 6. MAREA (0–2) ──────────────────────────────────── */
         if (tide.phase === 'mid') { score += 2; factors.push("Marea cómoda"); }
         else if (tide.phase === 'high') { score += 1; }
-        else if (tide.phase === 'low') {  factors.push("Marea muy baja"); }
+        else if (tide.phase === 'low') { factors.push("Marea muy baja"); }
 
         /* ── 7. LLUVIA / UV (0–1) ────────────────────────────── */
         if (precipitation != null && precipitation > 2) {
