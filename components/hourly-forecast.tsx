@@ -1,7 +1,7 @@
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import type { ForecastData, HourlyForecast as HourlyForecastType } from "@/lib/types";
 import { Clock } from "lucide-react";
-import { useProcessForecast } from "@/hooks/use-proccessForecast";
+import { useProcessForecast, ProcessedForecast } from "@/hooks/use-proccessForecast";
 
 
 
@@ -10,7 +10,6 @@ interface HourlyForecastProps {
 }
 
 export function HourlyForecast({ forecast }: HourlyForecastProps) {
-  console.log("FOrecast", forecast)
   if (!forecast?.hourly) return null;
   const { hoy, mañana, semana } = useProcessForecast(forecast);
 

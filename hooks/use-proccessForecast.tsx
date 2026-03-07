@@ -17,9 +17,10 @@ interface HourlySummary {
     apparent_temperature: number;
 }
 
-interface ProcessedForecast {
+export interface ProcessedForecast {
     hoy: HourlySummary[] | null;
     semana: DailySummary[] | null;
+    mañana: HourlySummary[] | null;
 }
 
 export const useProcessForecast = (data?: ForecastData): ProcessedForecast | null => {
@@ -53,33 +54,33 @@ export const useProcessForecast = (data?: ForecastData): ProcessedForecast | nul
             };
         })
         .filter(h => h.fecha === hoyStr);
-const ahora = new Date();
-const mña = new Date(ahora);
-mña.setDate(ahora.getDate() + 1);
+    const ahora = new Date();
+    const mña = new Date(ahora);
+    mña.setDate(ahora.getDate() + 1);
 
-const mñaStr = mña.toISOString().split("T")[0]; 
+    const mñaStr = mña.toISOString().split("T")[0];
 
-const mañana:HourlySummary[]=data.hourly.time
-.map((t,i)=>{
-    const date=new Date(t);
-    return {
-           hora: formatHour(date), // o formatHour(t)
+    const mañana: HourlySummary[] = data.hourly.time
+        .map((t, i) => {
+            const date = new Date(t);
+            return {
+                hora: formatHour(date), // o formatHour(t)
                 temperatura_2m: data.hourly.temperature_2m[i],
                 wind_speed_10m: data.hourly.wind_speed_10m[i],
                 wind_direction_10m: data.hourly.wind_direction_10m[i],
                 humedad: data.hourly.relative_humidity_2m[i],
                 fecha: date.toISOString().split("T")[0], // agregamos la fecha para filtrar
                 apparent_temperature: data.hourly.apparent_temperature[i],
-    }
-})
- .filter(h => h.fecha === mñaStr);
+            }
+        })
+        .filter(h => h.fecha === mñaStr);
     // Resumen diario de la semana
     const semana: DailySummary[] = data.daily.time.map((t, i) => ({
         dia: formatDate(t),
         uv_index_max: data.daily.uv_index_max[i],
     }));
 
-    return { hoy,mañana, semana };
+    return { hoy, mañana, semana };
 };
 
 // Auxiliar para convertir hora de daily/hourly a Date si viene como string

@@ -128,6 +128,7 @@ const getSafetyStatus = (
     }
 
     // MAREA EXTREMA
+
     if (isValid(sea_level_height_msl) && sea_level_height_msl > 2.2) {
         return {
             color: "yellow",
@@ -231,6 +232,7 @@ export const processData = (data?: MarineWeatherData, forecastData?: ForecastDat
             sea_level_height_msl: data.hourly.sea_level_height_msl?.[hourly] ?? null,
             windSpeed: forecastData?.hourly.wind_speed_10m[hourly] ?? null,
             windDirection: forecastData?.hourly.wind_direction_10m[hourly] ?? null,
+            previous_sea_level_height_msl: data.hourly.sea_level_height_msl?.[hourly - 1] ?? null,
         }
         // console.log(processData);
         return processData ? processData : null;
@@ -275,22 +277,23 @@ export const processData = (data?: MarineWeatherData, forecastData?: ForecastDat
     const getRating = (
         data: CombinedConditions,
         activity: ActivityType,
-        beachOrientation: number
+        beachOrientation: number,
+        spotName: string
     ): ActivityRating | null => {
 
         switch (activity) {
             case "surf": {
-                const { score, factors } = getSurfRating(data, beachOrientation);
+                const { score, factors } = getSurfRating(data, beachOrientation, spotName);
                 return { ...getLabel(score), factors };
             }
 
             case "sup": {
-                const { score, factors } = getSupRating(data, beachOrientation);
+                const { score, factors } = getSupRating(data, beachOrientation, spotName);
                 return { ...getLabel(score), factors };
             }
 
             case "swimming": {
-                const { score, factors } = getSwimmingRating(data, beachOrientation);
+                const { score, factors } = getSwimmingRating(data, beachOrientation, spotName);
                 return { ...getLabel(score), factors };
             }
             default: {
@@ -367,7 +370,8 @@ export const processData = (data?: MarineWeatherData, forecastData?: ForecastDat
     const getCurrentSafety = (
         marine: MarineWeatherData,
         forecast: ForecastData | undefined,
-        beachOrientation = 90
+        beachOrientation = 90,
+        spotName: string
     ): SafetyStatus => {
         if (!marine?.hourly || !forecast?.hourly) return {
             color: "green",
@@ -383,7 +387,7 @@ export const processData = (data?: MarineWeatherData, forecastData?: ForecastDat
         const wind_speed = forecast.hourly.wind_speed_10m?.[forecastIdx];
         const wind_direction = forecast.hourly.wind_direction_10m?.[forecastIdx];
         const sea_level_height_msl = marine.hourly.sea_level_height_msl?.[marineIdx];
-
+        const previous_sea_level_height_msl = marine.hourly.sea_level_height_msl?.[marineIdx - 1];
         if (!isValid(wind_speed) || !isValid(wind_direction)) {
             return {
                 color: "green",
@@ -454,8 +458,8 @@ export const processData = (data?: MarineWeatherData, forecastData?: ForecastDat
         /* =========================
            MAREA
         ========================== */
-
-        if (isValid(sea_level_height_msl) && sea_level_height_msl > 2.2) {
+        const tidal = getTidalPhase(Number(sea_level_height_msl), Number(previous_sea_level_height_msl), spotName);
+        if (tidal.phase === "high") {
             return {
                 color: "yellow",
                 label: "MAREA ALTA",
@@ -748,15 +752,15 @@ export const processData = (data?: MarineWeatherData, forecastData?: ForecastDat
     // ============================================================
     const SPOT_TIDAL_CONFIG: Record<string, { tidalRange: number; tidalMin: number }> = {
         "Rada Tilly": { tidalRange: 5.2, tidalMin: 0.6 },
-        "Costanera Comodoro": { tidalRange: 5.2, tidalMin: 0.6 },
-        "Km 3": { tidalRange: 5.2, tidalMin: 0.6 },
-        "Restinga Alí": { tidalRange: 5.2, tidalMin: 0.6 },
+        "Costanera Comodoro": { tidalRange: 3.5, tidalMin: 0.6 },
+        "Km 3": { tidalRange: 4.0, tidalMin: 0.6 },
+        "Restinga Alí": { tidalRange: 3.5, tidalMin: 0.6 },
         "Caleta Olivia": { tidalRange: 5.0, tidalMin: 0.5 }, // ligeramente distinto por estar más al sur
     };
 
     const getTidalPhase = (
         sea_level_height_msl: number,
-        previous_sea_level_height_msl: number,
+        previous_sea_level_height_msl?: number,
         spotName: string
     ): { phase: 'low' | 'mid' | 'high'; isRising: boolean; normalized: number } => {
         const config = SPOT_TIDAL_CONFIG[spotName] ?? { tidalRange: 5.2, tidalMin: 0.6 };
@@ -764,7 +768,8 @@ export const processData = (data?: MarineWeatherData, forecastData?: ForecastDat
         const normalized = Math.min(1, Math.max(0,
             (sea_level_height_msl - config.tidalMin) / config.tidalRange
         ));
-        const isRising = sea_level_height_msl > previous_sea_level_height_msl;
+        let previous = previous_sea_level_height_msl ? previous_sea_level_height_msl : null;
+        const isRising = previous ? sea_level_height_msl > previous : false;
         const phase = normalized < 0.3 ? 'low' : normalized > 0.7 ? 'high' : 'mid';
         return { phase, isRising, normalized };
     };
