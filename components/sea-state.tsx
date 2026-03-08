@@ -12,7 +12,7 @@ interface SeaStateProps {
 }
 
 export const SeaState = ({ data, forecast, beach }: SeaStateProps) => {
-    const processedData = processData(data, forecast, beach.orientation);
+    const processedData = processData(data, forecast, beach.orientation, beach.name);
     if (!processedData) return null;
 
     const { seaState, bestWindows } = processedData;
@@ -49,8 +49,10 @@ export const SeaState = ({ data, forecast, beach }: SeaStateProps) => {
                 <div className="bg-muted/40 rounded-xl p-4 space-y-2">
                     <p className="text-sm uppercase tracking-wide text-muted-foreground">Condición</p>
                     <p className="text-xl font-semibold">{seaState.condition}</p>
-                    <p className="text-sm uppercase tracking-wide text-muted-foreground mt-4">Marea</p>
-                    <p className="text-xl font-semibold">{seaState.tideInfo}</p>
+                    <p className="text-sm uppercase tracking-wide text-secondary-foreground mt-4">Marea</p>
+                    {/* <p className="text-xl font-semibold">{seaState.tideInfo === "low" ? "Baja" : ""}{seaState.tideInfo === "high" ? "Alta" : ""}{seaState.tideInfo === "mid" ? "Media" : ""}</p> */}
+                    <p className="text-xl font-semibold">{seaState.isRising ? "Subiendo" : "Bajando"}</p>
+
                 </div>
 
                 <div className="bg-muted/40 rounded-xl p-4">

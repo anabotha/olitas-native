@@ -18,13 +18,14 @@ import { processData } from '@/hooks/use-processData';
 interface ConditionsProps {
   forecast: ForecastData | undefined;
   conditions: MarineWeatherData;
+  selectedSpot: SpotLocation | undefined;
 }
 
-export function ConditionsPanel({ forecast, conditions }: ConditionsProps) {
+export function ConditionsPanel({ forecast, conditions, selectedSpot }: ConditionsProps) {
   if (!forecast?.hourly) return null;
   if (!conditions) return null;
   const { hoy } = useProcessForecast(forecast);
-  const processedData = processData(conditions);
+  const processedData = processData(conditions, forecast, selectedSpot?.orientation, selectedSpot?.name);
   if (!processedData) return <div>Hubo un error, proba mas tarde!</div>;
 
   const degToCompass = (deg: number) => {

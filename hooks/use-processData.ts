@@ -36,9 +36,6 @@ const riskScore: Record<SafetyColor, number> = {
     red: 2
 };
 
-// =============================
-// 1️⃣ Normalizar hourly
-// =============================
 
 const normalizeHourly = (hourly: any): HourSnapshot[] => {
     return hourly.time.map((t: Date, i: number) => ({
@@ -53,10 +50,6 @@ const angleDiff = (a: number, b: number) => {
     let diff = Math.abs(a - b);
     return diff > 180 ? 360 - diff : diff;
 };
-// =============================
-// 2️⃣ Evaluar seguridad por hora
-// =============================
-// Determina condición del viento y si genera corderito
 const evaluateWind = (windDir: number, beachDir: number, waveDir?: number, swellDir?: number, windSpeed?: number) => {
     const diff = angleDiff(windDir, beachDir);
 
@@ -153,9 +146,6 @@ const getSafetyStatus = (
     };
 };
 
-// =============================
-// 3️⃣ Peor riesgo próximas N horas
-// =============================
 
 const getWorstSafetyNextHours = (
     hourly: any,
@@ -239,41 +229,43 @@ export const processData = (data?: MarineWeatherData, forecastData?: ForecastDat
     }
 
     const getLabel = (score: number): Partial<ActivityRating> => {
-        if (score < 2) {
+
+        if (score <= 1) {
             return {
-                label: "Horrible",
-                description: "Condiciones no aptas para esta actividad",
-            }
+                label: "Desfavorable",
+                description: "Condiciones no aptas",
+            };
         }
-        if (score < 3) {
-            return {
-                label: "Jodido",
-                description: "",
-            }
-        }
-        if (score < 4) {
+
+
+
+        if (score <= 5) {
             return {
                 label: "Tranqui",
-                description: "Normalito, podria estar mejor",
-            }
+                description: "Normalito, podría estar mejor",
+            };
         }
-        if (score < 6) {
+
+        if (score <= 7) {
             return {
-                label: "Buenisimo",
-                description: "Agarra el traje",
-            }
+                label: "Bueno",
+                description: "Buenas condiciones para salir",
+            };
         }
-        if (score < 8) {
+
+        if (score <= 9) {
             return {
                 label: "Ideal",
                 description: "Condiciones muy buenas",
-            }
+            };
         }
+
         return {
-            label: "Increible",
-            description: "Esta ideal",
-        }
-    }
+            label: "Increíble",
+            description: "Condiciones perfectas",
+        };
+
+    };
     const getRating = (
         data: CombinedConditions,
         activity: ActivityType,
@@ -284,17 +276,17 @@ export const processData = (data?: MarineWeatherData, forecastData?: ForecastDat
         switch (activity) {
             case "surf": {
                 const { score, factors } = getSurfRating(data, beachOrientation, spotName);
-                return { ...getLabel(score), factors };
+                return { ...getLabel(score), factors, score };
             }
 
             case "sup": {
                 const { score, factors } = getSupRating(data, beachOrientation, spotName);
-                return { ...getLabel(score), factors };
+                return { ...getLabel(score), factors, score };
             }
 
             case "swimming": {
                 const { score, factors } = getSwimmingRating(data, beachOrientation, spotName);
-                return { ...getLabel(score), factors };
+                return { ...getLabel(score), factors, score };
             }
             default: {
                 return null;
@@ -302,24 +294,16 @@ export const processData = (data?: MarineWeatherData, forecastData?: ForecastDat
         }
     };
 
-    const evaluateTide = (currentMSL: number, previousMSL: number) => {
-        const isRising = currentMSL > previousMSL;
 
-        // Definimos "Alta" o "Baja" según el nivel (en Comodoro +/- 1.5 es el umbral)
-        let stage: 'high' | 'low' | 'mid' = 'mid';
-        if (currentMSL > 1.2) stage = 'high';
-        if (currentMSL < -1.2) stage = 'low';
 
-        return { stage, isRising };
-    };
-
-    const analyzeSeaState = (stats: any) => {
+    const analyzeSeaState = (stats: any, spotName: string) => {
         const {
             swell_wave_height,
             wave_height,
             wind_wave_height_max,
             sea_level_height_msl,
-            windSpeed
+            windSpeed,
+            previous_sea_level_height_msl,
         } = stats;
 
         const isLowWind = windSpeed < 8;
@@ -336,9 +320,9 @@ export const processData = (data?: MarineWeatherData, forecastData?: ForecastDat
         }
 
         // Evaluación de Marea para Comodoro/RT
-        let tideInfo = "Media";
-        if (sea_level_height_msl < -1.5) tideInfo = "Bajamar";
-        if (sea_level_height_msl > 1.5) tideInfo = "Pleamar";
+        let tideInfo = getTidalPhase(sea_level_height_msl, previous_sea_level_height_msl, spotName).phase;
+        // console.log("sea level", sea_level_height_msl);
+        // console.log("tide info", tideInfo);
 
         return { condition, tideInfo };
     };
@@ -458,7 +442,7 @@ export const processData = (data?: MarineWeatherData, forecastData?: ForecastDat
         /* =========================
            MAREA
         ========================== */
-        const tidal = getTidalPhase(Number(sea_level_height_msl), Number(previous_sea_level_height_msl), spotName);
+        const tidal = getTidalPhase(Number(sea_level_height_msl), Number(previous_sea_level_height_msl));
         if (tidal.phase === "high") {
             return {
                 color: "yellow",
@@ -741,44 +725,51 @@ export const processData = (data?: MarineWeatherData, forecastData?: ForecastDat
 
     //     return { score: finalScore, factors, windType: isOnshore ? 'Onshore' : isOffshore ? 'Offshore' : 'Cross-shore' };
     // };
-    // ============================================================
-    // ============================================================
-    // ============================================================
-    // SURF RATING — v4 (viento en km/h)
-    // MAX_RAW = 15
-    // ============================================================
-    // ============================================================
-    // CONFIGURACIÓN DE SPOTS — rango mareal
-    // ============================================================
-    const SPOT_TIDAL_CONFIG: Record<string, { tidalRange: number; tidalMin: number }> = {
-        "Rada Tilly": { tidalRange: 5.2, tidalMin: 0.6 },
-        "Costanera Comodoro": { tidalRange: 3.5, tidalMin: 0.6 },
-        "Km 3": { tidalRange: 4.0, tidalMin: 0.6 },
-        "Restinga Alí": { tidalRange: 3.5, tidalMin: 0.6 },
-        "Caleta Olivia": { tidalRange: 5.0, tidalMin: 0.5 }, // ligeramente distinto por estar más al sur
+
+
+
+    const allTidalValues = data.hourly.sea_level_height_msl ?? [];
+    const dailyMin = Math.min(...allTidalValues);
+    const dailyMax = Math.max(...allTidalValues);
+
+    // 2. Actualizá la firma — ya no necesita spotName ni SPOT_TIDAL_CONFIG
+    const SPOT_TIDAL_CONFIG: Record<string, {
+        rangeScale: number;  // cuánto del rango global aplica a este spot
+        midPoint: number;    // offset del punto medio (0 = igual que el global)
+    }> = {
+        "Rada Tilly": { rangeScale: 1.0, midPoint: 0 },    // referencia, rango completo
+        "Costanera Comodoro": { rangeScale: 0.75, midPoint: 0.05 }, // rango menor, algo más protegida
+        "Km 3": { rangeScale: 0.80, midPoint: 0 },
+        "Restinga Alí": { rangeScale: 0.70, midPoint: 0.05 },
+        "Caleta Olivia": { rangeScale: 1.05, midPoint: -0.05 }, // algo más expuesta al sur
     };
 
     const getTidalPhase = (
         sea_level_height_msl: number,
-        previous_sea_level_height_msl?: number,
-        spotName: string
-    ): { phase: 'low' | 'mid' | 'high'; isRising: boolean; normalized: number } => {
-        const config = SPOT_TIDAL_CONFIG[spotName] ?? { tidalRange: 5.2, tidalMin: 0.6 };
-        // Normalizar: 0 = bajamar, 1 = pleamar
+        previous_sea_level_height_msl: number | undefined,
+        spotName: string,
+
+    ) => {
+        const config = SPOT_TIDAL_CONFIG[spotName] ?? { rangeScale: 0.75, midPoint: 0.05 };
+        // console.log("config", config, spotName)
+        const globalRange = dailyMax - dailyMin;
+        const globalMid = dailyMin + globalRange / 2;
+
+        // Rango ajustado al spot
+        const spotRange = globalRange * config.rangeScale;
+        const spotMin = globalMid + config.midPoint - spotRange / 2;
+
         const normalized = Math.min(1, Math.max(0,
-            (sea_level_height_msl - config.tidalMin) / config.tidalRange
+            (sea_level_height_msl - spotMin) / spotRange
         ));
-        let previous = previous_sea_level_height_msl ? previous_sea_level_height_msl : null;
-        const isRising = previous ? sea_level_height_msl > previous : false;
+
+        const isRising = previous_sea_level_height_msl != null
+            ? sea_level_height_msl > previous_sea_level_height_msl
+            : false;
+
         const phase = normalized < 0.3 ? 'low' : normalized > 0.7 ? 'high' : 'mid';
         return { phase, isRising, normalized };
     };
-
-
-    // ============================================================
-    // SURF RATING — v5 (km/h + marea corregida + período 0)
-    // MAX_RAW = 15
-    // ============================================================
     const getSurfRating = (stats: any, beachOrientation: number, spotName: string) => {
         const {
             swell_wave_height,
@@ -871,11 +862,9 @@ export const processData = (data?: MarineWeatherData, forecastData?: ForecastDat
     };
 
 
-    // ============================================================
-    // SUP RATING — v5 (km/h + marea corregida + período 0)
-    // MAX_RAW = 10
-    // ============================================================
+
     const getSupRating = (stats: any, beachOrientation: number, spotName: string) => {
+
         const {
             windSpeed,
             wind_direction,
@@ -888,84 +877,182 @@ export const processData = (data?: MarineWeatherData, forecastData?: ForecastDat
             wind_gusts,
         } = stats;
 
+        const waveRef = wave_height ?? swell_wave_height ?? 0;
+        const windWaveH = wind_wave_height ?? 0;
+        const windWaveP = wind_wave_period ?? 99;
+
+        const effectiveWind =
+            wind_gusts != null && wind_gusts > 0
+                ? Math.max(windSpeed, wind_gusts * 0.85)
+                : windSpeed;
+
         const diff = Math.abs((wind_direction - beachOrientation + 180 + 360) % 360 - 180);
+
         const isOffshore = diff > 135;
         const isOnshore = diff < 45;
         const isCross = !isOnshore && !isOffshore;
 
-        const effectiveWind = (wind_gusts != null && wind_gusts > 0)
-            ? Math.max(windSpeed, wind_gusts * 0.85)
-            : windSpeed;
-        /* ── HARD STOPS — km/h ───────────────────────────────── */
+        const factors: string[] = [];
+
+        /* ───────────────── HARD STOPS ───────────────── */
+
         if (isOffshore && effectiveWind > 22) {
-            return { score: 0, factors: ["⚠️ PELIGRO: Viento de tierra fuerte"], dangerLevel: 'HIGH', isGlassy: false };
+            return {
+                score: 0,
+                factors: ["Peligro: viento de tierra fuerte"],
+                dangerLevel: "HIGH",
+                isGlassy: false,
+            };
         }
+
         if (effectiveWind > 55) {
-            return { score: 0, factors: ["⚠️ Viento extremo"], dangerLevel: 'HIGH', isGlassy: false };
+            return {
+                score: 0,
+                factors: ["Viento extremo"],
+                dangerLevel: "HIGH",
+                isGlassy: false,
+            };
         }
-        const waveRef = wave_height ?? swell_wave_height ?? 0;
-        const isGlassy = effectiveWind < 15 && waveRef < 0.3;
+
+        /* ───────────────── GLASSY DETECTION ───────────────── */
+
+        const isGlassy = effectiveWind < 15 && waveRef < 0.3 && windWaveH < 0.15;
 
         if (isGlassy) {
-            return { score: 10, factors: ["Espejo"], dangerLevel: 'NONE', isGlassy: true };
+            return {
+                score: 10,
+                factors: ["Espejo"],
+                dangerLevel: "NONE",
+                isGlassy: true,
+            };
         }
 
-        const MAX_RAW = 10;
-        let score = 0;
-        let factors: string[] = [];
+        /* ───────────────── BASE SCORE (VIENTO) ───────────────── */
 
-        /* ── VIENTO (0–4) — km/h ─────────────────────────────── */
-        if (effectiveWind < 15) { score += 4; factors.push("Viento calmo"); }
-        else if (effectiveWind < 22) { score += 3; factors.push("Viento suave"); }
-        else if (effectiveWind < 33) { score += 2; factors.push("Viento moderado"); }
-        else if (effectiveWind < 45) { score += 1; factors.push("Viento fuerte — remar cuesta"); }
-        else { factors.push("Viento muy fuerte"); }
+        let windScore = 0;
 
-        if (wind_gusts != null && wind_gusts - windSpeed > 15) {
-            score -= 1;
-            factors.push("Ráfagas fuertes");
+        if (effectiveWind < 10) windScore = 10;
+        else if (effectiveWind < 15) windScore = 9;
+        else if (effectiveWind < 20) windScore = 7;
+        else if (effectiveWind < 30) windScore = 5;
+        else if (effectiveWind < 40) windScore = 3;
+        else windScore = 1;
+
+        if (effectiveWind < 15) factors.push("Viento calmo");
+        else if (effectiveWind < 25) factors.push("Viento moderado");
+        else factors.push("Viento fuerte");
+
+        /* ───────────────── DIRECCIÓN ───────────────── */
+
+        let directionMultiplier = 1;
+
+        if (isOnshore) {
+            directionMultiplier = 1;
+        }
+        else if (isCross) {
+            directionMultiplier = effectiveWind < 20 ? 0.9 : 0.7;
+            factors.push("Viento lateral");
+        }
+        else if (isOffshore) {
+            directionMultiplier = effectiveWind < 15 ? 0.8 : 0.4;
+            factors.push("Viento de tierra");
         }
 
-        /* ── DIRECCIÓN (0–2) ─────────────────────────────────── */
-        if (!isCross && !isOffshore) { score += 2; }
-        else if (isCross && effectiveWind < 22) { score += 1; factors.push("Viento lateral leve"); }
-        else if (isCross) { factors.push("Viento lateral — desvía el rumbo"); }
+        let baseScore = windScore * directionMultiplier;
 
-        /* ── CHOP (0–2) ──────────────────────────────────────── */
-        const windWaveH = wind_wave_height ?? 0;
-        const windWaveP = wind_wave_period ?? 99;
-        if (windWaveH < 0.15) { score += 2; }
-        else if (windWaveH < 0.3 || windWaveP >= 6) { score += 1; }
-        else if (windWaveH > 0.4 && windWaveP < 5) { score -= 1; factors.push("Mar picado (chop corto)"); }
+        /* ───────────────── PENALTY OLAS ───────────────── */
 
-        /* ── OLEAJE (0–1) ────────────────────────────────────── */
-        if (waveRef < 0.5) { score += 1; }
-        else if (waveRef >= 1.0 && waveRef <= 1.8) { score += 1; factors.push("Olas aprovechables"); }
-        else if (waveRef > 1.8) { score -= 1; factors.push("Olas grandes "); }
+        let wavePenalty = 1;
 
-        /* ── MAREA (0–1) ─────────────────────────────────────── */
-        const tide = getTidalPhase(sea_level_height_msl, previous_sea_level_height_msl, spotName);
-        if (tide.phase === 'mid') { score += 1; }
-        else if (tide.phase === 'low') { factors.push("Marea muy baja"); }
+        if (waveRef < 0.5) wavePenalty = 1;
+        else if (waveRef < 1) {
+            wavePenalty = 0.9;
+            factors.push("Olas pequeñas");
+        }
+        else if (waveRef < 1.5) {
+            wavePenalty = 0.7;
+            factors.push("Olas medianas");
+        }
+        else if (waveRef < 2) {
+            wavePenalty = 0.5;
+            factors.push("Olas grandes");
+        }
+        else {
+            wavePenalty = 0.3;
+            factors.push("Olas muy grandes");
+        }
 
-        const finalScore = Math.round(Math.min(Math.max(0, (score / MAX_RAW) * 10), 10));
+        /* ───────────────── PENALTY CHOP ───────────────── */
+
+        let chopPenalty = 1;
+
+        if (windWaveH > 0.4 && windWaveP < 5) {
+            chopPenalty = 0.6;
+            factors.push("Mar picado (chop corto)");
+        }
+        else if (windWaveH > 0.3) {
+            chopPenalty = 0.8;
+            factors.push("Chop");
+        }
+
+        /* ───────────────── PENALTY RÁFAGAS ───────────────── */
+
+        let gustPenalty = 1;
+
+        if (wind_gusts != null) {
+
+            if (wind_gusts - windSpeed > 20) {
+                gustPenalty = 0.7;
+                factors.push("Ráfagas muy fuertes");
+            }
+            else if (wind_gusts - windSpeed > 10) {
+                gustPenalty = 0.85;
+                factors.push("Ráfagas");
+            }
+
+        }
+
+        /* ───────────────── PENALTY MAREA ───────────────── */
+
+        const tide = getTidalPhase(
+            sea_level_height_msl,
+            previous_sea_level_height_msl,
+            spotName
+        );
+
+        let tidePenalty = 1;
+
+        if (tide.phase === "mid") {
+            factors.push("Marea media");
+        }
+        else if (tide.phase === "low") {
+            tidePenalty = 0.85;
+            factors.push("Marea baja");
+        }
+
+        /* ───────────────── SCORE FINAL ───────────────── */
+
+        let finalScore =
+            baseScore *
+            wavePenalty *
+            chopPenalty *
+            gustPenalty *
+            tidePenalty;
+
+        finalScore = Math.round(Math.max(0, Math.min(finalScore, 10)));
+        console.log(finalScore)
         return {
             score: finalScore,
             factors: [...new Set(factors)],
-            dangerLevel: finalScore <= 2 ? 'MEDIUM' : 'NORMAL',
+            dangerLevel: finalScore <= 2 ? "MEDIUM" : "NORMAL",
             isGlassy,
         };
+
     };
 
-
-    // ============================================================
-    // SWIMMING RATING — v5 (km/h + marea corregida + período 0)
-    // MAX_RAW = 12
-    // ============================================================
     const getSwimmingRating = (stats: any, beachOrientation: number, spotName: string) => {
         const {
-            sea_temperature,
-            air_temperature,
+
             windSpeed,
             wind_direction,
             wave_height,
@@ -980,7 +1067,7 @@ export const processData = (data?: MarineWeatherData, forecastData?: ForecastDat
         } = stats;
 
         const MAX_RAW = 12;
-        let score = 0;
+        let score = 3;
         let factors: string[] = [];
 
         const windDiff = Math.abs((wind_direction - beachOrientation + 180 + 360) % 360 - 180);
@@ -994,22 +1081,11 @@ export const processData = (data?: MarineWeatherData, forecastData?: ForecastDat
 
         const totalWave = wave_height ?? Math.max(swell_wave_height ?? 0, wind_wave_height ?? 0);
 
-        /* ── 1. TEMPERATURA AGUA (0–3) ───────────────────────── */
-        // if (sea_temperature >= 22) { score += 3; factors.push("Agua cálida — ideal"); }
-        // else if (sea_temperature >= 18) { score += 2; factors.push("Temperatura del agua ideal"); }
-        // else if (sea_temperature >= 15) { score += 1; factors.push("Agua fresca — tolerable"); }
-        // else if (sea_temperature >= 12) { score += 0; factors.push("Agua fría — neoprene recomendado"); }
-        // else { score -= 2; factors.push("Agua muy fría — riesgo de hipotermia"); }
-
-        // /* ── 2. WIND CHILL (0–1) — km/h ─────────────────────── */
-        // const windChill = (air_temperature ?? 20) - (wind_speed * 0.22);
-        // if (windChill >= 18) { score += 1; factors.push("Calor exterior agradable"); }
-        // else if (windChill < 10) { score -= 1; factors.push("Wind chill — frío al salir"); }
-
         /* ── 3. OLEAJE (0–3) ─────────────────────────────────── */
         if (totalWave < 0.2) { score += 3; factors.push("Mar planchado"); }
         else if (totalWave < 0.5) { score += 2; }
-        else if (totalWave < 0.8) { score += 1; }
+        else if (totalWave < 0.9) { score += 1; }
+        else if (totalWave < 1.0) { score -= 0.5; factors.push("Oleaje moderado"); }
         else if (totalWave < 1.2) { score -= 1; factors.push("Oleaje moderado"); }
         else if (totalWave < 1.5) { score -= 2; factors.push("Oleaje alto"); }
         else { score -= 3; factors.push("Oleaje peligroso"); }
@@ -1017,7 +1093,7 @@ export const processData = (data?: MarineWeatherData, forecastData?: ForecastDat
         /* ── 4. VIENTO / CHOP (0–2) — km/h ──────────────────── */
         if (windSpeed < 15) { score += 2; }
         else if (windSpeed < 28 && !isOnshore) { score += 1; }
-        else if (isOnshore && windSpeed >= 28) { score -= 2; factors.push("Corderitos"); factors.push("Mar agitado"); }
+        else if (isOnshore && windSpeed >= 28) { score -= 1; factors.push("Corderitos"); factors.push("Mar agitado"); }
         else if (isOffshore && windSpeed < 28) { score += 1; factors.push("Viento de tierra"); factors.push("Mar planchado"); }
 
         /* ── 5. CORRIENTES — km/h ────────────────────────────── */
@@ -1037,7 +1113,7 @@ export const processData = (data?: MarineWeatherData, forecastData?: ForecastDat
         /* ── 6. MAREA (0–2) ──────────────────────────────────── */
         if (tide.phase === 'mid') { score += 2; factors.push("Marea cómoda"); }
         else if (tide.phase === 'high') { score += 1; }
-        else if (tide.phase === 'low') { factors.push("Marea muy baja"); }
+        else if (tide.phase === 'low') { factors.push("Marea baja"); }
 
         /* ── 7. LLUVIA / UV (0–1) ────────────────────────────── */
         if (precipitation != null && precipitation > 2) {
@@ -1062,6 +1138,10 @@ export const processData = (data?: MarineWeatherData, forecastData?: ForecastDat
         const todayStats = searchTodaysStats();
         if (!todayStats) return null;
         // console.log(data)
+        // Temporal, tiralo después de calibrar
+        const allTidalValues = data.hourly.sea_level_height_msl ?? [];
+        const dailyMin = Math.min(...allTidalValues);
+        const dailyMax = Math.max(...allTidalValues);
         const processedData = {
             current: {
                 waveHeight: todayStats.wave_height ?? undefined,
@@ -1085,6 +1165,7 @@ export const processData = (data?: MarineWeatherData, forecastData?: ForecastDat
                 weatherCode: undefined,
 
                 seaLevelHeightMsl: todayStats.sea_level_height_msl ?? undefined,
+                seaLevelHeightMslPrevious: todayStats.previous_sea_level_height_msl ?? undefined,
             },
             activities: {
                 surf: getRating(todayStats, "surf", beachOrientation ? beachOrientation : 90),
@@ -1097,8 +1178,9 @@ export const processData = (data?: MarineWeatherData, forecastData?: ForecastDat
                 sup: getBestWindow(data, "sup", beachOrientation ? beachOrientation : 90),
                 swimming: getBestWindow(data, "swimming", beachOrientation ? beachOrientation : 90)
             },
-            seaState: analyzeSeaState(todayStats)
+            seaState: analyzeSeaState(todayStats, beachName ? "Comodoro Rivadavia" : "Comodoro Rivadavia")
         }
+        // console.log(beachName)
         return processedData;
     }, [data, forecastData])
 }

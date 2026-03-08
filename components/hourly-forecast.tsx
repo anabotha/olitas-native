@@ -1,7 +1,7 @@
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import type { ForecastData, HourlyForecast as HourlyForecastType } from "@/lib/types";
 import { Clock } from "lucide-react";
-import { useProcessForecast, ProcessedForecast } from "@/hooks/use-proccessForecast";
+import { useProcessForecast } from "@/hooks/use-proccessForecast";
 
 
 

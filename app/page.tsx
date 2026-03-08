@@ -23,7 +23,7 @@ const fetcher = (url: string) => fetch(url).then((res) => res.json());
 
 export default function Home() {
   const [selectedSpot, setSelectedSpot] = useState<SpotLocation>(
-    DEFAULT_SPOTS[1]
+    DEFAULT_SPOTS[0]
   );
   // const [selectedActivity, setSelectedActivity] = useState<string>("surf");
 
@@ -70,18 +70,21 @@ export default function Home() {
 
         {data && !error && (
           <div className="flex flex-col gap-8">
-            {/* Activity cards */}
-            <ActivityCheck
+            <CollapsibleSection title="Actividad" defaultOpen={true}>
 
-              selectedSpot={selectedSpot}
-              data={data}
-              forecastData={forecastData}
-            />
+              {/* Activity cards */}
+              <ActivityCheck
+
+                selectedSpot={selectedSpot}
+                data={data}
+                forecastData={forecastData}
+              />
+            </CollapsibleSection>
 
             {/* Current conditions */}
             <section>
               <CollapsibleSection title="Ahora" defaultOpen={true}>
-                <ConditionsPanel forecast={forecastData} conditions={data} />
+                <ConditionsPanel forecast={forecastData} conditions={data} selectedSpot={selectedSpot} />
               </CollapsibleSection>
             </section>
             <section>

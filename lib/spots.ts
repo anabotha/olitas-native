@@ -2,8 +2,8 @@ import type { SpotLocation } from "./types";
 
 export const DEFAULT_SPOTS: SpotLocation[] = [
   // --- Zona Golfo San Jorge (Nuestra zona) ---
-  { name: "Rada Tilly", latitude: -45.92, longitude: -67.55, orientation: 90, country: "Argentina" },
   { name: "Costanera Comodoro", latitude: -45.86, longitude: -67.47, orientation: 90, country: "Argentina" },
+  { name: "Rada Tilly", latitude: -45.92, longitude: -67.55, orientation: 90, country: "Argentina" },
   { name: "Km 3", latitude: -45.83, longitude: -67.46, orientation: 100, country: "Argentina" },
   { name: "Restinga Alí", latitude: -45.81, longitude: -67.44, orientation: 90, country: "Argentina" },
   { name: "Caleta Olivia", latitude: -46.43, longitude: -67.52, orientation: 90, country: "Argentina" },

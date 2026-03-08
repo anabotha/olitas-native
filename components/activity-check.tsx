@@ -19,13 +19,13 @@ interface ActivityCheckProps {
 const ActivityCheck = (
   { data, selectedSpot, forecastData }: ActivityCheckProps
 ): JSX.Element => {
-  const processedData = processData(data, forecastData, selectedSpot?.orientation);
+  const processedData = processData(data, forecastData, selectedSpot?.orientation, selectedSpot?.name);
   if (!processedData) return <div>Hubo un error, proba mas tarde!</div>;
   return (
     <section>
-      <h3 className="mb-4 text-xs font-semibold uppercase tracking-widest text-muted-foreground">
+      {/* <h3 className="mb-4 text-xs font-semibold uppercase tracking-widest text-muted-foreground">
         Actividad
-      </h3>
+      </h3> */}
       <div className="col-span-3">
 
         {processedData.safety?.color === "red" || processedData.safety?.color === "yellow" && (
@@ -43,9 +43,8 @@ const ActivityCheck = (
         )}
       </div>
       <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
-
         <ActivityCard
-          activity="Surfing"
+          activity="Surf"
           icon={<HugeiconsIcon icon={SurfboardIcon} />}
           rating={processedData.activities.surf}
 
