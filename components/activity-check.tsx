@@ -8,18 +8,21 @@ import { HugeiconsIcon } from '@hugeicons/react'
 import { SwimmingIcon } from '@hugeicons/core-free-icons'
 import { SurfboardIcon } from '@hugeicons/core-free-icons'
 import { KayakIcon } from '@hugeicons/core-free-icons'
+import { useRatings } from '@/hooks/use-ratings'
 
 interface ActivityCheckProps {
 
   data: MarineWeatherData | undefined;
   selectedSpot: SpotLocation | undefined;
   forecastData: ForecastData | undefined;
+  selectedHour: Date;
 }
 
 const ActivityCheck = (
-  { data, selectedSpot, forecastData }: ActivityCheckProps
+  { data, selectedSpot, forecastData, selectedHour }: ActivityCheckProps
 ): JSX.Element => {
   const processedData = processData(data, forecastData, selectedSpot?.orientation, selectedSpot?.name);
+  const actividad = useRatings(processedData, selectedSpot?.name ?? "", selectedSpot?.orientation ?? 90, data, forecastData, selectedHour);
   if (!processedData) return <div>Hubo un error, proba mas tarde!</div>;
   return (
     <section>
@@ -46,18 +49,18 @@ const ActivityCheck = (
         <ActivityCard
           activity="Surf"
           icon={<HugeiconsIcon icon={SurfboardIcon} />}
-          rating={processedData.activities.surf}
+          rating={actividad.activities.surf}
 
         />
         <ActivityCard
           activity="SUP"
           icon={<HugeiconsIcon icon={KayakIcon} />}
-          rating={processedData.activities.sup}
+          rating={actividad.activities.sup}
         />
         <ActivityCard
           activity="Nado en aguas abiertas"
           icon={<HugeiconsIcon icon={SwimmingIcon} />}
-          rating={processedData.activities.swimming}
+          rating={actividad.activities.swimming}
         />
       </div>
     </section>

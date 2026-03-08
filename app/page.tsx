@@ -19,17 +19,22 @@ import { CurrentConditions } from "@/components/current-conditions";
 import { SeaState } from "@/components/sea-state";
 import { CollapsibleSection } from "@/components/collapsible-section";
 import { processData } from "@/hooks/use-processData";
+import { HourSelector } from "@/components/hour-selector";
 const fetcher = (url: string) => fetch(url).then((res) => res.json());
 
 export default function Home() {
   const [selectedSpot, setSelectedSpot] = useState<SpotLocation>(
     DEFAULT_SPOTS[0]
   );
+  const [selectedHour, setSelectedHour] = useState<Date>(() => {
+    const now = new Date();
+    now.setMinutes(0, 0, 0);
+    return now;
+  });
   // const [selectedActivity, setSelectedActivity] = useState<string>("surf");
 
   const { data, error, isLoading } = useMarineWeather(selectedSpot)
   const { forecastData, forecastError, forecastIsLoading } = useForecast(selectedSpot)
-
 
   return (
     <div className="min-h-screen bg-background">
@@ -37,19 +42,19 @@ export default function Home() {
 
       <main className="mx-auto max-w-5xl px-6 pb-16 md:px-10">
         {/* Hero section */}
-        <section className="mb-8 flex flex-col gap-6 md:flex-row md:items-end md:justify-between">
-          <div className="flex flex-col gap-2">
-            <h2 className="text-balance text-3xl font-bold tracking-tight text-foreground md:text-4xl">
-              Como esta hoy?
+        <section className="mb-8 gap-4">
+          <div className="flex flex-col gap-1">
+            <h2 className="flex flex-wrap items-center gap-x-2 text-3xl font-bold tracking-tight text-foreground md:text-4xl">
+              ¿Cómo está{" "}
+              <HourSelector selectedHour={selectedHour} onSelectHour={setSelectedHour} variant="inline" />
+              {" "}en{" "}
+              <SpotSelector selectedSpot={selectedSpot} onSelectSpot={setSelectedSpot} variant="inline" />
+              {"?"}
             </h2>
             <p className="text-pretty text-base text-muted-foreground">
-              Oleaje, viento y temperatura para tu proxima sesion.
+              Oleaje, viento y temperatura para tu próxima sesión.
             </p>
           </div>
-          <SpotSelector
-            selectedSpot={selectedSpot}
-            onSelectSpot={setSelectedSpot}
-          />
         </section>
 
         {isLoading && <LoadingState />}
@@ -78,6 +83,7 @@ export default function Home() {
                 selectedSpot={selectedSpot}
                 data={data}
                 forecastData={forecastData}
+                selectedHour={selectedHour}
               />
             </CollapsibleSection>
 

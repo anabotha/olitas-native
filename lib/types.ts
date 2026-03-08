@@ -62,39 +62,34 @@ export interface CombinedConditions {
 
     seaLevelHeightMsl?: number;
   };
-  activities: {
-    surf: ActivityRating;
-    sup: ActivityRating;
-    swimming: ActivityRating;
-  };
+
   beachOrientation?: number;
-  forecastData: ForecastData | undefined;
   safety: {
     color: string;
     label: string;
     message: string;
   };
-  bestWindows: {
-    surf: {
-      time: string;
-      score: number;
-    };
-    sup: {
-      time: string;
-      score: number;
-    };
-    swimming: {
-      time: string;
-      score: number;
-    };
-  };
   seaState: {
     condition: string;
     tideInfo: string;
+    isRising?: boolean;
   };
 
 }
 
+
+export interface activities {
+  activities: {
+    surf: ActivityRating;
+    sup: ActivityRating;
+    swimming: ActivityRating;
+  };
+  bestWindows?: {
+    surf: { time: string; score: number };
+    sup: { time: string; score: number };
+    swimming: { time: string; score: number };
+  };
+}
 export interface HourlyForecast {
   time: string;
   waveHeight: number;

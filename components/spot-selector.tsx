@@ -9,6 +9,7 @@ import { cn } from "@/lib/utils";
 interface SpotSelectorProps {
   selectedSpot: SpotLocation;
   onSelectSpot: (spot: SpotLocation) => void;
+  variant?: string;
 }
 
 export function SpotSelector({ selectedSpot, onSelectSpot }: SpotSelectorProps) {

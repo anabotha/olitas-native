@@ -1,6 +1,7 @@
 // import { Card } from "@hugeicons/core-free-icons";
 import { Card, CardHeader, CardTitle } from "./ui/card";
 import { processData } from "@/hooks/use-processData";
+import { useRatings } from "@/hooks/use-ratings";
 import { ForecastData, MarineWeatherData, SpotLocation } from "@/lib/types";
 import { HugeiconsIcon } from "@hugeicons/react";
 import { KayakIcon, SwimmingIcon, SurfboardIcon } from "@hugeicons/core-free-icons";
@@ -15,8 +16,13 @@ export const SeaState = ({ data, forecast, beach }: SeaStateProps) => {
     const processedData = processData(data, forecast, beach.orientation, beach.name);
     if (!processedData) return null;
 
-    const { seaState, bestWindows } = processedData;
+    const ratings = useRatings(processedData, beach.name, beach.orientation ?? 90, data, forecast);
+    const bestWindows = ratings.bestWindows;
+
+    const { seaState } = processedData;
     const now = new Date().getHours();
+
+    if (!bestWindows) return null;
 
     // 1. IMPORTANTE: Guardamos la referencia del componente del icono, no el JSX
     const activities = [

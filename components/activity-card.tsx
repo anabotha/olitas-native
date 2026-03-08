@@ -113,9 +113,7 @@ export function ActivityCard({
                 )}
               />
             ))}
-            <span className="ml-1 text-[11px] text-muted-foreground">
-              {filledSegments}/{scoreSegments}
-            </span>
+
           </div>
         </div>
 
@@ -139,7 +137,7 @@ export function ActivityCard({
           )}
         >
           <div className="flex items-center justify-center gap-2 ">
-            <span className={cn("text-sm font-bold rounded-b-xl", getScoreTextColor(rating.score))}>
+            <span className={cn("flex text-justify  text-sm font-bold rounded-b-xl", getScoreTextColor(rating.score))}>
               {label}
             </span>
           </div>
