@@ -64,7 +64,7 @@ export default function Home() {
             <AlertCircle className="h-5 w-5 text-destructive" />
             <div>
               <p className="text-sm font-medium text-foreground">
-                No se pudieron cargar los datos :${"("}
+                No se pudieron cargar los datos :{"("}
               </p>
               <p className="text-xs text-muted-foreground">
                 Intenta de nuevo en un momento. El mar no se va a ningun lado.

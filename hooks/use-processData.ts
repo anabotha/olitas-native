@@ -79,9 +79,7 @@ export const getTidalPhase = (
     const normalized = Math.min(1, Math.max(0,
         (sea_level_height_msl - spotMin) / spotRange
     ));
-    console.log(normalized)
     const phase = normalized <= 0.55 ? 'low' : normalized > 0.8 ? 'high' : 'mid';
-    console.log(phase);
     return { phase, isRising, normalized };
 };
 
@@ -122,7 +120,6 @@ const getSafetyStatus = (
 
     const { wind_speed, wind_direction, sea_level_height_msl } = snapshot;
 
-    console.log("Sea level high", sea_level_height_msl, wind_speed);
     if (!isValid(wind_speed)) {
         return {
             color: "green",
@@ -430,7 +427,6 @@ export const processData = (data?: MarineWeatherData, forecastData?: ForecastDat
         ========================== */
         const allTidal = marine.hourly.sea_level_height_msl ?? [];
         const tidal = getTidalPhase(Number(sea_level_height_msl), Number(previous_sea_level_height_msl), spotName, allTidal);
-        console.log(tidal)
         if (tidal.phase === "high") {
             return {
                 color: "yellow",
@@ -499,7 +495,6 @@ export const processData = (data?: MarineWeatherData, forecastData?: ForecastDat
 
             seaState: analyzeSeaState(todayStats, beachName ? "Comodoro Rivadavia" : "Comodoro Rivadavia")
         }
-        console.log("todayStats", todayStats.previous_sea_level_height_msl);
 
         return processedData;
     }, [data, forecastData])
