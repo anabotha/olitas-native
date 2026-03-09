@@ -22,7 +22,7 @@ const ActivityCheck = (
   { data, selectedSpot, forecastData, selectedHour }: ActivityCheckProps
 ): JSX.Element => {
   const processedData = processData(data, forecastData, selectedSpot?.orientation, selectedSpot?.name);
-  const actividad = useRatings(processedData, selectedSpot?.name ?? "", selectedSpot?.orientation ?? 90, data, forecastData, selectedHour);
+  const actividad = useRatings(processedData, selectedSpot?.name ?? "", selectedSpot?.orientation ?? 90, data, forecastData, selectedHour, selectedSpot);
   if (!processedData) return <div>Hubo un error, proba mas tarde!</div>;
   return (
     <section>

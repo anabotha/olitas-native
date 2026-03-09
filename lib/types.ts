@@ -107,11 +107,23 @@ export interface ActivityRating {
 }
 
 export interface SpotLocation {
-  name: string;
-  latitude: number;
-  longitude: number;
-  orientation?: number;
-  country?: string;
+  name: string
+  latitude: number
+  longitude: number
+  orientation: number
+  country: string
+
+  exposed: boolean
+
+  swellWindow: {
+    min: number
+    max: number
+  }
+
+  windShelter?: {
+    min: number
+    max: number
+  }
 }
 export type ActivityType = "surf" | "sup" | "swimming";
 

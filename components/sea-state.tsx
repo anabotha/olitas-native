@@ -16,7 +16,7 @@ export const SeaState = ({ data, forecast, beach }: SeaStateProps) => {
     const processedData = processData(data, forecast, beach.orientation, beach.name);
     if (!processedData) return null;
 
-    const ratings = useRatings(processedData, beach.name, beach.orientation ?? 90, data, forecast);
+    const ratings = useRatings(processedData, beach.name, beach.orientation ?? 90, data, forecast, new Date(), beach);
     const bestWindows = ratings.bestWindows;
 
     const { seaState } = processedData;
