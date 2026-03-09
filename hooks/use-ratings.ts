@@ -16,7 +16,6 @@ export const useRatings = (
     selectedHour?: Date,
     spot?: SpotLocation
 ): activities => {
-    console.log(processData)
     /** Busca el índice en data.hourly.time más cercano a `target` */
     const findHourIndex = (timeArray: Date[], target: Date): number => {
         const targetMs = target.getTime();
@@ -287,7 +286,6 @@ export const useRatings = (
         spotName: string,
         spot: SpotLocation
     ) => {
-        console.log(spot)
         const {
             swellHeight,
             swellPeriod,
