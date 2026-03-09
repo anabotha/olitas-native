@@ -42,16 +42,6 @@ export const DEFAULT_SPOTS: SpotLocation[] = [
     country: "Argentina",
     exposed: true,
     swellWindow: { min: 40, max: 130 }
-  },
-
-  {
-    name: "Caleta Olivia",
-    latitude: -46.43,
-    longitude: -67.52,
-    orientation: 90,
-    country: "Argentina",
-    exposed: true,
-    swellWindow: { min: 30, max: 140 }
   }
   , {
     name: "Caleta Córdova",
