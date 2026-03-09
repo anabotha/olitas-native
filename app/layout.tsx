@@ -40,8 +40,11 @@ export default function RootLayout({
   return (
     <html lang="en">
       <body className={`${dmSans.variable} ${geistMono.variable} font-sans antialiased`}>
-        {children}
-        <Analytics />
+        <main>
+
+          {children}
+          <Analytics />
+        </main>
       </body>
     </html>
   )
