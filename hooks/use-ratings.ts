@@ -162,11 +162,14 @@ export const useRatings = (
             description: "Condiciones perfectas para remar",
         };
 
-        if (score <= 2 && hasLandWind) return {
+        if (score <= 2 && hasLandWind && !hasStrongWind) return {
+            label: "Estar atento",
+            description: "Viento de tierra — te aleja de la costa",
+        };
+        if (score <= 2 && hasLandWind && hasStrongWind) return {
             label: "Peligroso",
             description: "Viento de tierra — te aleja de la costa",
         };
-
         if (score <= 2 && hasBigWaves) return {
             label: "Exigente",
             description: "Olas grandes — solo para expertos",
