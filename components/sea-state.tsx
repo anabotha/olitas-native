@@ -26,8 +26,10 @@ export const SeaState = ({ data, forecast, beach }: SeaStateProps) => {
 
     // 1. IMPORTANTE: Guardamos la referencia del componente del icono, no el JSX
     const activities = [
-        { label: "Surf", data: bestWindows.surf, icon: SurfboardIcon },
+        { label: "Surf ", data: bestWindows.surf, icon: SurfboardIcon },
         { label: "SUP", data: bestWindows.sup, icon: KayakIcon },
+        { label: "SUP", data: bestWindows.sup, icon: KayakIcon },
+
         { label: "Natación", data: bestWindows.swimming, icon: SwimmingIcon },
     ];
     // 2. Filtramos ANTES de renderizar para evitar arrays con 'undefined'

@@ -248,7 +248,7 @@ export const processData = (data?: MarineWeatherData, forecastData?: ForecastDat
         const hourly = data.hourly.time.findIndex((time) => getTime(time) === now)
 
         if (index === -1) return null
-        // console.log(forecastData)
+        // console.log("forecastData", forecastData)
         const processData = {
             wind_wave_height_max: data.daily.wind_wave_height_max?.[index] ?? null,
             wind_wave_direction_dominant:
@@ -475,13 +475,8 @@ export const processData = (data?: MarineWeatherData, forecastData?: ForecastDat
                 swellDirection: todayStats.swell_wave_direction ?? undefined,
                 swellPeriod: todayStats.swell_wave_period ?? undefined,
 
-                windDirection:
-                    todayStats.wind_wave_direction ??
-                    todayStats.wind_wave_direction_dominant ??
-                    undefined,
-
-                // No disponibles en marine actual
-                windSpeed: undefined,
+                windDirection: todayStats.windDirection ?? undefined,
+                windSpeed: todayStats.windSpeed ?? undefined,
                 windGusts: undefined,
                 seaTemperature: undefined,
                 airTemperature: undefined,
