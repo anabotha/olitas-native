@@ -8,28 +8,37 @@ import { SpotSelector } from "@/components/spot-selector";
 import { LoadingState } from "@/components/loading-state";
 import { DEFAULT_SPOTS } from "@/lib/spots";
 import type { SpotLocation } from "@/lib/types";
-import { AlertCircle } from "lucide-react";
+import { AlertCircle, Info } from "lucide-react";
 import { useMarineWeather } from "@/hooks/use-marineWeather";
 import ActivityCheck from "@/components/activity-check";
 import { useForecast } from "@/hooks/use-forecast";
 import { SeaState } from "@/components/sea-state";
 import { CollapsibleSection } from "@/components/collapsible-section";
 import { HourSelector } from "@/components/hour-selector";
-import { Info } from 'lucide-react'; // O la librería que uses
+import "driver.js/dist/driver.css";
 
 import { driver } from "driver.js";
-import "driver.js/dist/driver.css";
 
 export default function Home() {
   const [selectedSpot, setSelectedSpot] = useState<SpotLocation>(
     DEFAULT_SPOTS[0]
   );
+
   const [selectedHour, setSelectedHour] = useState<Date>(() => {
     const now = new Date();
     now.setMinutes(0, 0, 0);
     return now;
   });
+  const [showGuideOnLoad, setShowGuideOnLoad] = useState(false);
   // const [selectedActivity, setSelectedActivity] = useState<string>("surf");
+
+  useEffect(() => {
+    const hasVisited = localStorage.getItem('olitas_guide_viewed');
+    if (!hasVisited) {
+      setShowGuideOnLoad(true);
+      localStorage.setItem('olitas_guide_viewed', 'true');
+    }
+  }, []);
 
   const { data, error, isLoading } = useMarineWeather(selectedSpot)
   const { forecastData, forecastError, forecastIsLoading } = useForecast(selectedSpot)
@@ -103,7 +112,9 @@ export default function Home() {
 
         <button
           onClick={() => driverObj.drive()}
-          className="absolute top-4 right-4 text-gray-400 hover:text-blue-600 transition-colors"
+          className={`absolute top-4 right-4 text-gray-400 hover:text-blue-600 transition-colors p-2 rounded-full ${
+            showGuideOnLoad ? 'ring-2 ring-blue-400 animate-pulse' : ''
+          }`}
         >
           <Info size={24} />
         </button>

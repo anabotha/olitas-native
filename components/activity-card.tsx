@@ -132,12 +132,12 @@ export function ActivityCard({
         )}
         <div
           className={cn(
-            "flex items-center justify-between px-4 py-3 mt-auto",
+            "flex items-center justify-between px-4 py-3 mt-auto rounded-b-lg",
             getScoreBg(rating.score)
           )}
         >
           <div className="flex items-center justify-center gap-2 ">
-            <span className={cn("flex text-justify  text-sm font-bold rounded-b-xl", getScoreTextColor(rating.score))}>
+            <span className={cn("flex text-justify  text-sm font-bold", getScoreTextColor(rating.score))}>
               {label}
             </span>
           </div>
