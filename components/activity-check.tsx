@@ -22,8 +22,8 @@ const ActivityCheck = (
   { data, selectedSpot, forecastData, selectedHour }: ActivityCheckProps
 ): JSX.Element => {
   const processedData = processData(data, forecastData, selectedSpot?.orientation, selectedSpot?.name);
-  const actividad = useRatings(processedData, selectedSpot?.name ?? "", selectedSpot?.orientation ?? 90, data, forecastData, selectedHour, selectedSpot);
-  if (!processedData) return <div>Hubo un error, proba mas tarde!</div>;
+  if (!processedData || !selectedSpot) return <div>Hubo un error, proba mas tarde!</div>;
+  const actividad = useRatings(processedData, selectedSpot?.name ?? "", selectedSpot?.orientation ?? 90, selectedSpot, data, forecastData, selectedHour);
   return (
     <section>
       {/* <h3 className="mb-4 text-xs font-semibold uppercase tracking-widest text-muted-foreground">

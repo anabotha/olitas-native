@@ -4,23 +4,19 @@ import { ConditionsPanel } from './conditions-panel'
 import { HourlyForecast } from './hourly-forecast'
 import { ForecastData } from '@/lib/types'
 
-export const CurrentConditions = (
+export const CurrentConditions = ({
+    forecast
+}: {
     forecast: ForecastData
-) => {
+}) => {
     return (
         <>
-            {/* <section>
-                <h3 className="mb-4 text-xs font-semibold uppercase tracking-widest text-muted-foreground">
-                    Condiciones actuales
-                </h3>
-                <ConditionsPanel conditions={data} />
-            </section> */}
 
             <section>
                 <h3 className="mb-4 text-xs font-semibold uppercase tracking-widest text-muted-foreground">
                     Pronostico
                 </h3>
-                <HourlyForecast {...forecast} />
+                <HourlyForecast forecast={forecast} />
             </section>
         </>
     )

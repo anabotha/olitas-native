@@ -12,9 +12,9 @@ function directionInWindow(dir: number, min: number, max: number) {
 export const useRatings = (
     processData: CombinedConditions | null,
     beachName: string, beachOrientation: number,
+    spot: SpotLocation,
     data?: MarineWeatherData, forecastData?: ForecastData,
     selectedHour?: Date,
-    spot?: SpotLocation
 ): activities => {
     /** Busca el índice en data.hourly.time más cercano a `target` */
     const findHourIndex = (timeArray: Date[], target: Date): number => {
@@ -62,7 +62,7 @@ export const useRatings = (
         beachOrientation: number,
         spotName: string,
         spot: SpotLocation
-    ): ActivityRating | null => {
+    ): ActivityRating => {
 
         switch (activity) {
             case "surf": {
@@ -76,21 +76,21 @@ export const useRatings = (
             }
 
             case "swimming": {
-                const { score, factors } = getSwimmingRating(stats, beachOrientation, spotName);
+                const { score, factors } = getSwimmingRating(stats, spot);
                 return { ...getLabelSwimming(score, factors), factors, score };
             }
-            default: {
-                return null;
-            }
+
         }
     };
 
 
-    const getLabel = (score: number): Partial<ActivityRating> => {
+    const getLabel = (score: number): ActivityRating => {
         if (score <= 1) {
             return {
                 label: "Malo",
                 description: "No se dan las condiciones",
+                score,
+                factors: [],
             };
         }
 
@@ -98,6 +98,8 @@ export const useRatings = (
             return {
                 label: "Jodido",
                 description: "Se puede, pero no destaca",
+                score,
+                factors: [],
             };
         }
 
@@ -105,6 +107,8 @@ export const useRatings = (
             return {
                 label: "Bien",
                 description: "Condiciones bastante decentes",
+                score,
+                factors: [],
             };
         }
 
@@ -112,17 +116,21 @@ export const useRatings = (
             return {
                 label: "Muy bueno",
                 description: "Agarra el traje",
+                score,
+                factors: [],
             };
         }
 
         return {
             label: "Excelente",
             description: "Día ideal",
+            score,
+            factors: [],
         };
     };
     const angleDiff = (a: number, b: number) =>
         Math.abs((a - b + 540) % 360 - 180)
-    const getLabelSurf = (score: number, factors: string[]): Partial<ActivityRating> => {
+    const getLabelSurf = (score: number, factors: string[]): { label: string; description: string } => {
 
         // Casos especiales — condiciones contradictorias
         const hasWaves = factors.some(f => f.includes("Olas") || f.includes("potente") || f.includes("grande"));
@@ -153,7 +161,7 @@ export const useRatings = (
         return { label: "Excelente", description: "Día ideal" };
     };
 
-    const getLabelSup = (score: number, factors: string[]): Partial<ActivityRating> => {
+    const getLabelSup = (score: number, factors: string[]): { label: string; description: string } => {
 
         const isDangerous = factors.some(f => f.includes("Peligro") || f.includes("extremo"));
         const isGlassy = factors.some(f => f.includes("Espejo"));
@@ -215,7 +223,7 @@ export const useRatings = (
         };
     };
 
-    const getLabelSwimming = (score: number, factors: string[]): Partial<ActivityRating> => {
+    const getLabelSwimming = (score: number, factors: string[]): { label: string; description: string } => {
 
         const isDangerous = factors.some(f => f.includes("⚠️") || f.includes("peligroso"));
         const hasRipCurrent = factors.some(f => f.includes("resaca"));
@@ -584,7 +592,7 @@ export const useRatings = (
             factors.push("Spot protegido del viento")
         }
 
-        const diff = angleDiff(windDirection, spot.orientation)
+        const diff = angleDiff(windDirection, spot.orientation ? spot.orientation : 90)
 
         const isOffshore = diff > 135
         const isOnshore = diff < 45
@@ -755,11 +763,11 @@ export const useRatings = (
 
         /* DIRECCIONES */
 
-        const windDiff = angleDiff(windDirection, spot.orientation)
+        const windDiff = angleDiff(windDirection, spot.orientation ? spot.orientation : 90)
 
         const swellDiff =
             swellDirection != null
-                ? angleDiff(swellDirection, spot.orientation)
+                ? angleDiff(swellDirection, spot.orientation ? spot.orientation : 90)
                 : null
 
         const isOnshore = windDiff < 45
@@ -910,7 +918,7 @@ export const useRatings = (
         }
     }
     const getBestWindow = (data: any, activity: ActivityType, beachOrientation?: number) => {
-        const nowIndex = data.hourly.time.findIndex(t => new Date(t) >= new Date());
+        const nowIndex = data.hourly.time.findIndex((t: any) => new Date(t) >= new Date());
         let bestHour = null;
         let maxScore = -1;
         // Recorremos las próximas 24 horas
@@ -928,9 +936,9 @@ export const useRatings = (
                 seaLevelHeightMslPrevious: data.hourly.sea_level_height_msl[i - 1] || 0,
             };
 
-            const { score } = activity === "surf" ? getSurfRating(hourlyStats, beachOrientation ? beachOrientation : 90, beachName) :
-                activity === "sup" ? getSupRating(hourlyStats, beachOrientation ? beachOrientation : 90, beachName) :
-                    getSwimmingRating(hourlyStats, beachOrientation ? beachOrientation : 90, beachName);
+            const { score } = activity === "surf" ? getSurfRating(hourlyStats, beachOrientation ? beachOrientation : 90, beachName, spot) :
+                activity === "sup" ? getSupRating(hourlyStats, spot) :
+                    getSwimmingRating(hourlyStats, spot);
 
             if (score > maxScore) {
                 maxScore = score;

@@ -4,39 +4,44 @@ import { Clock } from "lucide-react";
 import { useProcessForecast } from "@/hooks/use-proccessForecast";
 
 
+import { HourlySummary } from "@/hooks/use-proccessForecast";
 
 interface HourlyForecastProps {
   forecast: ForecastData | undefined;
+
 }
 
 export function HourlyForecast({ forecast }: HourlyForecastProps) {
   if (!forecast?.hourly) return null;
-  const { hoy, mañana, semana } = useProcessForecast(forecast);
 
+  const processed = useProcessForecast(forecast);
+  if (!processed) return null;
+
+  const { hoy, mañana, semana } = processed;
   const degToCompass = (deg: number) => {
     const directions = ["N", "NE", "E", "SE", "S", "SO", "O", "NO"];
     const index = Math.round(deg / 45) % 8;
     return directions[index];
   };
 
-  const ordenarHora = (hoy: HourlyForecastType) => {
+  const ordenarHora = (hoy: HourlySummary[]) => {
     const ahora = new Date().getHours();
     const ordenado = hoy
-      .sort((a, b) => {
+      .sort((a: any, b: any) => {
         const ha = parseInt(a.hora.split(":")[0], 10);
         const hb = parseInt(b.hora.split(":")[0], 10);
         return ha - hb;
       })
-      .filter(hour => {
+      .filter((hour: any) => {
         const hNum = parseInt(hour.hora.split(":")[0], 10);
         return hNum >= ahora;
       });
     return ordenado;
   };
-  const ordenarMañana = (hoy: HourlyForecastType) => {
+  const ordenarMañana = (hoy: HourlySummary[]) => {
     const ahora = new Date().getHours();
     const ordenado = hoy
-      .sort((a, b) => {
+      .sort((a: any, b: any) => {
         const ha = parseInt(a.hora.split(":")[0], 10);
         const hb = parseInt(b.hora.split(":")[0], 10);
         return ha - hb;
@@ -46,6 +51,7 @@ export function HourlyForecast({ forecast }: HourlyForecastProps) {
 
   const ordenado = ordenarHora(hoy);
   const mañanaOrdenado = ordenarMañana(mañana);
+  console.log(ordenado)
   return (
     <Card>
       <CardHeader>

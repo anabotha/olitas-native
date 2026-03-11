@@ -5,7 +5,7 @@ import {
   Sun,
 } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import type { ForecastData, MarineWeatherData } from "@/lib/types";
+import type { ForecastData, MarineWeatherData, SpotLocation } from "@/lib/types";
 import {
 
   getWeatherDescription,
@@ -24,7 +24,9 @@ interface ConditionsProps {
 export function ConditionsPanel({ forecast, conditions, selectedSpot }: ConditionsProps) {
   if (!forecast?.hourly) return null;
   if (!conditions) return null;
-  const { hoy } = useProcessForecast(forecast);
+  const result = useProcessForecast(forecast);
+  if (!result) return null;
+  const { hoy, semana, mañana } = result;
   const processedData = processData(conditions, forecast, selectedSpot?.orientation, selectedSpot?.name);
   if (!processedData) return <div>Hubo un error, proba mas tarde!</div>;
 
@@ -34,15 +36,15 @@ export function ConditionsPanel({ forecast, conditions, selectedSpot }: Conditio
     return directions[index];
   };
 
-  const ordenarHora = (hoy: any) => {
+  const ordenarHora = (hoy: any[]) => {
     const ahora = new Date().getHours();
     const ordenado = hoy
-      .sort((a, b) => {
+      .sort((a: any, b: any) => {
         const ha = parseInt(a.hora.split(":")[0], 10);
         const hb = parseInt(b.hora.split(":")[0], 10);
         return ha - hb;
       })
-      .filter(hour => {
+      .filter((hour: any) => {
         const hNum = parseInt(hour.hora.split(":")[0], 10);
         return hNum == ahora;
       });

@@ -27,7 +27,7 @@ interface HourSnapshot {
 // Utils
 // =============================
 
-const isValid = (n: number) =>
+const isValid = (n: number | undefined | null): n is number =>
     typeof n === "number" && !Number.isNaN(n);
 
 const riskScore: Record<SafetyColor, number> = {
@@ -349,7 +349,11 @@ export const processData = (data?: MarineWeatherData, forecastData?: ForecastDat
         const marineIdx = getCurrentHourIndex(marine.hourly.time);
         const forecastIdx = getCurrentHourIndex(forecast.hourly.time);
 
-        if (marineIdx === -1 || forecastIdx === -1) return null;
+        if (marineIdx === -1 || forecastIdx === -1) return {
+            color: "green",
+            label: "SIN DATOS",
+            message: "Datos insuficientes."
+        };
 
         const wind_speed = forecast.hourly.wind_speed_10m?.[forecastIdx];
         const wind_direction = forecast.hourly.wind_direction_10m?.[forecastIdx];

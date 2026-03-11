@@ -1,6 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
 import type { CombinedConditions, HourlyForecast } from "@/lib/types";
-import { rateActivities } from "@/lib/conditions";
 
 function getCurrentIndex(times: string[]): number {
   const now = new Date();
@@ -107,7 +106,6 @@ export async function GET(request: NextRequest) {
       });
     }
 
-    const activities = rateActivities(currentConditions);
 
     const result: CombinedConditions = {
       location: {
@@ -117,7 +115,7 @@ export async function GET(request: NextRequest) {
       },
       current: currentConditions,
       hourlyForecast,
-      activities,
+
     };
 
     return NextResponse.json(result);

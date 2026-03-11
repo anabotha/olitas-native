@@ -5,22 +5,27 @@ import { useMemo } from "react"
 
 interface DailySummary {
     dia: string; // "DD/MM/YYYY"
-    uv_index_max: number;
+    uvIndex: number;
 }
 
-interface HourlySummary {
+export interface HourlySummary {
     hora: string; // "HH:00"
     temperatura_2m: number;
     wind_speed_10m: number;
     wind_direction_10m: number;
     humedad: number;
     apparent_temperature: number;
+    time: string;
+    fecha: string;
 }
 
 export interface ProcessedForecast {
-    hoy: HourlySummary[] | null;
-    semana: DailySummary[] | null;
-    mañana: HourlySummary[] | null;
+    hoy: HourlySummary[];
+    semana: DailySummary[]
+    ;
+    mañana: HourlySummary[]
+    ;
+
 }
 
 export const useProcessForecast = (data?: ForecastData): ProcessedForecast | null => {
@@ -51,6 +56,7 @@ export const useProcessForecast = (data?: ForecastData): ProcessedForecast | nul
                 humedad: data.hourly.relative_humidity_2m[i],
                 fecha: date.toISOString().split("T")[0], // agregamos la fecha para filtrar
                 apparent_temperature: data.hourly.apparent_temperature[i],
+                time: t instanceof Date ? t.toISOString() : t,
             };
         })
         .filter(h => h.fecha === hoyStr);
@@ -71,13 +77,14 @@ export const useProcessForecast = (data?: ForecastData): ProcessedForecast | nul
                 humedad: data.hourly.relative_humidity_2m[i],
                 fecha: date.toISOString().split("T")[0], // agregamos la fecha para filtrar
                 apparent_temperature: data.hourly.apparent_temperature[i],
+                time: t instanceof Date ? t.toISOString() : t,
             }
         })
         .filter(h => h.fecha === mñaStr);
     // Resumen diario de la semana
     const semana: DailySummary[] = data.daily.time.map((t, i) => ({
         dia: formatDate(t),
-        uv_index_max: data.daily.uv_index_max[i],
+        uvIndex: data.daily.uv_index_max[i],
     }));
 
     return { hoy, mañana, semana };

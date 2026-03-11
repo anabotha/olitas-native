@@ -118,7 +118,7 @@ export function ActivityCard({
         </div>
 
         {/* Tags — detalle secundario */}
-        {rating?.factors?.length > 0 && (
+        {rating.factors && rating.factors.length > 0 && (
           <div className="flex flex-wrap gap-1.5">
             {rating.factors.map((factor, i) => (
               <span

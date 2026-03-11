@@ -42,7 +42,7 @@ export interface MarineWeatherData {
 }
 
 export interface CombinedConditions {
-
+  location?: SpotLocation
   current: {
     waveHeight?: number;
     waveDirection?: number;
@@ -64,17 +64,18 @@ export interface CombinedConditions {
   };
 
   beachOrientation?: number;
-  safety: {
+  safety?: {
     color: string;
     label: string;
     message: string;
   };
-  seaState: {
+  seaState?: {
     condition: string;
     tideInfo: string;
     isRising?: boolean;
   };
-
+  hourlyForecast?: HourlyForecast[];
+  activities?: activities;
 }
 
 
@@ -104,18 +105,19 @@ export interface ActivityRating {
   label: string; // "Poor" | "Fair" | "Good" | "Great" | "Epic"
   description?: string;
   factors?: string[];
+  level?: string;
 }
 
 export interface SpotLocation {
   name: string
   latitude: number
   longitude: number
-  orientation: number
-  country: string
+  orientation?: number
+  country?: string
 
-  exposed: boolean
+  exposed?: boolean
 
-  swellWindow: {
+  swellWindow?: {
     min: number
     max: number
   }
@@ -137,7 +139,7 @@ export interface ForecastData {
     wind_speed_120m: number[];
     wind_direction_10m: number[];
     wind_direction_120m: number[];
-    temperature_80m: number[];
+    temperature_80m?: number[];
     apparent_temperature: number[];
   },
   daily: {
