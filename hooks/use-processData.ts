@@ -248,7 +248,7 @@ export const processData = (data?: MarineWeatherData, forecastData?: ForecastDat
         const hourly = data.hourly.time.findIndex((time) => getTime(time) === now)
 
         if (index === -1) return null
-        // console.log("forecastData", forecastData)
+        console.log("forecastData", forecastData?.hourly.wind_direction_10m[hourly] )
         const processData = {
             wind_wave_height_max: data.daily.wind_wave_height_max?.[index] ?? null,
             wind_wave_direction_dominant:

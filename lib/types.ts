@@ -52,8 +52,8 @@ export interface CombinedConditions {
     swellDirection?: number;
     swellPeriod?: number;
 
-    windSpeed?: number;
-    windDirection?: number;
+    windSpeed?: number|string;
+    windDirection?: number|string;
     windGusts?: number;
 
     seaTemperature?: number;

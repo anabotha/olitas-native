@@ -63,7 +63,6 @@ export const useRatings = (
         spotName: string,
         spot: SpotLocation
     ): ActivityRating => {
-
         switch (activity) {
             case "surf": {
                 const { score, factors } = getSurfRating(stats, beachOrientation, spotName, spot);
@@ -182,11 +181,18 @@ export const useRatings = (
             label: "Peligroso",
             description: "Viento de tierra — te aleja de la costa",
         };
-
-        if (score <= 3 && hasLandWind && !hasStrongWind) return {
-            label: "Estar atento",
-            description: "Viento de tierra — te aleja de la costa",
-        };
+if (score <= 2 && hasLandWind && !hasStrongWind) {
+    return {
+        label: "Estar atento",
+        description: "Viento de tierra — puede alejarte de la costa",
+    };
+}
+if (score <= 3 && hasStrongWind) {
+    return {
+        label: "Ventoso",
+        description: "Cuesta mantener el rumbo",
+    };
+}
         if (score <= 3 && hasBigWaves) return {
             label: "Exigente",
             description: "Olas grandes — solo para expertos",
@@ -451,7 +457,10 @@ export const useRatings = (
                 score += 1;
                 factors.push("Onshore leve");
             }
-            else if (effectiveWind <= 22) {
+            if (isOffshore && effectiveWind > 24) {
+    factors.push("Viento de tierra")
+}
+            else if (effectiveWind <= 32) {
                 score -= 1;
                 factors.push("Onshore moderado");
             }
@@ -563,8 +572,8 @@ export const useRatings = (
     const getSupRating = (stats: any, spot: SpotLocation) => {
 
         const {
-            windSpeed = 0,
-            windDirection = 0,
+            windSpeed ,
+            windDirection,
             waveHeight,
             swellHeight,
             swellDirection,
@@ -572,7 +581,6 @@ export const useRatings = (
             seaLevelHeightMsl,
             seaLevelHeightMslPrevious,
         } = stats
-
         const factors: string[] = []
 
         /* WAVE REFERENCE */
@@ -660,12 +668,11 @@ export const useRatings = (
         }
 
         /* WAVE SIZE */
-
-        let wavePenalty =
-            waveRef < 0.4 ? 1 :
-                waveRef < 0.8 ? 0.9 :
-                    waveRef < 1.3 ? 0.7 :
-                        waveRef < 2 ? 0.5 : 0.3
+let wavePenalty =
+    waveRef < 0.4 ? 1 :
+    waveRef < 0.9 ? 0.95 :
+    waveRef < 1.4 ? 0.85 :
+    waveRef < 2 ? 0.65 : 0.4
 
         if (waveRef >= 1 && waveRef < 1.5) factors.push("Olas medianas")
         if (waveRef >= 1.5) factors.push("Olas grandes")
@@ -675,8 +682,9 @@ export const useRatings = (
         const windWaveP = wavePeriod ?? 99
 
         let chopPenalty =
-            (waveRef > 0.4 && windWaveP < 5) ? 0.6 :
-                (waveRef > 0.3) ? 0.8 : 1
+    (waveRef > 0.6 && windWaveP < 4) ? 0.75 :
+    (waveRef > 0.4 && windWaveP < 5) ? 0.85 :
+    1
 
         if (chopPenalty === 0.6) factors.push("Mar picado")
         if (chopPenalty === 0.8) factors.push("Chop")
@@ -712,7 +720,6 @@ export const useRatings = (
         return {
             score: finalScore,
             factors: [...new Set(factors)],
-            dangerLevel: finalScore <= 2 ? "MEDIUM" : "NORMAL",
             isGlassy
         }
     }
@@ -721,8 +728,8 @@ export const useRatings = (
     const getSwimmingRating = (stats: any, spot: SpotLocation) => {
 
         const {
-            windSpeed = 0,
-            windDirection = 0,
+            windSpeed ,
+            windDirection ,
             waveHeight,
             swellHeight,
             swellDirection,
