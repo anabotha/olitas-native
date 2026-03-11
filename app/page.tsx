@@ -176,10 +176,24 @@ export default function Home() {
               </CollapsibleSection>
             </section>
             {/* Footer note */}
-            <footer className="pb-4 text-center">
-              <p className="text-xs text-muted-foreground">
-                Informacion provista por Open-Meteo. <br /> Siempre chequea las condiciones antes de salir.
-              </p>
+            <footer className="pb-8 text-center space-y-4">
+              <div className="space-y-1">
+                <p className="text-[10px] uppercase tracking-wider text-muted-foreground/60">
+                  Datos meteorológicos por Open-Meteo
+                </p>
+                <p className="text-xs font-medium text-destructive/80">
+                  Siempre chequeá las condiciones antes de salir al agua.
+                </p>
+              </div>
+
+              <div className="pt-2 border-t border-border/40 w-1/4 mx-auto">
+                <a
+                  href="mailto:josefinabotha@gmail.com"
+                  className="text-xs text-muted-foreground hover:text-primary transition-colors duration-200"
+                >
+                  Contacto: <span className="font-medium underline underline-offset-4">josefinabotha@gmail.com</span>
+                </a>
+              </div>
             </footer>
           </div>
         )}
