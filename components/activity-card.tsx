@@ -132,7 +132,7 @@ export function ActivityCard({
         )}
         <div
           className={cn(
-            "flex items-center justify-between px-4 py-3 mt-auto rounded-b-lg",
+            "flex items-center justify-between px-4 py-3 mt-auto rounded-lg",
             getScoreBg(rating.score)
           )}
         >
