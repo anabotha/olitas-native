@@ -47,20 +47,21 @@ const ActivityCheck = (
       </div>
       <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
         <ActivityCard
-          activity="Surf y SupSurf"
-          icon={<HugeiconsIcon icon={SurfboardIcon} />}
-          rating={actividad.activities.surf}
-
+          activity="Nado en aguas abiertas"
+          icon={<HugeiconsIcon icon={SwimmingIcon} />}
+          rating={actividad.activities.swimming}
         />
         <ActivityCard
           activity="Sup de Tierra"
           icon={<HugeiconsIcon icon={KayakIcon} />}
           rating={actividad.activities.sup}
         />
-        <ActivityCard
-          activity="Nado en aguas abiertas"
-          icon={<HugeiconsIcon icon={SwimmingIcon} />}
-          rating={actividad.activities.swimming}
+       
+         <ActivityCard
+          activity="Surf y SupSurf"
+          icon={<HugeiconsIcon icon={SurfboardIcon} />}
+          rating={actividad.activities.surf}
+
         />
       </div>
     </section>
