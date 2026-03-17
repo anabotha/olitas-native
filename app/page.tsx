@@ -54,7 +54,7 @@ export default function Home() {
         popover: {
           title: '🧉 Armá tu plan',
           description: 'Elegí a qué playa vas y a qué hora pensás meterte. El mar cambia rápido, mejor chequear antes de salir.',
-          side: "bottom"
+          side: "top"
         }
       },
       {
@@ -62,7 +62,7 @@ export default function Home() {
         popover: {
           title: '🤙 ¿Se puede?',
           description: 'Un resumen directo: si está para nadar, remar o mejor esperarse un rato.',
-          side: "bottom"
+          side: "top"
         }
       },
       {
