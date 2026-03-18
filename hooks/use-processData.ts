@@ -10,7 +10,7 @@ import { useProcessForecast } from "./use-proccessForecast";
 
 type SafetyColor = "green" | "yellow" | "red";
 
-interface SafetyStatus {
+export interface SafetyStatus {
     color: SafetyColor;
     label: string;
     message: string;
@@ -27,7 +27,7 @@ interface HourSnapshot {
 // Utils
 // =============================
 
-const isValid = (n: number | undefined | null): n is number =>
+export const isValid = (n: number | undefined | null): n is number =>
     typeof n === "number" && !Number.isNaN(n);
 
 const riskScore: Record<SafetyColor, number> = {
@@ -83,7 +83,7 @@ export const getTidalPhase = (
     return { phase, isRising, normalized };
 };
 
-const normalizeHourly = (hourly: any): HourSnapshot[] => {
+export const normalizeHourly = (hourly: any): HourSnapshot[] => {
     return hourly.time.map((t: Date, i: number) => ({
         time: new Date(t),
         wind_speed: hourly.wind_speed_10m?.[i],
@@ -92,11 +92,11 @@ const normalizeHourly = (hourly: any): HourSnapshot[] => {
     }));
 };
 // Normaliza diferencias de ángulos a 0–180
-const angleDiff = (a: number, b: number) => {
+export const angleDiff = (a: number, b: number) => {
     let diff = Math.abs(a - b);
     return diff > 180 ? 360 - diff : diff;
 };
-const evaluateWind = (windDir: number, beachDir: number, waveDir?: number, swellDir?: number, windSpeed?: number) => {
+export const evaluateWind = (windDir: number, beachDir: number, waveDir?: number, swellDir?: number, windSpeed?: number) => {
     const diff = angleDiff(windDir, beachDir);
 
     let windCond: "offshore" | "onshore" | "crossshore";
@@ -309,7 +309,7 @@ export const processData = (data?: MarineWeatherData, forecastData?: ForecastDat
 
         return { condition, tideInfo, isRising: tidal.isRising };
     };
-    const getCurrentHourIndex = (timeArray: string[] | Date[]) => {
+     const getCurrentHourIndex = (timeArray: string[] | Date[]) => {
         if (!Array.isArray(timeArray)) return -1;
 
         const now = new Date();

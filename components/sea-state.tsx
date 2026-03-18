@@ -18,7 +18,7 @@ export const SeaState = ({ data, forecast, beach }: SeaStateProps) => {
 
     const ratings = useRatings(processedData, beach.name, beach.orientation ?? 90, beach, data, forecast, new Date());
     const bestWindows = ratings.bestWindows;
-
+console.log("Best Windows:", bestWindows);
     const { seaState } = processedData;
     if (!seaState || !bestWindows) return null;
 
@@ -28,23 +28,25 @@ export const SeaState = ({ data, forecast, beach }: SeaStateProps) => {
     const activities = [
         { label: "Surf ", data: bestWindows.surf, icon: SurfboardIcon },
         { label: "SUP", data: bestWindows.sup, icon: KayakIcon },
-        { label: "SUP", data: bestWindows.sup, icon: KayakIcon },
-
         { label: "Natación", data: bestWindows.swimming, icon: SwimmingIcon },
     ];
     // 2. Filtramos ANTES de renderizar para evitar arrays con 'undefined'
-    const validWindows = activities.filter(a => {
-        // 1. Extraemos solo la hora (ej: "15:00" -> 15)
-        const hour = Number(a.data.time.split(':')[0]);
-        const now = new Date().getHours();
-
-        // 2. Tu lógica de ventana horaria
-        const isFuture = hour >= now || (now >= 22 && hour <= 5);
-
-        // 3. Score > 5
-        return a.data.score > 5 && isFuture;
-    });
-
+ const validWindows = activities.filter(a => {
+    if (a.data.time === "N/A") return false;
+    
+    // Reconstruir fecha desde "19/3, 00:00"
+    const [datePart, timePart] = a.data.time.split(', ');
+    const [day, month] = datePart.split('/').map(Number);
+    const [hour, minute] = timePart.split(':').map(Number);
+    
+    const windowDate = new Date();
+    windowDate.setMonth(month - 1, day);
+    windowDate.setHours(hour, minute, 0, 0);
+    
+    const isFuture = windowDate >= new Date();
+    
+    return a.data.score > 5 && isFuture;
+});
     return (
         <Card className="shadow-md">
             <CardHeader>
@@ -70,9 +72,9 @@ export const SeaState = ({ data, forecast, beach }: SeaStateProps) => {
 
                     <div className="space-y-2">
                         {validWindows.length > 0 ? (
-                            validWindows.map((activity) => (
+                            validWindows.map((activity, idx) => (
                                 <div
-                                    key={activity.label}
+                                    key={`${activity.label}-${activity.data.time}-${idx}`}
                                     className="flex justify-between items-center bg-background rounded-lg px-3 py-2 border"
                                 >
                                     <span className="font-medium flex items-center gap-2">
@@ -81,7 +83,7 @@ export const SeaState = ({ data, forecast, beach }: SeaStateProps) => {
                                         {activity.label}
                                     </span>
                                     <span className="text-sm text-muted-foreground">
-                                        {activity.data.time.toString().padStart(2, '0')} hs
+                                        {activity.data.time.toString()} hs
                                     </span>
                                 </div>
                             ))

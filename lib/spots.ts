@@ -45,44 +45,45 @@ export const DEFAULT_SPOTS: SpotLocation[] = [
   // },
   {
   name: "Costanera Comodoro",
-  latitude: -45.860,        // ✓ correcto
-  longitude: -67.474,       // ajuste mínimo (antes -67.47)
-  orientation: 95,          // antes 90° — en ese tramo la costa tuerce, mira levemente al ESE
+  latitude: -45.860,       
+  longitude: -67.474,       
+  orientation: 95,         
   country: "Argentina",
-  exposed: false,           // ✓ correcto — escolleras y puerto generan abrigo
-  swellWindow: { min: 60, max: 115 },  // antes 60-110 — techo sube a 115° por el ESE
-  windShelter: { min: 200, max: 320 }  // ✓ sin cambios, rango coherente
+  exposed: false,          
+  swellWindow: { min: 60, max: 115 }, 
+  windShelter: { min: 200, max: 320 } 
 },
 
 {
   name: "Rada Tilly",
-  latitude: -45.943,        // antes -45.92 — corregido a la playa real (~2.3km al sur)
-  longitude: -67.556,       // antes -67.55 — ajuste fino
-  orientation: 100,         // antes 90° — Rada Tilly mira más al ESE real
+  latitude: -45.943,       
+  
+  longitude: -67.556,      
+  orientation: 100,         
   country: "Argentina",
-  exposed: false,           // ✓ correcto — bahía con algo de abrigo natural
-  swellWindow: { min: 55, max: 130 }, // antes 50-120 — ajustado al frente ESE real
-  windShelter: { min: 200, max: 320 } // antes 210-310 — ampliado igual que Costanera
+  exposed: false,          
+  swellWindow: { min: 55, max: 130 }, 
+  windShelter: { min: 200, max: 320 } 
 },
 
 {
   name: "Km 3",
-  latitude: -45.830,        // ✓ razonable para zona norte
-  longitude: -67.460,       // ✓ razonable
-  orientation: 75,          // antes 100° — en ese tramo más al norte la costa mira más al NE
+  latitude: -45.830,        
+  longitude: -67.460,       
+  orientation: 75,          
   country: "Argentina",
-  exposed: true,            // ✓ correcto
-  swellWindow: { min: 30, max: 115 }, // antes 40-130 — piso baja (más fetch NNE), techo baja (sombra al SE)
+  exposed: true,           
+  swellWindow: { min: 30, max: 115 }, 
 },
 
 {
   name: "Restinga Alí",
-  latitude: -45.799,        // antes -45.81 — corregido al barrio real
-  longitude: -67.417,       // antes -67.44 — corregido (~2km al este)
-  orientation: 70,          // antes 90° — es el punto más al norte, costa mira más al NNE
+  latitude: -45.799,        
+  longitude: -67.417,      
+  orientation: 70,          
   country: "Argentina",
-  exposed: true,            // ✓ correcto
-  swellWindow: { min: 20, max: 110 }, // antes 40-130 — piso baja por fetch NNE, techo baja
+  exposed: true,            
+  swellWindow: { min: 20, max: 110 }, 
 },
  {
   name: "Caleta Córdova",

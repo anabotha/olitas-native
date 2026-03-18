@@ -9,6 +9,7 @@ import { SwimmingIcon } from '@hugeicons/core-free-icons'
 import { SurfboardIcon } from '@hugeicons/core-free-icons'
 import { KayakIcon } from '@hugeicons/core-free-icons'
 import { useRatings } from '@/hooks/use-ratings'
+import { useCurrentSafety } from '@/hooks/use-safety'
 
 interface ActivityCheckProps {
 
@@ -24,22 +25,21 @@ const ActivityCheck = (
   const processedData = processData(data, forecastData, selectedSpot?.orientation, selectedSpot?.name);
   if (!processedData || !selectedSpot) return <div>Hubo un error, proba mas tarde!</div>;
   const actividad = useRatings(processedData, selectedSpot?.name ?? "", selectedSpot?.orientation ?? 90, selectedSpot, data, forecastData, selectedHour);
+  const safety = useCurrentSafety(data, forecastData, selectedSpot, selectedHour);
   return (
     <section>
-      {/* <h3 className="mb-4 text-xs font-semibold uppercase tracking-widest text-muted-foreground">
-        Actividad
-      </h3> */}
+
       <div className="col-span-3">
 
-        {processedData.safety?.color === "red" || processedData.safety?.color === "yellow" && (
+        {safety.color === "red" || safety.color === "yellow" && (
           <div className="flex items-center gap-3 rounded-xl border border-destructive/20 bg-destructive/5 px-5 py-4">
             <AlertCircle className="h-5 w-5 text-destructive" />
             <div>
               <p className="text-sm font-medium text-foreground">
-                {processedData.safety.label}
+                {safety.label}
               </p>
               <p className="text-xs text-muted-foreground">
-                {processedData.safety.message}
+                {safety.message}
               </p>
             </div>
           </div>

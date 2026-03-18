@@ -13,7 +13,8 @@ export const useRatings = (
     processData: CombinedConditions | null,
     beachName: string, beachOrientation: number,
     spot: SpotLocation,
-    data?: MarineWeatherData, forecastData?: ForecastData,
+    data?: MarineWeatherData, 
+    forecastData?: ForecastData,
     selectedHour?: Date,
 ): activities => {
     /** Busca el índice en data.hourly.time más cercano a `target` */
@@ -924,24 +925,24 @@ let wavePenalty =
 
         }
     }
-    const getBestWindow = (data: any, activity: ActivityType, beachOrientation?: number) => {
+    const getBestWindow = (data: any,activity: ActivityType, beachOrientation?: number,forecastData?: ForecastData ) => {
         const nowIndex = data.hourly.time.findIndex((t: any) => new Date(t) >= new Date());
         let bestHour = null;
-        let maxScore = -1;
-        // Recorremos las próximas 24 horas
+        let maxScore = 0;
+        // Recorremos solo las próximas 24 horas
         for (let i = nowIndex; i < nowIndex + 24 && i < data.hourly.time.length; i++) {
-            const hourlyStats = {
-                waveHeight: data.hourly.wave_height[i],
-                waveDirection: data.hourly.wave_direction[i],
-                swellHeight: data.hourly.swell_wave_height[i],
-                swellDirection: data.hourly.swell_wave_direction[i],
-                swellPeriod: data.hourly.swell_wave_peak_period?.[i] || 0,
-                wavePeriod: data.hourly.wind_wave_period?.[i] || 0,
-                windSpeed: data.hourly.wind_speed_10m?.[i] || 0,
-                windDirection: data.hourly.windDirection_10m?.[i],
-                seaLevelHeightMsl: data.hourly.sea_level_height_msl[i],
-                seaLevelHeightMslPrevious: data.hourly.sea_level_height_msl[i - 1] || 0,
-            };
+          const hourlyStats = {
+        waveHeight: data.hourly.wave_height[i],
+        waveDirection: data.hourly.wave_direction[i],
+        swellHeight: data.hourly.swell_wave_height[i],
+        swellDirection: data.hourly.swell_wave_direction[i],
+        swellPeriod: data.hourly.swell_wave_peak_period?.[i] ?? 0,
+        wavePeriod: data.hourly.wind_wave_period?.[i] ?? 0,
+        windSpeed: forecastData?.hourly?.wind_speed_10m?.[i] ?? 0,     // ✅
+        windDirection: forecastData?.hourly?.wind_direction_10m?.[i],   // ✅
+        seaLevelHeightMsl: data.hourly.sea_level_height_msl[i],
+        seaLevelHeightMslPrevious: data.hourly.sea_level_height_msl[i - 1] ?? 0,
+    };
 
             const { score } = activity === "surf" ? getSurfRating(hourlyStats, beachOrientation ? beachOrientation : 90, beachName, spot) :
                 activity === "sup" ? getSupRating(hourlyStats, spot) :
@@ -954,7 +955,13 @@ let wavePenalty =
         }
 
         return {
-            time: bestHour ? new Date(bestHour).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : "N/A",
+            time: bestHour ? new Date(bestHour).toLocaleDateString('es-AR', { 
+                month: '2-digit', 
+                day: '2-digit', 
+                hour: '2-digit', 
+                minute: '2-digit',
+                hour12: false 
+            }) : "N/A",
             score: maxScore
         };
     };
@@ -966,11 +973,11 @@ let wavePenalty =
             swimming: getRating(hourlyStats, "swimming", beachOrientation, beachName, spot),
         },
         ...(data ? {
-            bestWindows: {
-                surf: getBestWindow(data, "surf", beachOrientation ? beachOrientation : 90),
-                sup: getBestWindow(data, "sup", beachOrientation ? beachOrientation : 90),
-                swimming: getBestWindow(data, "swimming", beachOrientation ? beachOrientation : 90)
-            },
+          bestWindows: {
+    surf: getBestWindow(data, "surf", beachOrientation ?? 90, forecastData),
+    sup: getBestWindow(data, "sup", beachOrientation ?? 90, forecastData),
+    swimming: getBestWindow(data, "swimming", beachOrientation ?? 90, forecastData),
+}
         } : {}),
     }
 }
