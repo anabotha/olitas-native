@@ -197,14 +197,23 @@ export default function Home() {
                 </p>
               </div>
 
-              <div className="pt-2 border-t border-border/40 w-1/4 mx-auto">
+              {/* <div className="pt-2 text-center border-t border-border/40 w-1/4 mx-auto">
+              <p>Contacto:</p>
                 <a
                   href="mailto:josefinabotha@gmail.com"
-                  className="text-xs text-muted-foreground hover:text-primary transition-colors duration-200"
-                >
-                  Contacto: <span className="font-medium underline underline-offset-4">josefinabotha@gmail.com</span>
+                  className="text-xs  text-muted-foreground hover:text-primary transition-colors duration-200"
+                ><span className="font-medium text-center underline underline-offset-4">josefinabotha@gmail.com</span>
                 </a>
-              </div>
+              </div> */}
+<div className="pt-2 text-center border-t border-border/40 max-w-xs mx-auto">
+  <a
+    href="mailto:josefinabotha@gmail.com"
+    className="block text-xs font-medium underline underline-offset-4 text-muted-foreground hover:text-primary transition-colors duration-200"
+  >
+    Contacto: <br/>
+    josefinabotha@gmail.com
+  </a>
+</div>
             </footer>
           </div>
         )}
