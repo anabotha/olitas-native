@@ -19,7 +19,7 @@ export function PwaInstallPrompt() {
     const isInstalled =
       window.matchMedia("(display-mode: standalone)").matches ||
       (window.navigator as unknown as { standalone?: boolean }).standalone ===
-        true;
+      true;
 
     if (isInstalled) return; // Ya está instalada → no mostrar nada
 
@@ -116,7 +116,7 @@ export function PwaInstallPrompt() {
           <span className="text-xl shrink-0">📲</span>
           <span className="flex-1 leading-snug">
             Para instalar: tocá <strong>Compartir</strong> →{" "}
-            <strong>Agregar a pantalla de inicio</strong>
+            <strong>Agregar a inicio</strong>
           </span>
           <button
             onClick={handleDismissIosTip}
