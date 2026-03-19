@@ -15,6 +15,7 @@ import { useForecast } from "@/hooks/use-forecast";
 import { SeaState } from "@/components/sea-state";
 import { CollapsibleSection } from "@/components/collapsible-section";
 import { HourSelector } from "@/components/hour-selector";
+import { PwaInstallPrompt } from "@/components/pwa-install-prompt";
 import "driver.js/dist/driver.css";
 
 import { driver } from "driver.js";
@@ -30,6 +31,7 @@ export default function Home() {
     return now;
   });
   const [showGuideOnLoad, setShowGuideOnLoad] = useState(false);
+
   // const [selectedActivity, setSelectedActivity] = useState<string>("surf");
 
   useEffect(() => {
@@ -38,9 +40,19 @@ export default function Home() {
       setShowGuideOnLoad(true);
       localStorage.setItem('olitas_guide_viewed', 'true');
     }
-  }, []);
+    // if (!hasVisited) {
+    //   setTimeout(() => {
+    //     setShowGuideOnLoad(false);
+      // }, 10000);
+    }
 
-  const { data, error, isLoading } = useMarineWeather(selectedSpot)
+  // }
+  , []);
+
+
+
+
+    const { data, error, isLoading } = useMarineWeather(selectedSpot)
   const { forecastData, forecastError, forecastIsLoading } = useForecast(selectedSpot)
   const driverObj = driver({
     showProgress: true,
@@ -109,7 +121,7 @@ export default function Home() {
       <header id="header" >
         <Header />
 
-
+        {/* <button onClick={()=>setshowDownload(true)}> Descargar</button> */}
         <button
           onClick={() => driverObj.drive()}
           className={`absolute top-4 right-4 text-gray-400 hover:text-blue-600 transition-colors p-2 rounded-full ${
@@ -135,6 +147,9 @@ export default function Home() {
               Oleaje, viento y temperatura para tu próxima sesión.
             </p>
           </div>
+
+          {/* PWA Install prompt */}
+          <PwaInstallPrompt />
         </section>
 
         {isLoading && <LoadingState />}
