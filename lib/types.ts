@@ -25,7 +25,7 @@ export interface MarineWeatherData {
     time: Date[];
     wave_height: number[] | null;
     wave_direction: number[] | null;
-    swell_wave_peak_period: number[] | null;
+    swell_wave_period: number[] | null;
     swell_wave_height: number[] | null;
     swell_wave_direction: number[] | null;
     wind_wave_period: number[] | null;
@@ -52,8 +52,8 @@ export interface CombinedConditions {
     swellDirection?: number;
     swellPeriod?: number;
 
-    windSpeed?: number|string;
-    windDirection?: number|string;
+    windSpeed?: number | string;
+    windDirection?: number | string;
     windGusts?: number;
 
     seaTemperature?: number;

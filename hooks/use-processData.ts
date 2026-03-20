@@ -260,7 +260,7 @@ export const processData = (data?: MarineWeatherData, forecastData?: ForecastDat
             wave_direction: data.hourly.wave_direction?.[hourly] ?? null,
             swell_wave_height: data.hourly.swell_wave_height?.[hourly] ?? null,
             swell_wave_direction: data.hourly.swell_wave_direction?.[hourly] ?? null,
-            swell_wave_period: data.hourly.swell_wave_peak_period?.[hourly] ?? null,
+            swell_wave_period: data.hourly.swell_wave_period?.[hourly] ?? null,
             wind_wave_period: data.hourly.wind_wave_period?.[hourly] ?? null,
             wind_wave_direction: data.hourly.wind_wave_direction?.[hourly] ?? null,
             sea_level_height_msl: data.hourly.sea_level_height_msl?.[hourly] ?? null,
@@ -308,7 +308,7 @@ export const processData = (data?: MarineWeatherData, forecastData?: ForecastDat
 
         return { condition, tideInfo, isRising: tidal.isRising };
     };
-     const getCurrentHourIndex = (timeArray: string[] | Date[]) => {
+    const getCurrentHourIndex = (timeArray: string[] | Date[]) => {
         if (!Array.isArray(timeArray)) return -1;
 
         const now = new Date();
@@ -464,7 +464,8 @@ export const processData = (data?: MarineWeatherData, forecastData?: ForecastDat
     return useMemo(() => {
         const todayStats = searchTodaysStats();
         if (!todayStats) return null;
-        // console.log(data)
+        // console.log("today stats", data, todayStats)
+
         // Temporal, tiralo después de calibrar
         const allTidalValues = data.hourly.sea_level_height_msl ?? [];
         const tidal = getTidalPhase(Number(todayStats.sea_level_height_msl ?? 0), todayStats.previous_sea_level_height_msl ?? undefined, beachName ?? "", allTidalValues);

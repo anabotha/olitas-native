@@ -17,7 +17,7 @@ export async function getMarineWeather(latitude: number, longitude: number): Pro
         hourly: [
             "wave_height",
             "wave_direction",
-            "swell_wave_peak_period",
+            "swell_wave_period",
             "swell_wave_height",
             "swell_wave_direction",
             "wind_wave_period",
@@ -52,7 +52,7 @@ export async function getMarineWeather(latitude: number, longitude: number): Pro
             wave_direction: hourly.variables(1)?.valuesArray()
                 ? Array.from(hourly.variables(1)!.valuesArray()!)
                 : null,
-            swell_wave_peak_period: hourly.variables(2)?.valuesArray()
+            swell_wave_period: hourly.variables(2)?.valuesArray()
                 ? Array.from(hourly.variables(2)!.valuesArray()!)
                 : null,
             swell_wave_height: hourly.variables(3)?.valuesArray()

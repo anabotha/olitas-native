@@ -42,7 +42,7 @@ export const useRatings = (
             waveDirection: data.hourly.wave_direction?.[idx] ?? null,
             swellHeight: data.hourly.swell_wave_height?.[idx] ?? null,
             swellDirection: data.hourly.swell_wave_direction?.[idx] ?? null,
-            swellPeriod: data.hourly.swell_wave_peak_period?.[idx] ?? null,
+            swellPeriod: data.hourly.swell_wave_period?.[idx] ?? null,
             wavePeriod: data.hourly.wind_wave_period?.[idx] ?? null,
             seaLevelHeightMsl: data.hourly.sea_level_height_msl?.[idx] ?? null,
             seaLevelHeightMslPrevious: data.hourly.sea_level_height_msl?.[idx - 1] ?? null,
@@ -170,7 +170,7 @@ export const useRatings = (
             seaLevelHeightMsl,
             seaLevelHeightMslPrevious,
         } = stats;
-
+        console.log("stats", stats)
         const MAX_RAW = 20;
         let score = 0;
         let factors: string[] = [];
@@ -1158,7 +1158,7 @@ export const useRatings = (
                 waveDirection: data.hourly.wave_direction[i],
                 swellHeight: data.hourly.swell_wave_height[i],
                 swellDirection: data.hourly.swell_wave_direction[i],
-                swellPeriod: data.hourly.swell_wave_peak_period?.[i] ?? 0,
+                swellPeriod: data.hourly.swell_wave_period?.[i] ?? 0,
                 wavePeriod: data.hourly.wind_wave_period?.[i] ?? 0,
                 windSpeed: forecastData?.hourly?.wind_speed_10m?.[i] ?? 0,     // ✅
                 windDirection: forecastData?.hourly?.wind_direction_10m?.[i],   // ✅
