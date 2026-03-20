@@ -52,12 +52,12 @@ const ActivityCheck = (
           rating={actividad.activities.swimming}
         />
         <ActivityCard
-          activity="Sup de Tierra"
+          activity="Sup tradicional"
           icon={<HugeiconsIcon icon={KayakIcon} />}
           rating={actividad.activities.sup}
         />
-       
-         <ActivityCard
+
+        <ActivityCard
           activity="Surf y SupSurf"
           icon={<HugeiconsIcon icon={SurfboardIcon} />}
           rating={actividad.activities.surf}
