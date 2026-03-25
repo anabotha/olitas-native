@@ -54,7 +54,8 @@ export const useRatings = (
 
     // Stats para la hora seleccionada, o fallback a processData.current
     const hourlyStats = buildStatsForHour() ?? processData?.current;
-
+    const nowStats = processData?.current;
+    console.log(nowStats)
 
 
     const getRating = (
@@ -66,17 +67,19 @@ export const useRatings = (
     ): ActivityRating => {
         switch (activity) {
             case "surf": {
-                const { score, factors } = getSurfRating(stats, beachOrientation, spotName, spot);
+                const { score, factors } = getSurfRating(nowStats, beachOrientation, spotName, spot);
                 return { ...getLabelSurf(score, factors), factors, score };
             }
 
             case "sup": {
-                const { score, factors } = getSupRating(stats, spot);
+                const { score, factors } = getSupRating(nowStats, spot);
+                console.log("score", score)
+                console.log("factors", factors)
                 return { ...getLabelSup(score, factors), factors, score };
             }
 
             case "swimming": {
-                const { score, factors } = getSwimmingRating(stats, spot);
+                const { score, factors } = getSwimmingRating(nowStats, spot);
                 return { ...getLabelSwimming(score, factors), factors, score };
             }
 
@@ -170,7 +173,7 @@ export const useRatings = (
             seaLevelHeightMsl,
             seaLevelHeightMslPrevious,
         } = stats;
-        console.log("stats", stats)
+
         const MAX_RAW = 20;
         let score = 0;
         let factors: string[] = [];
@@ -719,7 +722,9 @@ export const useRatings = (
            Subido desde 22 km/h: con reparo activo un viento real de ~43 km/h
            queda en ~28, que es el límite real Beaufort 4→5. */
 
-        if (isOffshore && effectiveWind >= 28) {
+        // ── HARD STOPS (antes de cualquier cálculo) ──────────────────────────
+
+        if (isOffshore && windSpeed >= 34) {
             return {
                 score: 0,
                 factors: ["Peligro: viento te lleva mar adentro"],
@@ -728,11 +733,31 @@ export const useRatings = (
             };
         }
 
-        if (effectiveWind > 55) {
+        if (windSpeed > 55) {
             return {
                 score: 0,
                 factors: ["Viento extremo"],
                 dangerLevel: "HIGH",
+                isGlassy: false,
+            };
+        }
+
+        // Viento muy fuerte → peligro
+        if (windSpeed >= 45) {
+            return {
+                score: 0,
+                factors: ["Peligro: viento muy fuerte"],
+                dangerLevel: "HIGH",
+                isGlassy: false,
+            };
+        }
+
+        // Viento fuerte → penalización fuerte (no hard stop)
+        if (windSpeed >= 35) {
+            return {
+                score: 1,
+                factors: ["Viento fuerte"],
+                dangerLevel: "MEDIUM",
                 isGlassy: false,
             };
         }
@@ -1003,7 +1028,45 @@ export const useRatings = (
         const isOnshore = windDiff < 45
         const isOffshore = windDiff > 135
         const isCross = !isOnshore && !isOffshore
+        // ── HARD STOPS (antes de cualquier cálculo) ──────────────────────────
 
+        if (isOffshore && windSpeed >= 28) {
+            return {
+                score: 0,
+                factors: ["Peligro: viento te lleva mar adentro"],
+                dangerLevel: "HIGH",
+                isGlassy: false,
+            };
+        }
+
+        if (windSpeed > 55) {
+            return {
+                score: 0,
+                factors: ["Viento extremo"],
+                dangerLevel: "HIGH",
+                isGlassy: false,
+            };
+        }
+
+        // Viento muy fuerte → peligro
+        if (windSpeed >= 45) {
+            return {
+                score: 0,
+                factors: ["Peligro: viento muy fuerte"],
+                dangerLevel: "HIGH",
+                isGlassy: false,
+            };
+        }
+
+        // Viento fuerte → penalización fuerte (no hard stop)
+        if (windSpeed >= 35) {
+            return {
+                score: 1,
+                factors: ["Viento fuerte"],
+                dangerLevel: "MEDIUM",
+                isGlassy: false,
+            };
+        }
         /* SWELL WINDOW */
 
         if (swellDirection != null && spot.swellWindow) {
