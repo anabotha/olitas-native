@@ -55,7 +55,6 @@ export const useRatings = (
     // Stats para la hora seleccionada, o fallback a processData.current
     const hourlyStats = buildStatsForHour() ?? processData?.current;
     const nowStats = processData?.current;
-    console.log(nowStats)
 
 
     const getRating = (
@@ -65,6 +64,7 @@ export const useRatings = (
         spotName: string,
         spot: SpotLocation
     ): ActivityRating => {
+        console.log(nowStats)
         switch (activity) {
             case "surf": {
                 const { score, factors } = getSurfRating(nowStats, beachOrientation, spotName, spot);
@@ -73,8 +73,7 @@ export const useRatings = (
 
             case "sup": {
                 const { score, factors } = getSupRating(nowStats, spot);
-                console.log("score", score)
-                console.log("factors", factors)
+
                 return { ...getLabelSup(score, factors), factors, score };
             }
 
@@ -380,7 +379,7 @@ export const useRatings = (
             factors.push("Marea alta");
         } else {
             score += 1;
-            factors.push("Marea baja");
+            // factors.push("Marea baja");
         }
 
         if (tide.isRising) {
@@ -868,8 +867,8 @@ export const useRatings = (
         if (tide.phase === "mid") factors.push("Marea media");
 
         if (tide.phase === "low") {
-            tidePenalty = 0.85;
-            factors.push("Marea baja");
+            tidePenalty = 1;
+            // factors.push("Marea baja");
         }
 
         /* FINAL SCORE */
