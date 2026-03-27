@@ -226,7 +226,7 @@ const getWorstSafetyNextHours = (
 
     return worst;
 };
-export const processData = (data?: MarineWeatherData, forecastData?: ForecastData, beachOrientation?: number, beachName?: string): CombinedConditions | null => {
+export const processData = (data?: MarineWeatherData, forecastData?: ForecastData, beachOrientation?: number, beachName?: string, selectedHour?: Date): CombinedConditions | null => {
     if (!data) return null;
     // if (!forecastData) return null;
     const getTime = (date: Date) => {
@@ -240,13 +240,15 @@ export const processData = (data?: MarineWeatherData, forecastData?: ForecastDat
     const searchTodaysStats = () => {
         if (!data) return null
 
-        const today = getDate(new Date())
-        const now = getTime(new Date())
+        const reference = selectedHour ?? new Date()
+        const today = getDate(reference)
+        const now = getTime(reference)
         const index = data.daily.time.findIndex(
             (date) => getDate(date) === today
         )
+        // console.log("index", index)
         const hourly = data.hourly.time.findIndex((time) => getTime(time) === now)
-
+        // console.log("hourly", hourly, selectedHour, now)
         if (index === -1) return null
         const processData = {
             wind_wave_height_max: data.daily.wind_wave_height_max?.[index] ?? null,
@@ -308,10 +310,10 @@ export const processData = (data?: MarineWeatherData, forecastData?: ForecastDat
 
         return { condition, tideInfo, isRising: tidal.isRising };
     };
-    const getCurrentHourIndex = (timeArray: string[] | Date[]) => {
+    const findClosestHourIndex = (timeArray: string[] | Date[], target: Date) => {
         if (!Array.isArray(timeArray)) return -1;
 
-        const now = new Date();
+        const now = target;
 
         let closestIndex = -1;
         let smallestDiff = Infinity;
@@ -345,8 +347,9 @@ export const processData = (data?: MarineWeatherData, forecastData?: ForecastDat
             message: "Datos insuficientes."
         };
 
-        const marineIdx = getCurrentHourIndex(marine.hourly.time);
-        const forecastIdx = getCurrentHourIndex(forecast.hourly.time);
+        const ref = selectedHour ?? new Date();
+        const marineIdx = findClosestHourIndex(marine.hourly.time, ref);
+        const forecastIdx = findClosestHourIndex(forecast.hourly.time, ref);
 
         if (marineIdx === -1 || forecastIdx === -1) return {
             color: "green",
@@ -496,5 +499,5 @@ export const processData = (data?: MarineWeatherData, forecastData?: ForecastDat
         }
 
         return processedData;
-    }, [data, forecastData])
+    }, [data, forecastData, selectedHour])
 }

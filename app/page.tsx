@@ -40,19 +40,16 @@ export default function Home() {
       setShowGuideOnLoad(true);
       localStorage.setItem('olitas_guide_viewed', 'true');
     }
-    // if (!hasVisited) {
-    //   setTimeout(() => {
-    //     setShowGuideOnLoad(false);
-      // }, 10000);
-    }
 
-  // }
-  , []);
+  }
+
+    // }
+    , []);
 
 
 
 
-    const { data, error, isLoading } = useMarineWeather(selectedSpot)
+  const { data, error, isLoading } = useMarineWeather(selectedSpot)
   const { forecastData, forecastError, forecastIsLoading } = useForecast(selectedSpot)
   const driverObj = driver({
     showProgress: true,
@@ -113,6 +110,7 @@ export default function Home() {
     ]
   });
 
+  // console.log(selectedHour)
 
 
 
@@ -121,12 +119,10 @@ export default function Home() {
       <header id="header" >
         <Header />
 
-        {/* <button onClick={()=>setshowDownload(true)}> Descargar</button> */}
         <button
           onClick={() => driverObj.drive()}
-          className={`absolute top-4 right-4 text-gray-400 hover:text-blue-600 transition-colors p-2 rounded-full ${
-            showGuideOnLoad ? 'ring-2 ring-blue-400 animate-pulse' : ''
-          }`}
+          className={`absolute top-4 right-4 text-gray-400 hover:text-blue-600 transition-colors p-2 rounded-full ${showGuideOnLoad ? 'ring-2 ring-blue-400 animate-pulse' : ''
+            }`}
         >
           <Info size={24} />
         </button>
@@ -184,21 +180,21 @@ export default function Home() {
                 />
               </div>
             </CollapsibleSection>
-
             {/* Current conditions */}
+
             <section id="ahora">
-              <CollapsibleSection title="ahora" defaultOpen={true}>
-                <ConditionsPanel forecast={forecastData} conditions={data} selectedSpot={selectedSpot} />
+              <CollapsibleSection title={`Condiciones ${selectedHour?.getHours()}:00hs`} defaultOpen={true}>
+                <ConditionsPanel forecast={forecastData} conditions={data} selectedHour={selectedHour} selectedSpot={selectedSpot} />
               </CollapsibleSection>
             </section>
             <section id="pronostico">
-              <CollapsibleSection title="Pronostico" defaultOpen={true}>
-                <HourlyForecast forecast={forecastData} />
+              <CollapsibleSection title={`Pronostico ${selectedHour?.getHours()}:00hs`} defaultOpen={true}>
+                <HourlyForecast forecast={forecastData} selectedHour={selectedHour} />
               </CollapsibleSection>
             </section>
             <section id="estado-del-mar">
               <CollapsibleSection title="Estado del Mar" defaultOpen={true}>
-                <SeaState data={data} forecast={forecastData} beach={selectedSpot} />
+                <SeaState data={data} forecast={forecastData} beach={selectedSpot} selectedHour={selectedHour} />
               </CollapsibleSection>
             </section>
             {/* Footer note */}
@@ -212,23 +208,15 @@ export default function Home() {
                 </p>
               </div>
 
-              {/* <div className="pt-2 text-center border-t border-border/40 w-1/4 mx-auto">
-              <p>Contacto:</p>
+              <div className="pt-2 text-center border-t border-border/40 max-w-xs mx-auto">
                 <a
                   href="mailto:josefinabotha@gmail.com"
-                  className="text-xs  text-muted-foreground hover:text-primary transition-colors duration-200"
-                ><span className="font-medium text-center underline underline-offset-4">josefinabotha@gmail.com</span>
+                  className="block text-xs font-medium underline underline-offset-4 text-muted-foreground hover:text-primary transition-colors duration-200"
+                >
+                  Contacto: <br />
+                  josefinabotha@gmail.com
                 </a>
-              </div> */}
-<div className="pt-2 text-center border-t border-border/40 max-w-xs mx-auto">
-  <a
-    href="mailto:josefinabotha@gmail.com"
-    className="block text-xs font-medium underline underline-offset-4 text-muted-foreground hover:text-primary transition-colors duration-200"
-  >
-    Contacto: <br/>
-    josefinabotha@gmail.com
-  </a>
-</div>
+              </div>
             </footer>
           </div>
         )}

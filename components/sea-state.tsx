@@ -10,18 +10,19 @@ interface SeaStateProps {
     data: MarineWeatherData;
     forecast: ForecastData | undefined;
     beach: SpotLocation;
+    selectedHour: Date | undefined;
 }
 
-export const SeaState = ({ data, forecast, beach }: SeaStateProps) => {
-    const processedData = processData(data, forecast, beach.orientation, beach.name);
+export const SeaState = ({ data, forecast, beach, selectedHour }: SeaStateProps) => {
+    const processedData = processData(data, forecast, beach.orientation, beach.name, selectedHour);
     if (!processedData) return null;
 
-    const ratings = useRatings(processedData, beach.name, beach.orientation ?? 90, beach, data, forecast, new Date());
+    const ratings = useRatings(processedData, beach.name, beach.orientation ?? 90, beach, data, forecast, selectedHour);
     const bestWindows = ratings.bestWindows;
     const { seaState } = processedData;
     if (!seaState || !bestWindows) return null;
 
-    const now = new Date().getHours();
+    const now = selectedHour?.getHours();
 
     // 1. IMPORTANTE: Guardamos la referencia del componente del icono, no el JSX
     const activities = [
@@ -30,22 +31,22 @@ export const SeaState = ({ data, forecast, beach }: SeaStateProps) => {
         { label: "Natación", data: bestWindows.swimming, icon: SwimmingIcon },
     ];
     // 2. Filtramos ANTES de renderizar para evitar arrays con 'undefined'
- const validWindows = activities.filter(a => {
-    if (a.data.time === "N/A") return false;
-    
-    // Reconstruir fecha desde "19/3, 00:00"
-    const [datePart, timePart] = a.data.time.split(', ');
-    const [day, month] = datePart.split('/').map(Number);
-    const [hour, minute] = timePart.split(':').map(Number);
-    
-    const windowDate = new Date();
-    windowDate.setMonth(month - 1, day);
-    windowDate.setHours(hour, minute, 0, 0);
-    
-    const isFuture = windowDate >= new Date();
-    
-    return a.data.score > 5 && isFuture;
-});
+    const validWindows = activities.filter(a => {
+        if (a.data.time === "N/A") return false;
+
+        // Reconstruir fecha desde "19/3, 00:00"
+        const [datePart, timePart] = a.data.time.split(', ');
+        const [day, month] = datePart.split('/').map(Number);
+        const [hour, minute] = timePart.split(':').map(Number);
+
+        const windowDate = new Date();
+        windowDate.setMonth(month - 1, day);
+        windowDate.setHours(hour, minute, 0, 0);
+
+        const isFuture = windowDate >= new Date();
+
+        return a.data.score > 5 && isFuture;
+    });
     return (
         <Card className="shadow-md">
             <CardHeader>

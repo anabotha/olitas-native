@@ -22,7 +22,7 @@ interface ActivityCheckProps {
 const ActivityCheck = (
   { data, selectedSpot, forecastData, selectedHour }: ActivityCheckProps
 ): JSX.Element => {
-  const processedData = processData(data, forecastData, selectedSpot?.orientation, selectedSpot?.name);
+  const processedData = processData(data, forecastData, selectedSpot?.orientation, selectedSpot?.name, selectedHour);
   if (!processedData || !selectedSpot) return <div>Hubo un error, proba mas tarde!</div>;
   const actividad = useRatings(processedData, selectedSpot?.name ?? "", selectedSpot?.orientation ?? 90, selectedSpot, data, forecastData, selectedHour);
   const safety = useCurrentSafety(data, forecastData, selectedSpot, selectedHour);

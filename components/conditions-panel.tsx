@@ -19,15 +19,16 @@ interface ConditionsProps {
   forecast: ForecastData | undefined;
   conditions: MarineWeatherData;
   selectedSpot: SpotLocation | undefined;
+  selectedHour: Date | undefined;
 }
 
-export function ConditionsPanel({ forecast, conditions, selectedSpot }: ConditionsProps) {
+export function ConditionsPanel({ forecast, conditions, selectedSpot, selectedHour }: ConditionsProps) {
   if (!forecast?.hourly) return null;
   if (!conditions) return null;
   const result = useProcessForecast(forecast);
   if (!result) return null;
   const { hoy, semana, mañana } = result;
-  const processedData = processData(conditions, forecast, selectedSpot?.orientation, selectedSpot?.name);
+  const processedData = processData(conditions, forecast, selectedSpot?.orientation, selectedSpot?.name, selectedHour);
   if (!processedData) return <div>Hubo un error, proba mas tarde!</div>;
 
   const degToCompass = (deg: number) => {
@@ -37,7 +38,7 @@ export function ConditionsPanel({ forecast, conditions, selectedSpot }: Conditio
   };
 
   const ordenarHora = (hoy: any[]) => {
-    const ahora = new Date().getHours();
+    const ahora = selectedHour ? selectedHour.getHours() : new Date().getHours();
     const ordenado = hoy
       .sort((a: any, b: any) => {
         const ha = parseInt(a.hora.split(":")[0], 10);

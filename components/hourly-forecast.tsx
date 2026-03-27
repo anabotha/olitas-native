@@ -8,10 +8,10 @@ import { HourlySummary } from "@/hooks/use-proccessForecast";
 
 interface HourlyForecastProps {
   forecast: ForecastData | undefined;
-
+  selectedHour: Date | undefined;
 }
 
-export function HourlyForecast({ forecast }: HourlyForecastProps) {
+export function HourlyForecast({ forecast, selectedHour }: HourlyForecastProps) {
   if (!forecast?.hourly) return null;
 
   const processed = useProcessForecast(forecast);
@@ -25,7 +25,7 @@ export function HourlyForecast({ forecast }: HourlyForecastProps) {
   };
 
   const ordenarHora = (hoy: HourlySummary[]) => {
-    const ahora = new Date().getHours();
+    const ahora = selectedHour ? selectedHour.getHours() : new Date().getHours();
     const ordenado = hoy
       .sort((a: any, b: any) => {
         const ha = parseInt(a.hora.split(":")[0], 10);
