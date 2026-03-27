@@ -54,7 +54,7 @@ export const useRatings = (
 
     // Stats para la hora seleccionada, o fallback a processData.current
     const hourlyStats = buildStatsForHour() ?? processData?.current;
-    const nowStats = processData?.current;
+    // const nowStats = processData?.current;
 
 
     const getRating = (
@@ -64,21 +64,21 @@ export const useRatings = (
         spotName: string,
         spot: SpotLocation
     ): ActivityRating => {
-        console.log(nowStats)
+        // console.log(nowStats)
         switch (activity) {
             case "surf": {
-                const { score, factors } = getSurfRating(nowStats, beachOrientation, spotName, spot);
+                const { score, factors } = getSurfRating(hourlyStats, beachOrientation, spotName, spot);
                 return { ...getLabelSurf(score, factors), factors, score };
             }
 
             case "sup": {
-                const { score, factors } = getSupRating(nowStats, spot);
+                const { score, factors } = getSupRating(hourlyStats, spot);
 
                 return { ...getLabelSup(score, factors), factors, score };
             }
 
             case "swimming": {
-                const { score, factors } = getSwimmingRating(nowStats, spot);
+                const { score, factors } = getSwimmingRating(hourlyStats, spot);
                 return { ...getLabelSwimming(score, factors), factors, score };
             }
 
