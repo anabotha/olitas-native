@@ -8,7 +8,7 @@ import { HourlySummary } from "@/hooks/use-proccessForecast";
 
 interface HourlyForecastProps {
   forecast: ForecastData | undefined;
-  selectedHour: Date | undefined;
+  selectedHour?: Date | undefined;
 }
 
 export function HourlyForecast({ forecast, selectedHour }: HourlyForecastProps) {
