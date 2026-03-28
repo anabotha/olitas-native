@@ -12,7 +12,7 @@ export const metadata: Metadata = {
   icons: {
     icon: [
       { url: '/android/launchericon-144x144.png' },
-      { url: '/icon.svg', type: 'image/svg+xml' },
+      // { url: '/icon.svg', type: 'image/svg+xml' },
     ],
     apple: '/apple-icon.png',
   },
