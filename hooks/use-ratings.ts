@@ -1,14 +1,13 @@
 import React, { use } from 'react'
 import { ActivityRating, ActivityType, CombinedConditions, MarineWeatherData, ForecastData, activities, SpotLocation } from '@/lib/types'
 import { getTidalPhase } from './use-processData';
-function directionInWindow(dir: number, min: number, max: number) {
 
-    if (min <= max) {
-        return dir >= min && dir <= max
-    }
+const degToCompass = (deg: number) => {
+    const directions = ["Norte", "Noreste", "Este", "Sureste", "Sur", "Suroeste", "Oeste", "Noroeste"];
+    const index = Math.floor(((deg + 22.5) / 45)) % 8;
+    return directions[index];
+};
 
-    return dir >= min || dir <= max
-}
 export const useRatings = (
     processData: CombinedConditions | null,
     beachName: string, beachOrientation: number,
@@ -67,7 +66,7 @@ export const useRatings = (
         // console.log(nowStats)
         switch (activity) {
             case "surf": {
-                const { score, factors } = getSurfRating(hourlyStats, beachOrientation, spotName, spot);
+                const { score, factors } = getSurfRating(hourlyStats, spotName, spot);
                 return { ...getLabelSurf(score, factors), factors, score };
             }
 
@@ -107,81 +106,7 @@ const angleDiff = (angle1: number, angle2: number): number => {
 
     return diff;
 };
-// const getLabelSwimming = (
-//     score: number,
-//     factors: string[],
-//     dangerLevel?: string   // ← se agrega para leer el ADVANCED del hard stop
-// ): { label: string; description: string } => {
 
-//     const hasRipCurrent     = factors.some(f => f.includes("resaca"))
-//     const hasLateralCurrent = factors.some(f => f.includes("lateral")||f.includes("Oleaje "))
-//     const hasHighWaves      = factors.some(f => f.includes("muy fuerte") || f.includes("fuerte"))
-//     const hasRoughSea       = factors.some(f => f.includes("revuelto") || f.includes("picado")  || f.includes("Corderitos"))
-//     const isFlat            = factors.some(f => f.includes("calmo")||f.includes("planchado") || f.includes("Espejo"))
-
-
-//     // ── PELIGROSOS (dangerLevel HIGH) ──────────────────────────────────────
-//     if (hasRipCurrent) return {
-//         label: "Peligroso",
-//         description: "Corriente de resaca activa",
-//     }
-//     if (hasLateralCurrent && score <= 3) return {
-//         label: "Peligroso",
-//         description: "Corriente lateral — no entrar",
-//     }
-
-//     // ── SOLO AVANZADOS (dangerLevel ADVANCED — viento fuerte sin peligro inmediato) ──
-//     if (dangerLevel === "ADVANCED") return {
-//         label: "Solo avanzados",
-//         description: "Viento fuerte — no recomendado para principiantes",
-//     }
-
-//     // ── MALO / JODIDO ──────────────────────────────────────────────────────
-//     if (score <= 2 && hasHighWaves) return {
-//         label: "Jodido",
-//         description: "Oleaje demasiado alto para nadar",
-//     }
-//     if (score <= 2) return {
-//         label: "Malo",
-//         description: "No se dan las condiciones",
-//     }
-
-//     // ── SCORE 3–4 ──────────────────────────────────────────────────────────
-//     if (score <= 4 && hasRoughSea) return {
-//         label: "Agitado",
-//         description: "Mar movido — solo con experiencia",
-//     }
-//     if (score <= 4 && hasHighWaves) return {
-//         label: "Con olas",
-//         description: "Oleaje moderado — con precaución",
-//     }
-//     if (score <= 4) return {
-//         label: "Flojo",
-//         description: "Se puede, pero no es ideal",
-//     }
-
-//     // ── SCORE 5–6 ──────────────────────────────────────────────────────────
-//     if (score <= 6 && isFlat) return {
-//         label: "Tranquilo",
-//         description: "Mar calmo — ideal para nadar",
-//     }
-//     if (score <= 6) return {
-//         label: "Bien",
-//         description: "Buenas condiciones",
-//     }
-
-//     // ── SCORE 7–8 ──────────────────────────────────────────────────────────
-//     if (score <= 8) return {
-//         label: "Muy bueno",
-//         description: "Agua en buenas condiciones",
-//     }
-
-//     // ── SCORE 9–10 ─────────────────────────────────────────────────────────
-//     return {
-//         label: "Excelente",
-//         description: "Día ideal para nadar",
-//     }
-// }
 const getLabelSwimming = (
     score: number,
     factors: string[],
@@ -273,9 +198,446 @@ const getLabelSwimming = (
         description: "Día ideal para nadar",
     }
 }
+
+    const getLabelSurf = (score: number, factors: string[]): { label: string; description: string } => {
+
+        // Casos especiales — condiciones contradictorias
+        const hasWaves = factors.some(f =>
+            f.includes("Olas") ||
+            f.includes("potente") ||
+            f.includes("grande") ||
+            f.includes("sólido") ||
+            f.includes("consistente")
+        );
+
+        // FIX: alineados con los factores reales que emite getSurfRating
+        const isDestroyed = factors.some(f =>
+            f.includes("destruido") ||      // "Mar destruido por viento"
+            f.includes("confuso") ||        // "Mar confuso"
+            f.includes("desordenada")       // "Ola desordenada por viento"
+        );
+
+        const periodBad = factors.some(f =>
+            f.includes("no es surfeable") ||
+            f.includes("cierra rápido") ||
+            f.includes("Swell débil")
+        );
+
+        if (score <= 2 && hasWaves && isDestroyed) {
+            return {
+                label: "Jodido",
+                description: "Hay olas pero el viento las arruina",
+            };
+        }
+
+        if (score <= 2 && hasWaves && periodBad) {
+            return {
+                label: "Jodido",
+                description: "Hay olas pero cierran todas",
+            };
+        }
+
+        // Labels normales
+        if (score <= 1) return { label: "Plano", description: "Sin condiciones" };
+        if (score <= 2) return { label: "Malo", description: "No vale la pena" };
+        if (score <= 4) return { label: "Flojo", description: "Se puede, pero no destaca" };
+        if (score <= 6) return { label: "Bien", description: "Condiciones bastante decentes" };
+        if (score <= 8) return { label: "Muy bueno", description: "Agarra el traje" };
+
+        return { label: "Excelente", description: "Día ideal" };
+    };
+    const inAngleWindow = (angle: number, min: number, max: number) => {
+        if (min <= max) return angle >= min && angle <= max
+        return angle >= min || angle <= max
+    }
+   const getSupRating = (stats: any, spot: SpotLocation) => {
+
+        const {
+            windSpeed,
+            windDirection,
+            waveHeight,
+            swellHeight,
+            swellDirection,
+            wavePeriod,
+            seaLevelHeightMsl,
+            seaLevelHeightMslPrevious,
+        } = stats;
+
+        const factors: string[] = [];
+
+        /* WAVE REFERENCE */
+
+        let waveRef = waveHeight ?? swellHeight ?? 0;
+
+        // SUP de tierra — las olas son inestabilidad, no el objetivo
+        if (!spot.exposed) {
+            waveRef *= 0.6;
+        }
+
+        /* WIND SHELTER
+           El reparo reduce effectiveWind antes de aplicar cualquier lógica.
+           Toda la escala Beaufort se evalúa sobre effectiveWind, no sobre windSpeed crudo. */
+
+        let effectiveWind = windSpeed;
+
+        if (spot.windShelter && inAngleWindow(windDirection, spot.windShelter.min, spot.windShelter.max)) {
+            effectiveWind *= 0.65;
+            factors.push("Spot protegido del viento");
+        }
+
+        const diff = angleDiff(windDirection, spot.orientation ? spot.orientation : 90);
+
+       const isOnshore  = diff < 45;   // el viento sopla hacia donde mira la playa
+const isOffshore = diff > 135;
+        const isCross = !isOnshore && !isOffshore;
+
+        /* HARD STOPS
+           Beaufort 5 offshore (≥28 km/h efectivos) → peligroso, te lleva mar adentro.
+           Subido desde 22 km/h: con reparo activo un viento real de ~43 km/h
+           queda en ~28, que es el límite real Beaufort 4→5. */
+
+        // ── HARD STOPS (antes de cualquier cálculo) ──────────────────────────
+
+        if (isOffshore && windSpeed >= 34) {
+            return {
+                score: 0,
+                factors: ["Peligro: viento te lleva mar adentro"],
+                dangerLevel: "HIGH",
+                isGlassy: false,
+            };
+        }
+
+        if (windSpeed > 55) {
+            return {
+                score: 0,
+                factors: ["Viento extremo"],
+                dangerLevel: "HIGH",
+                isGlassy: false,
+            };
+        }
+
+        // Viento muy fuerte → peligro
+        if (windSpeed >= 45) {
+            return {
+                score: 0,
+                factors: ["Peligro: viento muy fuerte"],
+                dangerLevel: "HIGH",
+                isGlassy: false,
+            };
+        }
+
+        // Viento fuerte → penalización fuerte (no hard stop)
+        if (windSpeed >= 35) {
+            return {
+                score: 1,
+                factors: ["Viento fuerte"],
+                dangerLevel: "MEDIUM",
+                isGlassy: false,
+            };
+        }
+
+        /* GLASSY */
+
+        const isGlassy = effectiveWind < 12 && waveRef < 0.25;
+
+        if (isGlassy) {
+            return { score: 10, factors: ["Espejo"], dangerLevel: "NONE", isGlassy: true };
+        }
+
+        /* WIND SCORE */
+
+        let windScore =
+            effectiveWind < 8 ? 10 :
+                effectiveWind < 14 ? 9 :
+                    effectiveWind < 20 ? 7 :
+                        effectiveWind < 30 ? 5 :
+                            effectiveWind < 40 ? 3 : 1;
+
+        if (effectiveWind < 18) factors.push("Viento calmo");
+        else if (effectiveWind < 28) factors.push("Viento moderado");
+        else factors.push("Viento fuerte");
+
+        /* DIRECTION QUALITY + FACTOR DE Viento en direccion al mar
+           Beaufort aplicado sobre effectiveWind (ya con reparo):
+           ≤15      → sin mención
+           15–20    → "Viento en direccion al mar leve"   (solo factor, no afecta label)
+           20–28    → "Viento en direccion al mar"         (factor + puede bajar label en getLabelSup)
+           ≥28      → hard stop arriba (nunca llega acá) */
+
+        let directionMultiplier =
+            isOnshore ? 1 :
+                isCross ? (effectiveWind < 20 ? 0.9 : 0.7) :
+                    (effectiveWind < 15 ? 0.8 : 0.4);
+
+        if (isCross) factors.push("Viento lateral");
+
+        if (isOffshore) {
+            if (effectiveWind > 20) {
+                factors.push("Viento en direccion al mar");        // 20–28: advertencia moderada
+            } else if (effectiveWind > 15) {
+                factors.push("Viento en direccion al mar leve");   // 15–20: solo informativo
+            }
+            // ≤15: silencio total
+        }
+
+        let baseScore = windScore * directionMultiplier;
+
+        /* SWELL WINDOW */
+
+        if (swellDirection && spot.swellWindow) {
+            const goodSwell = inAngleWindow(
+                swellDirection,
+                spot.swellWindow.min,
+                spot.swellWindow.max
+            );
+
+            if (!goodSwell) {
+                baseScore *= 0.85;
+                factors.push("Swell desfavorable");
+            } else {
+                factors.push("Swell favorable");
+            }
+        }
+
+        /* WAVE SIZE — inestabilidad para SUP de tierra */
+
+        let wavePenalty =
+            waveRef < 0.4 ? 1 :
+                waveRef < 0.9 ? 0.95 :
+                    waveRef < 1.4 ? 0.85 :
+                        waveRef < 2 ? 0.65 : 0.4;
+
+        if (waveRef >= 0.4 && waveRef < 0.9) factors.push("Algo de movimiento");
+        if (waveRef >= 0.9 && waveRef < 1.5) factors.push("Olas medianas — inestable");
+        if (waveRef >= 1.5) factors.push("Olas grandes — muy inestable");
+
+        /* CHOP
+           FIX: valores comparados alineados con los valores asignados reales. */
+
+        const windWaveP = wavePeriod ?? 99;
+
+        let chopPenalty: number;
+
+        if (waveRef > 0.6 && windWaveP < 4) {
+            chopPenalty = 0.75;
+            factors.push("Mar picado");
+        } else if (waveRef > 0.4 && windWaveP < 5) {
+            chopPenalty = 0.85;
+            factors.push("Chop");
+        } else {
+            chopPenalty = 1;
+        }
+
+        /* TIDE */
+
+        const tide = getTidalPhase(
+            seaLevelHeightMsl,
+            seaLevelHeightMslPrevious,
+            spot.name,
+            data?.hourly?.sea_level_height_msl ?? []
+        );
+
+        let tidePenalty = 1;
+
+        if (tide.phase === "mid") factors.push("Marea media");
+
+        if (tide.phase === "low") {
+            tidePenalty = 1;
+            // factors.push("Marea baja");
+        }
+
+        /* FINAL SCORE */
+
+        let finalScore =
+            baseScore *
+            wavePenalty *
+            chopPenalty *
+            tidePenalty;
+
+        finalScore = Math.round(Math.max(0, Math.min(finalScore, 10)));
+
+        return {
+            score: finalScore,
+            factors: [...new Set(factors)],
+            isGlassy,
+        };
+    };
+    const getSwimmingRating = (stats: any, spot: SpotLocation) => {
+
+    const {
+        windSpeed,
+        windDirection,
+        waveHeight,
+        swellHeight,
+        swellDirection,
+        wavePeriod,
+        seaLevelHeightMsl,
+        seaLevelHeightMslPrevious
+    } = stats
+
+    let score = 5
+    const factors: string[] = []
+
+    /* OLA TOTAL */
+    let totalWave = waveHeight ?? swellHeight ?? 0
+    if (!spot.exposed) totalWave *= 0.6
+
+    /* ENERGÍA DE SWELL */
+    const swellEnergy =
+        swellHeight != null && wavePeriod != null
+            ? (swellHeight ** 2) * wavePeriod
+            : 0
+
+    /* VIENTO EFECTIVO */
+    let effectiveWind = windSpeed
+    if (spot.windShelter && inAngleWindow(windDirection, spot.windShelter.min, spot.windShelter.max)) {
+        effectiveWind *= 0.65
+        factors.push("Viento protegido")
+    }
+
+    /* DIRECCIONES */
+    const windDiff = angleDiff(windDirection, spot.orientation ?? 90)
+    const swellDiff = swellDirection != null
+        ? angleDiff(swellDirection, spot.orientation ?? 90)
+        : null
+
+    const isDirectOnshore = windDiff < 22.5
+
+const isOnshore  = windDiff < 45;   // el viento sopla hacia donde mira la playa
+const isOffshore = windDiff > 135;
+    const isSideShore     = windDiff >= 45 && windDiff <= 135
+
+    /* HARD STOPS */
+    if (windSpeed > 55) {
+        return { score: 0, factors: ["Viento extremo"], dangerLevel: "HIGH", isGlassy: false }
+    }
+    if (windSpeed >= 45) {
+        return { score: 0, factors: ["Viento muy fuerte"], dangerLevel: "HIGH", isGlassy: false }
+    }
+    if (isOffshore && windSpeed >= 28) {
+        
+        return { score: 0, factors: ["Viento en direccion al mar"], dangerLevel: "HIGH", isGlassy: false }
+    }
+    if (windSpeed >= 35) {
+        // ← no es HIGH, no es peligro inmediato, pero no es para cualquiera
+        return { score: 1, factors: ["Viento fuerte"], dangerLevel: "ADVANCED", isGlassy: false }
+    }
+
+    /* SWELL WINDOW */
+    if (swellDirection != null && spot.swellWindow) {
+        const goodSwell = inAngleWindow(swellDirection, spot.swellWindow.min, spot.swellWindow.max)
+        if (!goodSwell) {
+            totalWave *= 0.7
+            factors.push("Swell bloqueado")
+        }
+    }
+
+    /* OLEAJE */
+    if (totalWave < 0.25) {
+        score += 2
+        factors.push("Mar calmo")
+    } else if (totalWave < 0.5) {
+        score += 1
+    } else if (totalWave < 0.7) {
+        score += 0
+    } else if (totalWave < 1.0) {
+        score -= 1
+        factors.push("Oleaje moderado")
+    } else if (totalWave < 1.3) {
+        score -= 2
+        factors.push("Oleaje fuerte")
+    } else {
+        score -= 3
+        factors.push("Oleaje muy fuerte")
+    }
+
+    /* PERIODO */
+    if (wavePeriod != null) {
+        if (wavePeriod > 11 && totalWave > 0.8) {
+            score -= 1
+            factors.push("Swell potente")
+        }
+        if (wavePeriod < 5 && effectiveWind > 20) {
+            score -= 1
+            factors.push("Mar revuelto")
+        }
+    }
+
+    /* VIENTO */
+    if (effectiveWind < 10) {
+        score += 2
+    } else if (effectiveWind < 18) {
+        score += 1
+    } else if (effectiveWind > 30 && isOnshore) {
+        score -= 2
+        factors.push("Viento de frente")
+    } else if (effectiveWind > 35) {
+        if (isOffshore) {
+    factors.push("Viento en direccion al mar")
+}
+        score -= 1
+        factors.push("Viento fuerte")
+    }
+
+
+
+    /* MAR PICADO */
+    if (totalWave < 0.6 && effectiveWind > 35) {
+        score -= 2
+        factors.push("Mar picado")
+    }
+
+    /* MAREA */
+    const tide = getTidalPhase(
+        seaLevelHeightMsl,
+        seaLevelHeightMslPrevious,
+        spot.name,
+        data?.hourly?.sea_level_height_msl ?? []
+    )
+    if (tide.phase === "mid") {
+        score += 1
+        factors.push("Marea media")
+    }
+    if (tide.phase === "low") {
+        factors.push("Marea baja")
+    }
+
+    /* RIP CURRENT */
+    const tidalDrop = !tide.isRising && tide.phase !== "high"
+    const swellCross = swellDiff != null && swellDiff > 20 && swellDiff < 110
+    if (swellCross && totalWave > 0.9 && tidalDrop) {
+        score -= 2
+        factors.push("Corriente de resaca")
+    }
+    if (isSideShore && effectiveWind > 30) {
+        score -= 1
+        factors.push("Corriente lateral")
+    }
+
+    /* SHOREBREAK */
+    if (totalWave > 1 && wavePeriod != null && wavePeriod < 7) {
+        score -= 1
+        factors.push("Olitas en orilla")
+    }
+
+    if (swellEnergy > 20 && totalWave > 0.8) {
+        score -= 1
+        factors.push("Swell energético")
+    }
+
+    const finalScore = Math.round(Math.min(Math.max(0, score), 10))
+    const dangerLevel = finalScore <= 2 ? "HIGH" : finalScore <= 5 ? "MEDIUM" : "LOW"
+
+    return {
+        score: finalScore,
+        factors: [...new Set(factors)],
+        dangerLevel,
+        isGlassy: effectiveWind < 5,
+    }
+}
 const getSurfRating = (
     stats: any,
-    beachOrientation: number,
+ 
     spotName: string,
     spot: SpotLocation
 ) => {
@@ -307,7 +669,7 @@ const getSurfRating = (
     let isSheltered = false;
 
     if (spot.swellWindow) {
-        swellAllowed = directionInWindow(
+        swellAllowed = inAngleWindow(
             swellDirection,
             spot.swellWindow.min,
             spot.swellWindow.max
@@ -319,7 +681,7 @@ const getSurfRating = (
     }
 
     if (spot.windShelter) {
-        isSheltered = directionInWindow(
+        isSheltered = inAngleWindow(
             windDirection,
             spot.windShelter.min,
             spot.windShelter.max
@@ -336,12 +698,11 @@ const getSurfRating = (
 
     /* ── ÁNGULOS ─────────────────────────────── */
     // CAMBIO: reemplazado el one-liner por angleDiff consistente con el resto del código
-    const windDiff  = angleDiff(windDirection, beachOrientation);
-    const swellDiff = angleDiff(swellDirection, beachOrientation);
+    const windDiff  = angleDiff(windDirection, spot.orientation ?? 90);
+    const swellDiff = angleDiff(swellDirection, spot.orientation ?? 90);
 
-    const isOffshore = windDiff > 135;
-    const isOnshore  = windDiff < 45;
-
+const isOnshore  = windDiff < 45;   // el viento sopla hacia donde mira la playa
+const isOffshore = windDiff > 135;
     const period = swellPeriod ?? wavePeriod ?? null;
 
     /* ── HARD STOPS ──────────────────────────── */
@@ -518,269 +879,6 @@ const getSurfRating = (
     };
 };
 
-    const getLabelSurf = (score: number, factors: string[]): { label: string; description: string } => {
-
-        // Casos especiales — condiciones contradictorias
-        const hasWaves = factors.some(f =>
-            f.includes("Olas") ||
-            f.includes("potente") ||
-            f.includes("grande") ||
-            f.includes("sólido") ||
-            f.includes("consistente")
-        );
-
-        // FIX: alineados con los factores reales que emite getSurfRating
-        const isDestroyed = factors.some(f =>
-            f.includes("destruido") ||      // "Mar destruido por viento"
-            f.includes("confuso") ||        // "Mar confuso"
-            f.includes("desordenada")       // "Ola desordenada por viento"
-        );
-
-        const periodBad = factors.some(f =>
-            f.includes("no es surfeable") ||
-            f.includes("cierra rápido") ||
-            f.includes("Swell débil")
-        );
-
-        if (score <= 2 && hasWaves && isDestroyed) {
-            return {
-                label: "Jodido",
-                description: "Hay olas pero el viento las arruina",
-            };
-        }
-
-        if (score <= 2 && hasWaves && periodBad) {
-            return {
-                label: "Jodido",
-                description: "Hay olas pero cierran todas",
-            };
-        }
-
-        // Labels normales
-        if (score <= 1) return { label: "Plano", description: "Sin condiciones" };
-        if (score <= 2) return { label: "Malo", description: "No vale la pena" };
-        if (score <= 4) return { label: "Flojo", description: "Se puede, pero no destaca" };
-        if (score <= 6) return { label: "Bien", description: "Condiciones bastante decentes" };
-        if (score <= 8) return { label: "Muy bueno", description: "Agarra el traje" };
-
-        return { label: "Excelente", description: "Día ideal" };
-    };
-    const inAngleWindow = (angle: number, min: number, max: number) => {
-        if (min <= max) return angle >= min && angle <= max
-        return angle >= min || angle <= max
-    }
-   const getSupRating = (stats: any, spot: SpotLocation) => {
-
-        const {
-            windSpeed,
-            windDirection,
-            waveHeight,
-            swellHeight,
-            swellDirection,
-            wavePeriod,
-            seaLevelHeightMsl,
-            seaLevelHeightMslPrevious,
-        } = stats;
-
-        const factors: string[] = [];
-
-        /* WAVE REFERENCE */
-
-        let waveRef = waveHeight ?? swellHeight ?? 0;
-
-        // SUP de tierra — las olas son inestabilidad, no el objetivo
-        if (!spot.exposed) {
-            waveRef *= 0.6;
-        }
-
-        /* WIND SHELTER
-           El reparo reduce effectiveWind antes de aplicar cualquier lógica.
-           Toda la escala Beaufort se evalúa sobre effectiveWind, no sobre windSpeed crudo. */
-
-        let effectiveWind = windSpeed;
-
-        if (spot.windShelter && inAngleWindow(windDirection, spot.windShelter.min, spot.windShelter.max)) {
-            effectiveWind *= 0.65;
-            factors.push("Spot protegido del viento");
-        }
-
-        const diff = angleDiff(windDirection, spot.orientation ? spot.orientation : 90);
-
-        const isOffshore = diff > 135;
-        const isOnshore = diff < 45;
-        const isCross = !isOnshore && !isOffshore;
-
-        /* HARD STOPS
-           Beaufort 5 offshore (≥28 km/h efectivos) → peligroso, te lleva mar adentro.
-           Subido desde 22 km/h: con reparo activo un viento real de ~43 km/h
-           queda en ~28, que es el límite real Beaufort 4→5. */
-
-        // ── HARD STOPS (antes de cualquier cálculo) ──────────────────────────
-
-        if (isOffshore && windSpeed >= 34) {
-            return {
-                score: 0,
-                factors: ["Peligro: viento te lleva mar adentro"],
-                dangerLevel: "HIGH",
-                isGlassy: false,
-            };
-        }
-
-        if (windSpeed > 55) {
-            return {
-                score: 0,
-                factors: ["Viento extremo"],
-                dangerLevel: "HIGH",
-                isGlassy: false,
-            };
-        }
-
-        // Viento muy fuerte → peligro
-        if (windSpeed >= 45) {
-            return {
-                score: 0,
-                factors: ["Peligro: viento muy fuerte"],
-                dangerLevel: "HIGH",
-                isGlassy: false,
-            };
-        }
-
-        // Viento fuerte → penalización fuerte (no hard stop)
-        if (windSpeed >= 35) {
-            return {
-                score: 1,
-                factors: ["Viento fuerte"],
-                dangerLevel: "MEDIUM",
-                isGlassy: false,
-            };
-        }
-
-        /* GLASSY */
-
-        const isGlassy = effectiveWind < 12 && waveRef < 0.25;
-
-        if (isGlassy) {
-            return { score: 10, factors: ["Espejo"], dangerLevel: "NONE", isGlassy: true };
-        }
-
-        /* WIND SCORE */
-
-        let windScore =
-            effectiveWind < 8 ? 10 :
-                effectiveWind < 14 ? 9 :
-                    effectiveWind < 20 ? 7 :
-                        effectiveWind < 30 ? 5 :
-                            effectiveWind < 40 ? 3 : 1;
-
-        if (effectiveWind < 18) factors.push("Viento calmo");
-        else if (effectiveWind < 28) factors.push("Viento moderado");
-        else factors.push("Viento fuerte");
-
-        /* DIRECTION QUALITY + FACTOR DE Viento en direccion al mar
-           Beaufort aplicado sobre effectiveWind (ya con reparo):
-           ≤15      → sin mención
-           15–20    → "Viento en direccion al mar leve"   (solo factor, no afecta label)
-           20–28    → "Viento en direccion al mar"         (factor + puede bajar label en getLabelSup)
-           ≥28      → hard stop arriba (nunca llega acá) */
-
-        let directionMultiplier =
-            isOnshore ? 1 :
-                isCross ? (effectiveWind < 20 ? 0.9 : 0.7) :
-                    (effectiveWind < 15 ? 0.8 : 0.4);
-
-        if (isCross) factors.push("Viento lateral");
-
-        if (isOffshore) {
-            if (effectiveWind > 20) {
-                factors.push("Viento en direccion al mar");        // 20–28: advertencia moderada
-            } else if (effectiveWind > 15) {
-                factors.push("Viento en direccion al mar leve");   // 15–20: solo informativo
-            }
-            // ≤15: silencio total
-        }
-
-        let baseScore = windScore * directionMultiplier;
-
-        /* SWELL WINDOW */
-
-        if (swellDirection && spot.swellWindow) {
-            const goodSwell = inAngleWindow(
-                swellDirection,
-                spot.swellWindow.min,
-                spot.swellWindow.max
-            );
-
-            if (!goodSwell) {
-                baseScore *= 0.85;
-                factors.push("Swell desfavorable");
-            } else {
-                factors.push("Swell favorable");
-            }
-        }
-
-        /* WAVE SIZE — inestabilidad para SUP de tierra */
-
-        let wavePenalty =
-            waveRef < 0.4 ? 1 :
-                waveRef < 0.9 ? 0.95 :
-                    waveRef < 1.4 ? 0.85 :
-                        waveRef < 2 ? 0.65 : 0.4;
-
-        if (waveRef >= 0.4 && waveRef < 0.9) factors.push("Algo de movimiento");
-        if (waveRef >= 0.9 && waveRef < 1.5) factors.push("Olas medianas — inestable");
-        if (waveRef >= 1.5) factors.push("Olas grandes — muy inestable");
-
-        /* CHOP
-           FIX: valores comparados alineados con los valores asignados reales. */
-
-        const windWaveP = wavePeriod ?? 99;
-
-        let chopPenalty: number;
-
-        if (waveRef > 0.6 && windWaveP < 4) {
-            chopPenalty = 0.75;
-            factors.push("Mar picado");
-        } else if (waveRef > 0.4 && windWaveP < 5) {
-            chopPenalty = 0.85;
-            factors.push("Chop");
-        } else {
-            chopPenalty = 1;
-        }
-
-        /* TIDE */
-
-        const tide = getTidalPhase(
-            seaLevelHeightMsl,
-            seaLevelHeightMslPrevious,
-            spot.name,
-            data?.hourly?.sea_level_height_msl ?? []
-        );
-
-        let tidePenalty = 1;
-
-        if (tide.phase === "mid") factors.push("Marea media");
-
-        if (tide.phase === "low") {
-            tidePenalty = 1;
-            // factors.push("Marea baja");
-        }
-
-        /* FINAL SCORE */
-
-        let finalScore =
-            baseScore *
-            wavePenalty *
-            chopPenalty *
-            tidePenalty;
-
-        finalScore = Math.round(Math.max(0, Math.min(finalScore, 10)));
-
-        return {
-            score: finalScore,
-            factors: [...new Set(factors)],
-            isGlassy,
-        };
-    };
     const getLabelSup = (score: number, factors: string[]): { label: string; description: string } => {
 
         const isOffshoreDANGER = factors.some(f => f.includes("lleva mar adentro"));
@@ -864,421 +962,10 @@ const getSurfRating = (
 
         return { label: "Excelente", description: "Día ideal para remar" };
     };
-//     const getSwimmingRating = (stats: any, spot: SpotLocation) => {
 
-//         const {
-//             windSpeed,
-//             windDirection,
-//             waveHeight,
-//             swellHeight,
-//             swellDirection,
-//             wavePeriod,
-//             seaLevelHeightMsl,
-//             seaLevelHeightMslPrevious
-//         } = stats
 
-//         let score = 5
-//         const factors: string[] = []
 
-//         /* OLA TOTAL */
-
-//         let totalWave = waveHeight ?? swellHeight ?? 0
-
-//         if (!spot.exposed) {
-//             totalWave *= 0.6
-//         }
-
-//         /* ENERGÍA DE SWELL */
-
-//         const swellEnergy =
-//             swellHeight != null && wavePeriod != null
-//                 ? (swellHeight ** 2) * wavePeriod
-//                 : 0
-
-//         /* VIENTO EFECTIVO */
-
-//         let effectiveWind = windSpeed
-
-//         if (
-//             spot.windShelter &&
-//             inAngleWindow(windDirection, spot.windShelter.min, spot.windShelter.max)
-//         ) {
-//             effectiveWind *= 0.65
-//             factors.push("Playa protegida del viento")
-//         }
-
-//         /* DIRECCIONES */
-// const diff = angleDiff(windDirection, beachOrientation);
-//         const windDiff = angleDiff(windDirection, spot.orientation ? spot.orientation : 90)
-
-//         const swellDiff =
-//             swellDirection != null
-//                 ? angleDiff(swellDirection, spot.orientation ? spot.orientation : 90)
-//                 : null
-
-//         // const isOnshore = windDiff < 45
-//         // const isOffshore = windDiff > 135
-//         // const isCross = !isOnshore && !isOffshore
-//         const isDirectOnshore  = diff < 22.5;   // Viento justo de frente
-// const isOnshore        = diff < 45;     // Viento del mar hacia tierra
-// const isOffshore       = diff > 135;    // Viento en direccion al mar hacia el mar (PELIGRO)
-// const isSideShore      = diff >= 45 && diff <= 135; // Viento lateral
-//         // ── HARD STOPS (antes de cualquier cálculo) ──────────────────────────
-
-//         if (isOffshore && windSpeed >= 28) {
-//             return {
-//                 score: 0,
-//                 factors: ["Peligro: viento te lleva mar adentro"],
-//                 dangerLevel: "HIGH",
-//                 isGlassy: false,
-//             };
-//         }
-
-//         if (windSpeed > 55) {
-//             return {
-//                 score: 0,
-//                 factors: ["Viento extremo"],
-//                 dangerLevel: "HIGH",
-//                 isGlassy: false,
-//             };
-//         }
-
-//         // Viento muy fuerte → peligro
-//         if (windSpeed >= 45) {
-//             return {
-//                 score: 0,
-//                 factors: ["Viento muy fuerte"],
-//                 dangerLevel: "HIGH",
-//                 isGlassy: false,
-//             };
-//         }
-
-//         // Viento fuerte → penalización fuerte (no hard stop)
-//         if (windSpeed >= 35) {
-//             return {
-//                 score: 1,
-//                 factors: ["Viento","Apto para avanzados con precaucion"],
-//                 dangerLevel: "MEDIUM",
-//                 isGlassy: false,
-//             };
-//         }
-//         /* SWELL WINDOW */
-
-//         if (swellDirection != null && spot.swellWindow) {
-
-//             const goodSwell = inAngleWindow(
-//                 swellDirection,
-//                 spot.swellWindow.min,
-//                 spot.swellWindow.max
-//             )
-
-//             if (!goodSwell) {
-//                 totalWave *= 0.7
-//                 factors.push("Swell bloqueado")
-//             }
-//         }
-
-//         /* OLEAJE */
-
-//         if (totalWave < 0.25) {
-//             score += 2
-//             factors.push("Mar planchado")
-//         }
-//         else if (totalWave < 0.5) {
-//             score += 1
-//         }
-//         else if (totalWave < 0.9) {
-//             score += 0
-//         }
-//         else if (totalWave < 1.3) {
-//             score -= 1
-//             factors.push("Oleaje moderado")
-//         }
-//         else {
-//             score -= 2
-//             factors.push("Oleaje fuerte")
-//         }
-
-//         /* PERIODO */
-
-//         if (wavePeriod != null) {
-
-//             if (wavePeriod > 11 && totalWave > 0.8) {
-//                 score -= 1
-//                 factors.push("Swell potente")
-//             }
-
-//             if (wavePeriod < 5 && effectiveWind > 20) {
-//                 score -= 1
-//                 factors.push("Mar revuelto")
-//             }
-//         }
-
-//         /* VIENTO */
-
-//         if (effectiveWind < 10) {
-//             score += 2
-//         }
-//         else if (effectiveWind < 18) {
-//             score += 1
-//         }
-//         else if (effectiveWind > 30 && isOnshore) {
-//             score -= 2
-//             factors.push("Viento onshore fuerte")
-//         }
-//         else if (effectiveWind > 35) {
-//             score -= 1
-//             factors.push("Viento fuerte")
-//         }
-
-//         if (isOffshore && effectiveWind < 20) {
-//             score += 1
-//             factors.push("Viento en direccion al mar")
-//         }
-
-//         /* MAR CORTO (típico Patagonia) */
-
-//         if (totalWave < 0.6 && effectiveWind > 35) {
-//             score -= 2
-//             factors.push("Mar corto con viento fuerte")
-//         }
-
-//         /* MAREA */
-
-//         const tide = getTidalPhase(
-//             seaLevelHeightMsl,
-//             seaLevelHeightMslPrevious,
-//             spot.name,
-//             data?.hourly?.sea_level_height_msl ?? []
-//         )
-
-//         if (tide.phase === "mid") {
-//             score += 1
-//             factors.push("Marea cómoda")
-//         }
-
-//         if (tide.phase === "low") {
-//             factors.push("Marea baja")
-//         }
-
-//         /* RIP CURRENT RISK */
-
-//         const tidalDrop =
-//             !tide.isRising && tide.phase !== "high"
-
-//         const swellCross =
-//             swellDiff != null && swellDiff > 20 && swellDiff < 110
-
-//         if (swellCross && totalWave > 0.9 && tidalDrop) {
-//             score -= 2
-//             factors.push("Riesgo de corriente de resaca")
-//         }
-
-//         if (isSideShore && effectiveWind > 30) {
-//             score -= 1
-//             factors.push("Corriente lateral")
-//         }
-
-//         /* SHOREBREAK */
-
-//         if (totalWave > 1 && wavePeriod != null && wavePeriod < 7) {
-//             score -= 1
-//             factors.push("Shorebreak")
-//         }
-
-//         /* ENERGÍA ALTA DE SWELL */
-
-//         if (swellEnergy > 20 && totalWave > 0.8) {
-//             score -= 1
-//             factors.push("Swell con mucha energía")
-//         }
-
-//         /* NORMALIZACIÓN */
-
-//         const finalScore = Math.round(
-//             Math.min(Math.max(0, score), 10)
-//         )
-
-//         return {
-//             score: finalScore,
-//             factors: [...new Set(factors)],
-
-//         }
-//     }
-
-const getSwimmingRating = (stats: any, spot: SpotLocation) => {
-
-    const {
-        windSpeed,
-        windDirection,
-        waveHeight,
-        swellHeight,
-        swellDirection,
-        wavePeriod,
-        seaLevelHeightMsl,
-        seaLevelHeightMslPrevious
-    } = stats
-
-    let score = 5
-    const factors: string[] = []
-
-    /* OLA TOTAL */
-    let totalWave = waveHeight ?? swellHeight ?? 0
-    if (!spot.exposed) totalWave *= 0.6
-
-    /* ENERGÍA DE SWELL */
-    const swellEnergy =
-        swellHeight != null && wavePeriod != null
-            ? (swellHeight ** 2) * wavePeriod
-            : 0
-
-    /* VIENTO EFECTIVO */
-    let effectiveWind = windSpeed
-    if (spot.windShelter && inAngleWindow(windDirection, spot.windShelter.min, spot.windShelter.max)) {
-        effectiveWind *= 0.65
-        factors.push("Viento protegido")
-    }
-
-    /* DIRECCIONES */
-    const windDiff = angleDiff(windDirection, spot.orientation ?? 90)
-    const swellDiff = swellDirection != null
-        ? angleDiff(swellDirection, spot.orientation ?? 90)
-        : null
-
-    const isDirectOnshore = windDiff < 22.5
-    const isOnshore       = windDiff < 45
-    const isOffshore      = windDiff > 135
-    const isSideShore     = windDiff >= 45 && windDiff <= 135
-
-    /* HARD STOPS */
-    if (windSpeed > 55) {
-        return { score: 0, factors: ["Viento extremo"], dangerLevel: "HIGH", isGlassy: false }
-    }
-    if (windSpeed >= 45) {
-        return { score: 0, factors: ["Viento muy fuerte"], dangerLevel: "HIGH", isGlassy: false }
-    }
-    if (isOffshore && windSpeed >= 28) {
-        
-        return { score: 0, factors: ["Viento en direccion al mar"], dangerLevel: "HIGH", isGlassy: false }
-    }
-    if (windSpeed >= 35) {
-        // ← no es HIGH, no es peligro inmediato, pero no es para cualquiera
-        return { score: 1, factors: ["Viento fuerte"], dangerLevel: "ADVANCED", isGlassy: false }
-    }
-
-    /* SWELL WINDOW */
-    if (swellDirection != null && spot.swellWindow) {
-        const goodSwell = inAngleWindow(swellDirection, spot.swellWindow.min, spot.swellWindow.max)
-        if (!goodSwell) {
-            totalWave *= 0.7
-            factors.push("Swell bloqueado")
-        }
-    }
-
-    /* OLEAJE */
-    if (totalWave < 0.25) {
-        score += 2
-        factors.push("Mar calmo")
-    } else if (totalWave < 0.5) {
-        score += 1
-    } else if (totalWave < 0.7) {
-        score += 0
-    } else if (totalWave < 1.0) {
-        score -= 1
-        factors.push("Oleaje moderado")
-    } else if (totalWave < 1.3) {
-        score -= 2
-        factors.push("Oleaje fuerte")
-    } else {
-        score -= 3
-        factors.push("Oleaje muy fuerte")
-    }
-
-    /* PERIODO */
-    if (wavePeriod != null) {
-        if (wavePeriod > 11 && totalWave > 0.8) {
-            score -= 1
-            factors.push("Swell potente")
-        }
-        if (wavePeriod < 5 && effectiveWind > 20) {
-            score -= 1
-            factors.push("Mar revuelto")
-        }
-    }
-
-    /* VIENTO */
-    if (effectiveWind < 10) {
-        score += 2
-    } else if (effectiveWind < 18) {
-        score += 1
-    } else if (effectiveWind > 30 && isOnshore) {
-        score -= 2
-        factors.push("Viento de frente")
-    } else if (effectiveWind > 35) {
-        if (isOffshore) {
-    factors.push("Viento en direccion al mar")
-}
-        score -= 1
-        factors.push("Viento fuerte")
-    }
-
-
-
-    /* MAR PICADO */
-    if (totalWave < 0.6 && effectiveWind > 35) {
-        score -= 2
-        factors.push("Mar picado")
-    }
-
-    /* MAREA */
-    const tide = getTidalPhase(
-        seaLevelHeightMsl,
-        seaLevelHeightMslPrevious,
-        spot.name,
-        data?.hourly?.sea_level_height_msl ?? []
-    )
-    if (tide.phase === "mid") {
-        score += 1
-        factors.push("Marea media")
-    }
-    if (tide.phase === "low") {
-        factors.push("Marea baja")
-    }
-
-    /* RIP CURRENT */
-    const tidalDrop = !tide.isRising && tide.phase !== "high"
-    const swellCross = swellDiff != null && swellDiff > 20 && swellDiff < 110
-    if (swellCross && totalWave > 0.9 && tidalDrop) {
-        score -= 2
-        factors.push("Corriente de resaca")
-    }
-    if (isSideShore && effectiveWind > 30) {
-        score -= 1
-        factors.push("Corriente lateral")
-    }
-
-    /* SHOREBREAK */
-    if (totalWave > 1 && wavePeriod != null && wavePeriod < 7) {
-        score -= 1
-        factors.push("Olitas en orilla")
-    }
-
-    if (swellEnergy > 20 && totalWave > 0.8) {
-        score -= 1
-        factors.push("Swell energético")
-    }
-
-    const finalScore = Math.round(Math.min(Math.max(0, score), 10))
-    const dangerLevel = finalScore <= 2 ? "HIGH" : finalScore <= 5 ? "MEDIUM" : "LOW"
-
-    return {
-        score: finalScore,
-        factors: [...new Set(factors)],
-        dangerLevel,
-        isGlassy: effectiveWind < 5,
-    }
-}
-    const getBestWindow = (data: any, activity: ActivityType, beachOrientation?: number, forecastData?: ForecastData) => {
+    const getBestWindow = (data: any, activity: ActivityType, forecastData?: ForecastData) => {
         const nowIndex = data.hourly.time.findIndex((t: any) => new Date(t) >= new Date());
         let bestHour = null;
         let maxScore = 0;
@@ -1297,7 +984,7 @@ const getSwimmingRating = (stats: any, spot: SpotLocation) => {
                 seaLevelHeightMslPrevious: data.hourly.sea_level_height_msl[i - 1] ?? 0,
             };
 
-            const { score } = activity === "surf" ? getSurfRating(hourlyStats, beachOrientation ? beachOrientation : 90, beachName, spot) :
+            const { score } = activity === "surf" ? getSurfRating(hourlyStats, beachName, spot) :
                 activity === "sup" ? getSupRating(hourlyStats, spot) :
                     getSwimmingRating(hourlyStats, spot);
 
@@ -1327,9 +1014,9 @@ const getSwimmingRating = (stats: any, spot: SpotLocation) => {
         },
         ...(data ? {
             bestWindows: {
-                surf: getBestWindow(data, "surf", beachOrientation ?? 90, forecastData),
-                sup: getBestWindow(data, "sup", beachOrientation ?? 90, forecastData),
-                swimming: getBestWindow(data, "swimming", beachOrientation ?? 90, forecastData),
+                surf: getBestWindow(data, "surf",  forecastData),
+                sup: getBestWindow(data, "sup",  forecastData),
+                swimming: getBestWindow(data, "swimming",  forecastData),
             }
         } : {}),
     }

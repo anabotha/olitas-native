@@ -31,11 +31,12 @@ export function ConditionsPanel({ forecast, conditions, selectedSpot, selectedHo
   const processedData = processData(conditions, forecast, selectedSpot?.orientation, selectedSpot?.name, selectedHour);
   if (!processedData) return <div>Hubo un error, proba mas tarde!</div>;
 
-  const degToCompass = (deg: number) => {
+const degToCompass = (deg: number) => {
     const directions = ["Norte", "Noreste", "Este", "Sureste", "Sur", "Suroeste", "Oeste", "Noroeste"];
-    const index = Math.round(deg / 45) % 8;
+    const index = Math.floor(((deg + 22.5) / 45)) % 8;
     return directions[index];
-  };
+};
+
 
   const ordenarHora = (hoy: any[]) => {
     const ahora = selectedHour ? selectedHour.getHours() : new Date().getHours();
@@ -90,7 +91,8 @@ export function ConditionsPanel({ forecast, conditions, selectedSpot, selectedHo
                 <span className="flex items-center gap-1">
                   <ArrowUp
                     className="h-3 w-3"
-                    style={{ transform: `rotate(${processedData.current.waveDirection}deg)` }}
+                    style={{ transform: `rotate(${(processedData.current.waveDirection?? 0 + 180) % 360}deg)` }}
+
                   />
                   {processedData.current.waveDirection?.toFixed(0)}
                 </span>
@@ -110,7 +112,7 @@ export function ConditionsPanel({ forecast, conditions, selectedSpot, selectedHo
                   <span className="flex items-center gap-1">
                     <ArrowUp
                       className="h-3 w-3"
-                      style={{ transform: `rotate(${processedData.current.swellDirection}deg)` }}
+                      style={{ transform: `rotate(${(processedData.current.swellDirection + 180) % 360}deg)` }}
                     />
                     {processedData.current.swellDirection?.toFixed(0)}
                   </span>
@@ -141,7 +143,13 @@ export function ConditionsPanel({ forecast, conditions, selectedSpot, selectedHo
               label="Direccion"
               value={degToCompass(ordenado[0].wind_direction_10m)}
             />
-            <ConditionItem label="Racha" value={`${ordenado[0].wind_speed_10m.toFixed(0)} km/h`} />
+            <ConditionItem 
+  label="Racha" 
+  value={ordenado[0].wind_gusts_10m != null 
+    ? `${ordenado[0].wind_gusts_10m.toFixed(0)} km/h` 
+    : "—"
+  } 
+/>
           </div>
         </CardContent>
       </Card>

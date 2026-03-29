@@ -78,7 +78,6 @@ export const SeaState = ({ data, forecast, beach, selectedHour }: SeaStateProps)
                                     className="flex justify-between items-center bg-background rounded-lg px-3 py-2 border"
                                 >
                                     <span className="font-medium flex items-center gap-2">
-                                        {/* Renderizamos el componente del icono correctamente */}
                                         <HugeiconsIcon icon={activity.icon} size={20} />
                                         {activity.label}
                                     </span>

@@ -270,7 +270,7 @@ export const processData = (data?: MarineWeatherData, forecastData?: ForecastDat
             windDirection: forecastData?.hourly.wind_direction_10m[hourly] ?? null,
             previous_sea_level_height_msl: data.hourly.sea_level_height_msl?.[hourly - 1] ?? null,
         }
-        // console.log(processData);
+
         return processData ? processData : null;
     }
 
