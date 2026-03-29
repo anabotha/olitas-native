@@ -76,6 +76,7 @@ export function SpotSelector({ selectedSpot, onSelectSpot }: SpotSelectorProps) 
               <button
                 key={spot.name}
                 onClick={() => {
+                  localStorage.setItem("olitas_selected_spot", JSON.stringify(spot));
                   onSelectSpot(spot);
                   setIsOpen(false);
                   setSearch("");

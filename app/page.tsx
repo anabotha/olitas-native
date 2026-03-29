@@ -6,7 +6,7 @@ import { ConditionsPanel } from "@/components/conditions-panel";
 import { HourlyForecast } from "@/components/hourly-forecast";
 import { SpotSelector } from "@/components/spot-selector";
 import { LoadingState } from "@/components/loading-state";
-import { DEFAULT_SPOTS } from "@/lib/spots";
+import { DEFAULT_SPOTS} from "@/lib/spots";
 import type { SpotLocation } from "@/lib/types";
 import { AlertCircle, Info } from "lucide-react";
 import { useMarineWeather } from "@/hooks/use-marineWeather";
@@ -21,9 +21,12 @@ import "driver.js/dist/driver.css";
 import { driver } from "driver.js";
 
 export default function Home() {
+  
+ 
   const [selectedSpot, setSelectedSpot] = useState<SpotLocation>(
-    DEFAULT_SPOTS[0]
+   DEFAULT_SPOTS[0]
   );
+
 
   const [selectedHour, setSelectedHour] = useState<Date>(() => {
     const now = new Date();
@@ -32,7 +35,6 @@ export default function Home() {
   });
   const [showGuideOnLoad, setShowGuideOnLoad] = useState(false);
 
-  // const [selectedActivity, setSelectedActivity] = useState<string>("surf");
 
   useEffect(() => {
     const hasVisited = localStorage.getItem('olitas_guide_viewed');
@@ -40,10 +42,11 @@ export default function Home() {
       setShowGuideOnLoad(true);
       localStorage.setItem('olitas_guide_viewed', 'true');
     }
-
+  const saved = localStorage.getItem("olitas_selected_spot");
+    if (saved) {
+      setSelectedSpot(JSON.parse(saved));
+    }
   }
-
-    // }
     , []);
 
 
@@ -110,7 +113,6 @@ export default function Home() {
     ]
   });
 
-  // console.log(selectedHour)
 
 
 
