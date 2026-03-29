@@ -63,7 +63,7 @@ export const getTidalPhase = (
         : false;
     // Sin datos horarios, usar estimación simple
     if (allTidalValues.length === 0) {
-        const phase = sea_level_height_msl < 0 ? 'low' : sea_level_height_msl > 0.9 ? 'high' : 'mid';
+        const phase = sea_level_height_msl < 0 ? 'low' : sea_level_height_msl > 1.2 ? 'high' : 'mid';
         return { phase, isRising, normalized: 0.5 };
     }
 
@@ -167,13 +167,13 @@ const getSafetyStatus = (
 
     // MAREA EXTREMA
 
-    if (isValid(sea_level_height_msl) && sea_level_height_msl > 2.2) {
-        return {
-            color: "yellow",
-            label: "MAREA ALTA",
-            message: "Marea elevada. Precaución en zonas bajas."
-        };
-    }
+    // if (isValid(sea_level_height_msl) && sea_level_height_msl > 2.9) {
+    //     return {
+    //         color: "yellow",
+    //         label: "MAREA ALTA",
+    //         message: "Marea elevada. Precaución en zonas bajas."
+    //     };
+    // }
 
     // VIENTO GENERAL
     if (wind_speed > 38) {
@@ -433,13 +433,13 @@ export const processData = (data?: MarineWeatherData, forecastData?: ForecastDat
         ========================== */
         const allTidal = marine.hourly.sea_level_height_msl ?? [];
         const tidal = getTidalPhase(Number(sea_level_height_msl), Number(previous_sea_level_height_msl), spotName, allTidal);
-        if (tidal.phase === "high") {
-            return {
-                color: "yellow",
-                label: "MAREA ALTA",
-                message: "Marea elevada. Precaución en zonas bajas."
-            };
-        }
+        // if (tidal.phase === "high") {
+        //     return {
+        //         color: "yellow",
+        //         label: "MAREA ALTA",
+        //         message: "Marea elevada. Precaución en zonas bajas."
+        //     };
+        // }
 
         /* =========================
            VIENTO GENERAL

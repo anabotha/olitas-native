@@ -120,7 +120,7 @@ export async function GET(request: NextRequest) {
 
     return NextResponse.json(result);
   } catch (error) {
-    console.error("API Error:", error);
+    // console.error("API Error:", error);
     return NextResponse.json(
       { error: "Failed to fetch marine conditions" },
       { status: 500 }

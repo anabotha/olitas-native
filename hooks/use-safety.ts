@@ -100,11 +100,11 @@ const findClosestHourIndex = (timeArray: Date[], target: Date): number => {
         allTidal
     );
 
-    if (tidal.phase === "high") return {
-        color: "yellow",
-        label: "MAREA ALTA",
-        message: "Marea elevada. Precaución en zonas bajas."
-    };
+    // if (tidal.phase === "high") return {
+    //     color: "yellow",
+    //     label: "MAREA ALTA",
+    //     message: "Marea elevada. Precaución en zonas bajas."
+    // };
 
     if (wind_speed > 44) return {
         color: "yellow",
