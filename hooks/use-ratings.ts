@@ -84,13 +84,8 @@ export const useRatings = (
         }
     };
 
-    // const angleDiff = (a: number, b: number) =>
-    //     Math.abs((a - b + 540) % 360 - 180)
 
-/**
- * Calcula la diferencia más corta en grados entre dos direcciones (0-360).
- * El resultado siempre estará entre 0 y 180.
- */
+
 const angleDiff = (angle1: number, angle2: number): number => {
     // 1. Normalizamos los ángulos para que estén entre 0 y 359
     const a = (angle1 % 360 + 360) % 360;
@@ -284,12 +279,14 @@ const getLabelSwimming = (
             effectiveWind *= 0.65;
             factors.push("Spot protegido del viento");
         }
+const windBlowingToward = (windDirection + 180) % 360;
+const spotFacing = spot.orientation ?? 90;
 
-        const diff = angleDiff(windDirection, spot.orientation ? spot.orientation : 90);
+const diff = angleDiff(windBlowingToward, spotFacing);
 
-       const isOnshore  = diff < 45;   // el viento sopla hacia donde mira la playa
-const isOffshore = diff > 135;
-        const isCross = !isOnshore && !isOffshore;
+const isOnshore  = diff < 45;   // sopla hacia la playa
+const isOffshore = diff > 135;  // sopla alejándose de la playa
+const isCross    = !isOnshore && !isOffshore;
 
         /* HARD STOPS
            Beaufort 5 offshore (≥28 km/h efectivos) → peligroso, te lleva mar adentro.
@@ -496,16 +493,21 @@ const isOffshore = diff > 135;
     }
 
     /* DIRECCIONES */
-    const windDiff = angleDiff(windDirection, spot.orientation ?? 90)
+    const windBlowingToward = (windDirection + 180) % 360;
+const spotFacing = spot.orientation ?? 90;
+
+const diff = angleDiff(windBlowingToward, spotFacing);
+
     const swellDiff = swellDirection != null
         ? angleDiff(swellDirection, spot.orientation ?? 90)
         : null
 
-    const isDirectOnshore = windDiff < 22.5
+    const isDirectOnshore =diff < 22.5
 
-const isOnshore  = windDiff < 45;   // el viento sopla hacia donde mira la playa
-const isOffshore = windDiff > 135;
-    const isSideShore     = windDiff >= 45 && windDiff <= 135
+const isOnshore  = diff < 45;   // sopla hacia la playa
+const isOffshore = diff > 135;  // sopla alejándose de la playa
+const isCross    = !isOnshore && !isOffshore;
+    const isSideShore     = diff >= 45 && diff <= 135
 
     /* HARD STOPS */
     if (windSpeed > 55) {
@@ -698,11 +700,22 @@ const getSurfRating = (
 
     /* ── ÁNGULOS ─────────────────────────────── */
     // CAMBIO: reemplazado el one-liner por angleDiff consistente con el resto del código
-    const windDiff  = angleDiff(windDirection, spot.orientation ?? 90);
-    const swellDiff = angleDiff(swellDirection, spot.orientation ?? 90);
+   
+    const windBlowingToward = (windDirection + 180) % 360;
+const spotFacing = spot.orientation ?? 90;
 
-const isOnshore  = windDiff < 45;   // el viento sopla hacia donde mira la playa
-const isOffshore = windDiff > 135;
+const diff = angleDiff(windBlowingToward, spotFacing);
+
+    const swellDiff = swellDirection != null
+        ? angleDiff(swellDirection, spot.orientation ?? 90)
+        : null
+
+    const isDirectOnshore =diff < 22.5
+
+const isOnshore  = diff < 45;   // sopla hacia la playa
+const isOffshore = diff > 135;  // sopla alejándose de la playa
+const isCross    = !isOnshore && !isOffshore;
+    const isSideShore     = diff >= 45 && diff <= 135
     const period = swellPeriod ?? wavePeriod ?? null;
 
     /* ── HARD STOPS ──────────────────────────── */
