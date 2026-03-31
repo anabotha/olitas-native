@@ -838,7 +838,7 @@ const isCross    = !isOnshore && !isOffshore;
 
     /* ── ÁNGULO DEL SWELL ───────────────────── */
     // sin cambios
-    if (swellDiff <= 45) {
+    if (swellDiff && swellDiff <= 45) {
         score += 1;
         factors.push(swellDiff <= 12 ? "Swell directo" : "Ángulo favorable");
     }
