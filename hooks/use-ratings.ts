@@ -295,14 +295,7 @@ export const useRatings = (
 
         // ── HARD STOPS (antes de cualquier cálculo) ──────────────────────────
 
-        if (isOffshore && windSpeed >= 34) {
-            return {
-                score: 0,
-                factors: ["Peligro: viento te lleva mar adentro"],
-                dangerLevel: "HIGH",
-                isGlassy: false,
-            };
-        }
+       
 
         if (windSpeed > 55) {
             return {
@@ -324,7 +317,7 @@ export const useRatings = (
         }
 
         // Viento fuerte → penalización fuerte (no hard stop)
-        if (windSpeed >= 35) {
+        if (windSpeed >= 40) {
             return {
                 score: 1,
                 factors: ["Viento fuerte"],
@@ -332,7 +325,14 @@ export const useRatings = (
                 isGlassy: false,
             };
         }
-
+ if (isOffshore && windSpeed >= 34) {
+            return {
+                score: 0,
+                factors: ["Peligro: viento te lleva mar adentro"],
+                dangerLevel: "HIGH",
+                isGlassy: false,
+            };
+        }
         /* GLASSY */
 
         const isGlassy = effectiveWind < 12 && waveRef < 0.25;
@@ -510,6 +510,9 @@ export const useRatings = (
         const isSideShore = diff >= 45 && diff <= 135
 
         /* HARD STOPS */
+        if (windSpeed > 60) {
+            return { score: 0, factors: ["Alerta Naranja"], dangerLevel: "HIGH", isGlassy: false }
+        }
         if (windSpeed > 55) {
             return { score: 0, factors: ["Viento extremo"], dangerLevel: "HIGH", isGlassy: false }
         }
