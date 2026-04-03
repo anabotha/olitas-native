@@ -744,16 +744,7 @@ export const useRatings = (
             return { score: 0, factors: ["Viento hacia el mar — peligroso"], isEpic: false };
         }
 
-        if (effectiveWind > 70) {
-            return { score: 0, factors: ["Viento extremo"], isEpic: false };
-        }
-        if (windSpeed > 60) {
-            return { score: 0, factors: ["Alerta Naranja"], isEpic: false };
-        }
-        if (windSpeed > 55) {
-            return { score: 0, factors: ["Viento extremo"], isEpic: false };
-        }
-        if (windSpeed > 45) {
+        if (effectiveWind > 60) {
             return { score: 0, factors: ["Viento extremo"], isEpic: false };
         }
 
@@ -772,7 +763,15 @@ export const useRatings = (
         // Los tramos >= 13 y >= 18 de la versión original eran inalcanzables.
         if (period != null) {
             const energy = adjustedSwell * period;
-
+            if (period >= 7 && period <= 9) {
+                score += 2;
+                factors.push("Período óptimo");
+            } else if (period >= 6) {
+                score += 1;
+            } if (period < 5) {
+                score -= 3;
+                factors.push("Período muy corto");
+            }
             if (energy >= 10) {
                 score += 5;
                 factors.push("Swell potente");
@@ -789,6 +788,7 @@ export const useRatings = (
                 score += 1;
                 factors.push("Swell débil");
             }
+
         }
 
         /* ── ALTURA DEL SWELL ───────────────────── */
