@@ -36,6 +36,11 @@ export const useRatings = (
         const idx = findHourIndex(data.hourly.time, selectedHour);
         if (idx === -1) return null;
 
+        // El forecast tiene su propio array de tiempos — buscamos su índice de forma independiente
+        const forecastIdx = forecastData
+            ? findHourIndex(forecastData.hourly.time as unknown as Date[], selectedHour)
+            : -1;
+
         return {
             waveHeight: data.hourly.wave_height?.[idx] ?? null,
             waveDirection: data.hourly.wave_direction?.[idx] ?? null,
@@ -45,16 +50,16 @@ export const useRatings = (
             wavePeriod: data.hourly.wind_wave_period?.[idx] ?? null,
             seaLevelHeightMsl: data.hourly.sea_level_height_msl?.[idx] ?? null,
             seaLevelHeightMslPrevious: data.hourly.sea_level_height_msl?.[idx - 1] ?? null,
-            // Viento del forecast
-            windSpeed: forecastData?.hourly?.wind_speed_10m?.[idx] ?? null,
-            windDirection: forecastData?.hourly?.wind_direction_10m?.[idx] ?? null,
+            // Viento del forecast — índice propio
+            windSpeed: forecastIdx !== -1 ? forecastData?.hourly?.wind_speed_10m?.[forecastIdx] ?? null : null,
+            windDirection: forecastIdx !== -1 ? forecastData?.hourly?.wind_direction_10m?.[forecastIdx] ?? null : null,
         };
     };
 
     // Stats para la hora seleccionada, o fallback a processData.current
     const hourlyStats = buildStatsForHour() ?? processData?.current;
     // const nowStats = processData?.current;
-
+    console.log(hourlyStats, "hourlyStats")
 
     const getRating = (
         stats: any,
@@ -295,7 +300,14 @@ export const useRatings = (
 
         // ── HARD STOPS (antes de cualquier cálculo) ──────────────────────────
 
-       
+        if (windSpeed == null) {
+            return {
+                score: 0,
+                factors: ["Sin datos de viento"],
+                dangerLevel: "HIGH",
+                isGlassy: false,
+            };
+        }
 
         if (windSpeed > 55) {
             return {
@@ -325,7 +337,7 @@ export const useRatings = (
                 isGlassy: false,
             };
         }
- if (isOffshore && windSpeed >= 34) {
+        if (isOffshore && windSpeed >= 34) {
             return {
                 score: 0,
                 factors: ["Peligro: viento te lleva mar adentro"],
@@ -510,6 +522,9 @@ export const useRatings = (
         const isSideShore = diff >= 45 && diff <= 135
 
         /* HARD STOPS */
+        if (windSpeed == null) {
+            return { score: 0, factors: ["Sin datos de viento"], dangerLevel: "HIGH", isGlassy: false }
+        }
         if (windSpeed > 60) {
             return { score: 0, factors: ["Alerta Naranja"], dangerLevel: "HIGH", isGlassy: false }
         }
@@ -520,7 +535,6 @@ export const useRatings = (
             return { score: 0, factors: ["Viento muy fuerte"], dangerLevel: "HIGH", isGlassy: false }
         }
         if (isOffshore && windSpeed >= 28) {
-
             return { score: 0, factors: ["Viento en direccion al mar"], dangerLevel: "HIGH", isGlassy: false }
         }
         if (windSpeed >= 35) {
@@ -729,7 +743,6 @@ export const useRatings = (
         if (isOffshore && effectiveWind > 55) {
             return { score: 0, factors: ["Viento hacia el mar — peligroso"], isEpic: false };
         }
-
 
         if (effectiveWind > 70) {
             return { score: 0, factors: ["Viento extremo"], isEpic: false };

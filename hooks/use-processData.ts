@@ -250,6 +250,13 @@ export const processData = (data?: MarineWeatherData, forecastData?: ForecastDat
         const hourly = data.hourly.time.findIndex((time) => getTime(time) === now)
         // console.log("hourly", hourly, selectedHour, now)
         if (index === -1) return null
+
+        // El índice del forecast se busca por separado contra su propio array de tiempos,
+        // porque puede tener un rango distinto al del marine API.
+        const forecastHourly = forecastData
+            ? forecastData.hourly.time.findIndex((time) => getTime(new Date(time)) === now)
+            : -1
+
         const processData = {
             wind_wave_height_max: data.daily.wind_wave_height_max?.[index] ?? null,
             wind_wave_direction_dominant:
@@ -266,8 +273,8 @@ export const processData = (data?: MarineWeatherData, forecastData?: ForecastDat
             wind_wave_period: data.hourly.wind_wave_period?.[hourly] ?? null,
             wind_wave_direction: data.hourly.wind_wave_direction?.[hourly] ?? null,
             sea_level_height_msl: data.hourly.sea_level_height_msl?.[hourly] ?? null,
-            windSpeed: forecastData?.hourly.wind_speed_10m[hourly] ?? null,
-            windDirection: forecastData?.hourly.wind_direction_10m[hourly] ?? null,
+            windSpeed: forecastHourly !== -1 ? forecastData?.hourly.wind_speed_10m[forecastHourly] ?? null : null,
+            windDirection: forecastHourly !== -1 ? forecastData?.hourly.wind_direction_10m[forecastHourly] ?? null : null,
             previous_sea_level_height_msl: data.hourly.sea_level_height_msl?.[hourly - 1] ?? null,
         }
 

@@ -50,6 +50,7 @@ export function HourlyForecast({ forecast, selectedHour }: HourlyForecastProps) 
   };
 
   const ordenado = ordenarHora(hoy);
+  console.log(ordenado, "ordenado")
   const mañanaOrdenado = ordenarMañana(mañana);
   return (
     <Card>
