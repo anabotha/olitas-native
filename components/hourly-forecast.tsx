@@ -100,7 +100,7 @@ export function HourlyForecast({ forecast, selectedHour }: HourlyForecastProps) 
                     </span>
                   </div>
                   {semana[0].uvIndex > 0 && (
-                    <span className="rounded-full bg-accent/50 px-2 py-0.5 text-[10px] font-medium text-accent-foreground">
+                    <span className="rounded-full bg-accent/50 px-2 py-0.5 text-s font-medium text-accent-foreground">
                       UV {semana[0].uvIndex.toFixed(0)}
                     </span>
                   )}
