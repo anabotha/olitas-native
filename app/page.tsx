@@ -134,6 +134,9 @@ export default function Home() {
         {/* Hero section */}
         <section className="mb-8 gap-4">
           <div className="flex flex-col gap-1" id="selector">
+            <h1 className="sr-only">
+              Olitas — Condiciones del mar en Comodoro Rivadavia y la costa patagónica
+            </h1>
             <h2 className="flex flex-wrap items-center gap-x-2 text-3xl font-bold tracking-tight text-foreground md:text-4xl">
               ¿Cómo está{" "}
               <HourSelector selectedHour={selectedHour} onSelectHour={setSelectedHour} variant="inline" />
