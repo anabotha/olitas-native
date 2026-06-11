@@ -6,7 +6,7 @@ import './globals.css'
 const dmSans = DM_Sans({ subsets: ["latin"], variable: "--font-dm-sans" });
 const geistMono = Geist_Mono({ subsets: ["latin"], variable: "--font-geist-mono" });
 
-const BASE_URL = 'https://olitas.anabotha.dev'
+const BASE_URL = 'https://olitas.anabotha.dev/'
 
 export const metadata: Metadata = {
   metadataBase: new URL(BASE_URL),
