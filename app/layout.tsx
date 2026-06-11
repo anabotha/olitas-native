@@ -26,7 +26,9 @@ export const metadata: Metadata = {
     'mar',
     'sup',
     'surf',
-    'natacion'
+    'natacion',
+    'olitas comodoro rivadavia',
+    'ana botha'
   ],
   authors: [{ name: 'Olitas' }],
   creator: 'Olitas',
@@ -81,6 +83,47 @@ export const viewport: Viewport = {
   themeColor: '#4a90a4',
 }
 
+const jsonLdWebApp = {
+  '@context': 'https://schema.org',
+  '@type': 'WebApplication',
+  name: 'Olitas',
+  url: BASE_URL,
+  description: 'Condiciones del mar en tiempo real para surf, natación y SUP en Comodoro Rivadavia y la costa patagónica. Oleaje, viento y temperatura al instante.',
+  applicationCategory: 'WeatherApplication',
+  operatingSystem: 'Web, Android, iOS',
+  inLanguage: 'es-AR',
+  isAccessibleForFree: true,
+  offers: {
+    '@type': 'Offer',
+    price: '0',
+    priceCurrency: 'ARS',
+  },
+  author: {
+    '@type': 'Person',
+    name: 'Josefina Botha',
+    email: 'josefinabotha@gmail.com',
+  },
+  featureList: [
+    'Oleaje en tiempo real',
+    'Velocidad y dirección del viento',
+    'Temperatura del agua',
+    'Pronóstico por hora',
+    'Estado de la marea',
+    'Recomendaciones para surf, SUP y natación',
+  ],
+  screenshot: `${BASE_URL}/android/launchericon-512x512.png`,
+  image: `${BASE_URL}/android/launchericon-512x512.png`,
+}
+
+const jsonLdWebSite = {
+  '@context': 'https://schema.org',
+  '@type': 'WebSite',
+  name: 'Olitas',
+  url: BASE_URL,
+  description: 'Condiciones del mar en tiempo real para la costa patagónica.',
+  inLanguage: 'es-AR',
+}
+
 export default function RootLayout({
   children,
 }: Readonly<{
@@ -89,8 +132,15 @@ export default function RootLayout({
   return (
     <html lang="es-AR">
       <head>
-
         <link rel="apple-touch-icon" href="/icons/apple-touch-icon.png" />
+        <script
+          type="application/ld+json"
+          dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLdWebApp) }}
+        />
+        <script
+          type="application/ld+json"
+          dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLdWebSite) }}
+        />
       </head>
       <body className={`${dmSans.variable} ${geistMono.variable} font-sans antialiased`}>
         <main>
