@@ -4,6 +4,7 @@ import { CombinedConditions, MarineWeatherData, ForecastData } from "@/lib/types
 import { use, useMemo } from "react"
 import { useForecast } from "./use-forecast";
 import { useProcessForecast } from "./use-proccessForecast";
+import { angleDiff } from "@/lib/geometry";
 // =============================
 // Tipos
 // =============================
@@ -46,7 +47,7 @@ const SPOT_TIDAL_CONFIG: Record<string, {
     "Costanera Comodoro": { rangeScale: 0.75, midPoint: 0.05 }, // rango menor, algo más protegida
     "Km 3": { rangeScale: 0.80, midPoint: 0 },
     "Restinga Alí": { rangeScale: 0.70, midPoint: 0.05 },
-    "Caleta Olivia": { rangeScale: 1.05, midPoint: -0.05 }, // algo más expuesta al sur
+    "Caleta Córdova": { rangeScale: 1.05, midPoint: -0.05 }, // algo más expuesta
 };
 
 export const getTidalPhase = (
@@ -90,11 +91,6 @@ export const normalizeHourly = (hourly: any): HourSnapshot[] => {
         wind_direction: hourly.wind_direction_10m?.[i],
         sea_level_height_msl: hourly.sea_level_height_msl?.[i]
     }));
-};
-// Normaliza diferencias de ángulos a 0–180
-export const angleDiff = (a: number, b: number) => {
-    let diff = Math.abs(a - b);
-    return diff > 180 ? 360 - diff : diff;
 };
 export const evaluateWind = (windDir: number, beachDir: number, waveDir?: number, swellDir?: number, windSpeed?: number) => {
     const diff = angleDiff(windDir, beachDir);
@@ -500,9 +496,9 @@ export const processData = (data?: MarineWeatherData, forecastData?: ForecastDat
                 seaLevelHeightMslPrevious: todayStats.previous_sea_level_height_msl ?? undefined,
             },
 
-            safety: getCurrentSafety(data, forecastData, beachOrientation ? beachOrientation : 90, beachName ? "Comodoro Rivadavia" : "Comodoro Rivadavia"),
+            safety: getCurrentSafety(data, forecastData, beachOrientation ? beachOrientation : 90, beachName ?? ""),
 
-            seaState: analyzeSeaState(todayStats, beachName ? "Comodoro Rivadavia" : "Comodoro Rivadavia")
+            seaState: analyzeSeaState(todayStats, beachName ?? "")
         }
 
         return processedData;
