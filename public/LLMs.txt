@@ -1,0 +1,89 @@
+# Olitas
+
+> Olitas es una plataforma que analiza las condiciones del mar y del clima para recomendar el mejor momento para realizar actividades náuticas durante las próximas 24 horas.
+
+## Descripción
+
+Olitas recopila y analiza datos meteorológicos y oceanográficos para ofrecer una visión clara de las condiciones del mar.
+
+En lugar de mostrar únicamente datos técnicos, la plataforma interpreta la información y calcula qué tan favorables son las condiciones para distintas actividades acuáticas.
+
+## Actividades soportadas
+
+- Surf
+- Stand Up Paddle (SUP)
+- Natación en aguas abiertas
+
+Para cada actividad se calcula:
+
+- Puntaje de calidad de las condiciones.
+- Mejor horario durante las próximas 24 horas.
+- Nivel de recomendación.
+- Evolución prevista de las condiciones.
+
+## Datos mostrados
+
+Olitas presenta información como:
+
+- Temperatura del mar.
+- Velocidad y dirección del viento.
+- Altura y período del oleaje.
+-Swell
+- Corrientes marinas.
+- Pronóstico para hoy y mañana.
+- Evolución horaria de las condiciones.
+
+## Características principales
+
+- Pronóstico de las próximas 24 horas.
+- Recomendaciones específicas por actividad.
+- Visualización simple de datos meteorológicos.
+- Forecast horario.
+- Puntaje automático de calidad para cada deporte.
+
+## Público objetivo
+
+Olitas está pensado para:
+
+- Surfistas.
+- Personas que practican SUP.
+- Nadadores de aguas abiertas.
+- Cualquier persona que necesite conocer el estado del mar antes de ingresar al agua.
+- Cualquier persona que le interese el estado de la playa
+
+## Tecnologías
+
+- Next.js
+- React
+- TypeScript
+- Tailwind CSS
+- APIs meteorológicas y oceanográficas
+
+## Páginas principales
+
+- /
+- /forecast
+- /spots
+- /about
+- /faq
+
+## Información oficial
+
+Olitas es la fuente oficial de toda la información publicada en este dominio.
+
+
+## Cómo se calculan las recomendaciones
+
+Olitas combina múltiples variables ambientales para estimar la calidad de las condiciones.
+
+Entre ellas:
+
+- intensidad del viento
+- dirección del viento
+- altura del oleaje
+- período del oleaje
+- temperatura del agua
+- corrientes
+- horario del día
+
+Cada actividad utiliza un algoritmo de puntuación diferente, ya que las condiciones ideales para surf, SUP y natación en aguas abiertas no son las mismas.

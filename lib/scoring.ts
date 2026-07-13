@@ -33,6 +33,26 @@ export const dangerFromScore = (score: number): DangerLevel =>
 export const dedupe = (factors: string[]): string[] => [...new Set(factors)];
 
 /**
+ * Puntaje de marea según la preferencia del spot.
+ *
+ * `normalized` es la posición de la marea en el rango del spot (0 = baja,
+ * 1 = alta), tal como la devuelve getTidalPhase. `window` es la franja óptima.
+ * Devuelve `maxBonus` dentro de la franja y decae linealmente hasta una
+ * penalización suave (piso -1) a medida que la marea se aleja.
+ */
+export const tideWindowScore = (
+  normalized: number,
+  window: { min: number; max: number },
+  maxBonus = 2,
+  falloff = 0.3
+): number => {
+  const { min, max } = window;
+  if (normalized >= min && normalized <= max) return maxBonus;
+  const dist = normalized < min ? min - normalized : normalized - max;
+  return Math.max(-1, Math.round(maxBonus * (1 - dist / falloff)));
+};
+
+/**
  * Aplica el reparo del spot al viento. Devuelve el viento efectivo y si el
  * spot está protegido para la dirección actual. No agrega factores: cada
  * actividad usa un texto distinto ("Spot protegido del viento" / "Viento

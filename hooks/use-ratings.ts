@@ -2,7 +2,7 @@ import React, { use } from 'react'
 import { ActivityRating, ActivityType, CombinedConditions, MarineWeatherData, ForecastData, activities, SpotLocation } from '@/lib/types'
 import { getTidalPhase } from './use-processData';
 import { angleDiff, inAngleWindow, classifyWind } from '@/lib/geometry';
-import { RatingResult, clampScore, normalize, dangerFromScore, dedupe, applyShelter } from '@/lib/scoring';
+import { RatingResult, clampScore, normalize, dangerFromScore, dedupe, applyShelter, tideWindowScore } from '@/lib/scoring';
 import { SURF_CONFIG, SUP_CONFIG, SWIM_CONFIG } from './rating-config';
 
 const degToCompass = (deg: number) => {
@@ -746,15 +746,18 @@ export const useRatings = (
             data?.hourly?.sea_level_height_msl ?? []
         );
 
-        if (tide.phase === "mid") {
-            score += 2;
-            factors.push("Marea media");
-        } else if (tide.phase === "high") {
-            score -= 1;
-            factors.push("Marea alta");
-        } else {
-            score += 1;
-        }
+        // Puntaje por cercanía a la marea preferida del spot (no genérico).
+        const tideBonus = tideWindowScore(
+            tide.normalized,
+            spot.optimalTide ?? SURF_CONFIG.defaultOptimalTide
+        );
+        score += tideBonus;
+
+        if (tideBonus >= 2) factors.push("Marea ideal");
+        else if (tideBonus <= -1) factors.push("Marea desfavorable");
+        else if (tide.phase === "high") factors.push("Marea alta");
+        else if (tide.phase === "low") factors.push("Marea baja");
+        else factors.push("Marea media");
 
         if (tide.isRising) {
             score += 1;

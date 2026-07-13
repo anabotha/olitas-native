@@ -27,6 +27,9 @@ export const SURF_CONFIG = {
     { min: 0.4, cap: 3 },
     { min: 0.0, cap: 1 },
   ],
+  // Ventana de marea usada cuando el spot no define `optimalTide`.
+  // Media–alta: replica aproximadamente el bonus "Marea media" previo.
+  defaultOptimalTide: { min: 0.45, max: 0.8 },
 } as const;
 
 export const SUP_CONFIG = {

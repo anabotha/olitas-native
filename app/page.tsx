@@ -204,24 +204,32 @@ export default function Home() {
             </section>
             {/* Footer note */}
             <footer className="pb-8 text-center space-y-4">
-              <div className="space-y-1">
+            
+              <div className="pt-2 text-center border-t border-border/40 max-w-xs mx-auto">
+                <a
+                  href="mailto:josefinabotha@gmail.com"
+                  className="block text-xs font-medium underline underline-offset-4 text-blue-500 hover:text-blue-600 transition-colors duration-200"
+                >
+                  ¿Tenes dudas? ¡Contactame por aca!
+                </a> 
+                
+                  <a
+                  href="https://anabotha.dev"
+                  className="block text-xs font-medium underline underline-offset-4 text-blue-500 hover:text-blue-600 transition-colors duration-200"
+                >
+                  Mi portfolio
+                </a>
+              </div>
+<br/>
+                <div className="space-y-1">
                 <p className="text-[10px] uppercase tracking-wider text-muted-foreground/60">
                   Datos meteorológicos por Open-Meteo
                 </p>
-                <p className="text-xs font-medium text-destructive/80">
+                <p className="text-xs font-medium text-destructive/60">
                   Siempre chequeá las condiciones antes de salir al agua.
                 </p>
               </div>
 
-              <div className="pt-2 text-center border-t border-border/40 max-w-xs mx-auto">
-                <a
-                  href="mailto:josefinabotha@gmail.com"
-                  className="block text-xs font-medium underline underline-offset-4 text-muted-foreground hover:text-primary transition-colors duration-200"
-                >
-                  Contacto: <br />
-                  josefinabotha@gmail.com
-                </a>
-              </div>
             </footer>
           </div>
         )}

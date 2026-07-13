@@ -126,6 +126,15 @@ export interface SpotLocation {
     min: number
     max: number
   }
+
+  // Ventana de marea preferida del spot, en el espacio normalizado que devuelve
+  // getTidalPhase (0 = marea baja, 1 = marea alta). El scoring de surf premia
+  // estar dentro de esta franja y penaliza suavemente cuanto más lejos.
+  // Ej: { min: 0.5, max: 0.9 } = rompe mejor de media a alta.
+  optimalTide?: {
+    min: number
+    max: number
+  }
 }
 export type ActivityType = "surf" | "sup" | "swimming";
 

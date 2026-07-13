@@ -64,7 +64,7 @@ export function SpotSelector({ selectedSpot, onSelectSpot }: SpotSelectorProps) 
             <Search className="h-4 w-4 text-muted-foreground" />
             <input
               type="text"
-              placeholder="Search spots..."
+              placeholder="Busca tu lugar..."
               value={search}
               onChange={(e) => setSearch(e.target.value)}
               className="w-full bg-transparent text-sm text-foreground placeholder:text-muted-foreground focus:outline-none"
