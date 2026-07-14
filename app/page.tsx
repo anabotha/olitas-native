@@ -207,6 +207,8 @@ export default function Home() {
             
               <div className="pt-2 text-center border-t border-border/40 max-w-xs mx-auto">
                 <a
+                  target="_blank"
+                  rel="noopener noreferrer"
                   href="mailto:josefinabotha@gmail.com"
                   className="block text-xs font-medium underline underline-offset-4 text-blue-500 hover:text-blue-600 transition-colors duration-200"
                 >
@@ -214,6 +216,8 @@ export default function Home() {
                 </a> 
                 
                   <a
+                  target="_blank"
+                  rel="noopener noreferrer"
                   href="https://anabotha.dev"
                   className="block text-xs font-medium underline underline-offset-4 text-blue-500 hover:text-blue-600 transition-colors duration-200"
                 >
