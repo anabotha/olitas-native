@@ -349,7 +349,9 @@ export const useRatings = (
             seaLevelHeightMsl,
             seaLevelHeightMslPrevious,
             spot.name,
-            data?.hourly?.sea_level_height_msl ?? []
+            data?.hourly?.sea_level_height_msl ?? [],
+            data?.hourly?.time ?? [],
+            selectedHour ?? new Date()
         );
         if (tide.phase === "mid") factors.push("Marea media");
 
@@ -489,7 +491,9 @@ export const useRatings = (
             seaLevelHeightMsl,
             seaLevelHeightMslPrevious,
             spot.name,
-            data?.hourly?.sea_level_height_msl ?? []
+            data?.hourly?.sea_level_height_msl ?? [],
+            data?.hourly?.time ?? [],
+            selectedHour ?? new Date()
         )
         if (tide.phase === "mid") {
             score += 1
@@ -743,14 +747,14 @@ export const useRatings = (
             seaLevelHeightMsl,
             seaLevelHeightMslPrevious,
             spotName,
-            data?.hourly?.sea_level_height_msl ?? []
+            data?.hourly?.sea_level_height_msl ?? [],
+            data?.hourly?.time ?? [],
+            selectedHour ?? new Date()
         );
 
         // Puntaje por cercanía a la marea preferida del spot (no genérico).
-        const tideBonus = tideWindowScore(
-            tide.normalized,
-            spot.optimalTide ?? SURF_CONFIG.defaultOptimalTide
-        );
+        const tideWindow = spot.optimalTide ?? SURF_CONFIG.defaultOptimalTide;
+        const tideBonus = tideWindowScore(tide.normalized, tideWindow);
         score += tideBonus;
 
         if (tideBonus >= 2) factors.push("Marea ideal");
@@ -759,9 +763,16 @@ export const useRatings = (
         else if (tide.phase === "low") factors.push("Marea baja");
         else factors.push("Marea media");
 
-        if (tide.isRising) {
+        // El bonus por dirección solo corresponde si la marea se está
+        // acercando a la ventana ideal del spot (por abajo y subiendo, o por
+        // arriba y bajando). Si ya está adentro o se está alejando, "subiendo"
+        // no es necesariamente bueno — depende de la ventana de cada spot.
+        const approachingTideWindow =
+            (tide.normalized < tideWindow.min && tide.isRising) ||
+            (tide.normalized > tideWindow.max && !tide.isRising);
+        if (approachingTideWindow) {
             score += 1;
-            factors.push("Marea subiendo");
+            factors.push(tide.isRising ? "Marea subiendo hacia la ventana ideal" : "Marea bajando hacia la ventana ideal");
         }
 
         /* ── NORMALIZACIÓN + TECHO POR TAMAÑO ─────

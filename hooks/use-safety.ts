@@ -97,7 +97,9 @@ const findClosestHourIndex = (timeArray: Date[], target: Date): number => {
         Number(sea_level_height_msl),
         Number(previous_sea_level_height_msl),
         spot.name,
-        allTidal
+        allTidal,
+        marine.hourly.time ?? [],
+        targetHour
     );
 
     // if (tidal.phase === "high") return {

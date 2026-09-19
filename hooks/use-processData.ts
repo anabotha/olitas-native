@@ -38,38 +38,73 @@ const riskScore: Record<SafetyColor, number> = {
 };
 
 
-// 2. Actualizá la firma — ya no necesita spotName ni SPOT_TIDAL_CONFIG
+// Cada spot pide la marea a Open-Meteo con sus propias coordenadas, pero los
+// 5 spots están a pocos km entre sí (mismo golfo) — el modelo global de
+// Open-Meteo casi seguro les devuelve una curva prácticamente idéntica, ya
+// que su grilla no tiene resolución para captar diferencias de batimetría
+// local (playa plana vs. restinga vs. caleta). SPOT_TIDAL_CONFIG reescala esa
+// misma curva por spot para aproximar ese efecto.
+//
+// HEURÍSTICO, a ojo — no viene de una tabla de marea real ni de un modelo
+// físico. La forma más confiable de calibrarlo que tenemos hoy es "cuántos
+// metros de playa quedan para caminar" en baja normal / baja extrema / alta
+// (más metros de playa expuesta ≈ rangeScale más alto). Estado por spot:
+//   - Rada Tilly: confirmado como el de MAYOR amplitud — en baja expone hasta
+//     ~20m de playa (bastante más que el resto). Se usa como referencia
+//     (rangeScale 1.0), pero ver nota abajo: eso deja a Caleta Córdova con un
+//     rangeScale aún mayor (1.05), lo cual no está confirmado y contradice
+//     que Rada Tilly sea la de mayor swing — pendiente de revisar si se junta
+//     el dato real de Caleta.
+//   - Costanera Comodoro: confirmado como chica — ~5m en baja normal, ~10m en
+//     baja extrema, 0-1m en alta.
+//   - Km 3, Restinga Alí: sin confirmar, valores de arranque.
+//   - Caleta Córdova: "corta en longitud, perfil bajito" según la experiencia
+//     de quien conoce el spot, pero sin suficiente certeza para tocar el
+//     número (podría sugerir MENOS swing, no más — ver nota de Rada Tilly).
 const SPOT_TIDAL_CONFIG: Record<string, {
     rangeScale: number;  // cuánto del rango global aplica a este spot
     midPoint: number;    // offset del punto medio (0 = igual que el global)
 }> = {
-    "Rada Tilly": { rangeScale: 1.0, midPoint: 0 },    // referencia, rango completo
-    "Costanera Comodoro": { rangeScale: 0.75, midPoint: 0.05 }, // rango menor, algo más protegida
-    "Km 3": { rangeScale: 0.80, midPoint: 0 },
-    "Restinga Alí": { rangeScale: 0.70, midPoint: 0.05 },
-    "Caleta Córdova": { rangeScale: 1.05, midPoint: -0.05 }, // algo más expuesta
+    "Rada Tilly": { rangeScale: 1.0, midPoint: 0 },    // referencia, mayor amplitud confirmada
+    "Costanera Comodoro": { rangeScale: 0.75, midPoint: 0.05 }, // confirmado: playa chica, algo más protegida
+    "Km 3": { rangeScale: 0.80, midPoint: 0 }, // sin confirmar
+    "Restinga Alí": { rangeScale: 0.70, midPoint: 0.05 }, // sin confirmar
+    "Caleta Córdova": { rangeScale: 1.05, midPoint: -0.05 }, // sin confirmar — ver nota de arriba, dato de "playa corta" sugeriría revisar esto
 };
+
+// Misma key de día que usa searchTodaysStats: toISOString ya viene con el
+// offset horario del spot "horneado" en el epoch (ver getMarineWeather), así
+// que comparar por fecha UTC acá equivale a comparar por fecha local.
+const dayKey = (date: Date | string): string => new Date(date).toISOString().split("T")[0];
 
 export const getTidalPhase = (
     sea_level_height_msl: number,
     previous_sea_level_height_msl: number | undefined,
     spotName: string,
     allTidalValues: number[] = [],
-
-
+    allTidalTimes: (Date | string)[] = [],
+    reference: Date = new Date(),
 ) => {
     const config = SPOT_TIDAL_CONFIG[spotName] ?? { rangeScale: 0.75, midPoint: 0.05 };
     const isRising = previous_sea_level_height_msl != null
         ? sea_level_height_msl > previous_sea_level_height_msl
         : false;
+
+    // El forecast trae varios días de una — acotamos al día de `reference`
+    // antes de sacar mínimo/máximo. Si no tenemos los tiempos (o no matchean
+    // en longitud con los valores), caemos al array completo como antes.
+    const dailyValues = allTidalTimes.length === allTidalValues.length && allTidalTimes.length > 0
+        ? allTidalValues.filter((_, i) => dayKey(allTidalTimes[i]) === dayKey(reference))
+        : allTidalValues;
+
     // Sin datos horarios, usar estimación simple
-    if (allTidalValues.length === 0) {
+    if (dailyValues.length === 0) {
         const phase = sea_level_height_msl < 0 ? 'low' : sea_level_height_msl > 1.2 ? 'high' : 'mid';
         return { phase, isRising, normalized: 0.5 };
     }
 
-    const dailyMin = Math.min(...allTidalValues);
-    const dailyMax = Math.max(...allTidalValues);
+    const dailyMin = Math.min(...dailyValues);
+    const dailyMax = Math.max(...dailyValues);
     const globalRange = dailyMax - dailyMin;
     const globalMid = dailyMin + globalRange / 2;
 
@@ -306,7 +341,14 @@ export const processData = (data?: MarineWeatherData, forecastData?: ForecastDat
         }
 
         // Evaluación de Marea para Comodoro/RT
-        const tidal = getTidalPhase(sea_level_height_msl, previous_sea_level_height_msl, spotName, data?.hourly?.sea_level_height_msl ?? []);
+        const tidal = getTidalPhase(
+            sea_level_height_msl,
+            previous_sea_level_height_msl,
+            spotName,
+            data?.hourly?.sea_level_height_msl ?? [],
+            data?.hourly?.time ?? [],
+            selectedHour ?? new Date()
+        );
         let tideInfo = tidal.phase;
         // console.log("sea level", sea_level_height_msl);
         // console.log("tide info", tideInfo);
@@ -435,7 +477,14 @@ export const processData = (data?: MarineWeatherData, forecastData?: ForecastDat
            MAREA
         ========================== */
         const allTidal = marine.hourly.sea_level_height_msl ?? [];
-        const tidal = getTidalPhase(Number(sea_level_height_msl), Number(previous_sea_level_height_msl), spotName, allTidal);
+        const tidal = getTidalPhase(
+            Number(sea_level_height_msl),
+            Number(previous_sea_level_height_msl),
+            spotName,
+            allTidal,
+            marine.hourly.time ?? [],
+            ref
+        );
         // if (tidal.phase === "high") {
         //     return {
         //         color: "yellow",
@@ -474,7 +523,14 @@ export const processData = (data?: MarineWeatherData, forecastData?: ForecastDat
 
         // Temporal, tiralo después de calibrar
         const allTidalValues = data.hourly.sea_level_height_msl ?? [];
-        const tidal = getTidalPhase(Number(todayStats.sea_level_height_msl ?? 0), todayStats.previous_sea_level_height_msl ?? undefined, beachName ?? "", allTidalValues);
+        const tidal = getTidalPhase(
+            Number(todayStats.sea_level_height_msl ?? 0),
+            todayStats.previous_sea_level_height_msl ?? undefined,
+            beachName ?? "",
+            allTidalValues,
+            data.hourly.time ?? [],
+            selectedHour ?? new Date()
+        );
         const processedData = {
             current: {
                 waveHeight: todayStats.wave_height ?? undefined,
