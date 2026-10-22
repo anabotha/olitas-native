@@ -8,12 +8,14 @@ import type { SpotLocation } from "@/lib/types";
 //     ...DEFAULT_SPOTS[0]
 // }), [])
 
-export function useMarineWeather({ latitude, longitude }: SpotLocation) {
+export function useMarineWeather(spot: SpotLocation | null) {
+    const latitude = spot?.latitude;
+    const longitude = spot?.longitude;
     return useSWR(
         latitude && longitude
             ? ["marine-weather", latitude, longitude]
             : null,
-        () => getMarineWeather(latitude, longitude),
+        () => getMarineWeather(latitude!, longitude!),
         {
             refreshInterval: 1000 * 60 * 60 * 2, // cada 2 horas busca info
             revalidateOnFocus: false,

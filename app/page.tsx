@@ -34,6 +34,7 @@ export default function Home() {
     return now;
   });
   const [showGuideOnLoad, setShowGuideOnLoad] = useState(false);
+  const [spotReady, setSpotReady] = useState(false);
 
 
   useEffect(() => {
@@ -44,16 +45,22 @@ export default function Home() {
     }
   const saved = localStorage.getItem("olitas_selected_spot");
     if (saved) {
-      setSelectedSpot(JSON.parse(saved));
+      try {
+        setSelectedSpot(JSON.parse(saved));
+      } catch {}
     }
+    setSpotReady(true);
   }
     , []);
 
 
 
 
-  const { data, error, isLoading } = useMarineWeather(selectedSpot)
-  const { forecastData, forecastError, forecastIsLoading } = useForecast(selectedSpot)
+  // No pedimos datos hasta leer el spot guardado, para evitar cargar el default y después recargar
+  const activeSpot = spotReady ? selectedSpot : null
+  const { data, error, isLoading } = useMarineWeather(activeSpot)
+  const { forecastData, forecastIsLoading } = useForecast(activeSpot)
+  const showLoading = !spotReady || isLoading || forecastIsLoading
   const driverObj = driver({
     showProgress: true,
     popoverClass: 'bg-white rounded-[20px] shadow-2xl p-6 font-sans',
@@ -153,7 +160,7 @@ export default function Home() {
           <PwaInstallPrompt />
         </section>
 
-        {isLoading && <LoadingState />}
+        {showLoading && !error && <LoadingState />}
 
         {error && (
           <div className="flex items-center gap-3 rounded-xl border border-destructive/20 bg-destructive/5 px-5 py-4">
@@ -169,7 +176,7 @@ export default function Home() {
           </div>
         )}
 
-        {data && !error && (
+        {data && !error && !showLoading && (
           <div className="flex flex-col gap-8">
 
             <CollapsibleSection title="actividad" defaultOpen={true}>
