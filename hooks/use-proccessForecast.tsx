@@ -17,9 +17,8 @@ export interface HourlySummary {
     apparent_temperature: number;
     time: string;
     fecha: string;
-    // Todavía no se piden a Open-Meteo: Racha y Clima quedan vacíos
-    wind_gusts_10m?: number;
-    weatherCode?: number;
+    wind_gusts_10m: number;
+    weatherCode: number;
 }
 
 /** Inicio de la hora (minutos y segundos en cero) para comparar fechas completas */
@@ -70,6 +69,8 @@ export const useProcessForecast = (data?: ForecastData): ProcessedForecast | nul
                 humedad: data.hourly.relative_humidity_2m[i],
                 fecha: fechaLocal(date), // fecha local, no UTC
                 apparent_temperature: data.hourly.apparent_temperature[i],
+                wind_gusts_10m: data.hourly.wind_gusts_10m[i],
+                weatherCode: data.hourly.weather_code[i],
                 time: t instanceof Date ? t.toISOString() : t,
             };
         })
@@ -91,6 +92,8 @@ export const useProcessForecast = (data?: ForecastData): ProcessedForecast | nul
                 humedad: data.hourly.relative_humidity_2m[i],
                 fecha: fechaLocal(date), // fecha local, no UTC
                 apparent_temperature: data.hourly.apparent_temperature[i],
+                wind_gusts_10m: data.hourly.wind_gusts_10m[i],
+                weatherCode: data.hourly.weather_code[i],
                 time: t instanceof Date ? t.toISOString() : t,
             }
         })

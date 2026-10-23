@@ -5,6 +5,15 @@ import { angleDiff, inAngleWindow, classifyWind } from '@/lib/geometry';
 import { RatingResult, clampScore, normalize, dangerFromScore, dedupe, applyShelter, tideWindowScore } from '@/lib/scoring';
 import { SURF_CONFIG, SUP_CONFIG, SWIM_CONFIG } from './rating-config';
 
+/** Ráfagas fuertes: superan el umbral absoluto o (si hay `spread`) se despegan mucho del viento medio */
+const hasStrongGusts = (
+    windSpeed: number,
+    windGusts: number | null | undefined,
+    limits: { strong: number; spread?: number }
+): boolean =>
+    windGusts != null &&
+    (windGusts >= limits.strong || (limits.spread != null && windGusts - windSpeed >= limits.spread));
+
 const degToCompass = (deg: number) => {
     const directions = ["Norte", "Noreste", "Este", "Sureste", "Sur", "Suroeste", "Oeste", "Noroeste"];
     const index = Math.floor(((deg + 22.5) / 45)) % 8;
@@ -56,6 +65,7 @@ export const useRatings = (
             // Viento del forecast — índice propio
             windSpeed: forecastIdx !== -1 ? forecastData?.hourly?.wind_speed_10m?.[forecastIdx] ?? null : null,
             windDirection: forecastIdx !== -1 ? forecastData?.hourly?.wind_direction_10m?.[forecastIdx] ?? null : null,
+            windGusts: forecastIdx !== -1 ? forecastData?.hourly?.wind_gusts_10m?.[forecastIdx] ?? null : null,
         };
     };
 
@@ -236,6 +246,7 @@ export const useRatings = (
         const {
             windSpeed,
             windDirection,
+            windGusts,
             waveHeight,
             swellHeight,
             swellDirection,
@@ -276,9 +287,14 @@ export const useRatings = (
         if (isOffshore && windSpeed >= hs.offshoreDanger) {
             return { score: 0, factors: ["Peligro: viento te lleva mar adentro"], dangerLevel: "HIGH", isGlassy: false };
         }
+        if (windGusts != null && windGusts >= SUP_CONFIG.gusts.hardStop) {
+            return { score: 0, factors: ["Peligro: ráfagas muy fuertes"], dangerLevel: "HIGH", isGlassy: false };
+        }
+
+        const gustyWind = hasStrongGusts(windSpeed, windGusts, SUP_CONFIG.gusts);
 
         /* GLASSY */
-        const isGlassy = effectiveWind < SUP_CONFIG.glassy.maxWind && waveRef < SUP_CONFIG.glassy.maxWave;
+        const isGlassy = !gustyWind && effectiveWind < SUP_CONFIG.glassy.maxWind && waveRef < SUP_CONFIG.glassy.maxWave;
         if (isGlassy) {
             return { score: 10, factors: ["Espejo"], dangerLevel: "NONE", isGlassy: true };
         }
@@ -300,6 +316,17 @@ export const useRatings = (
         if (effectiveWind < 18) factors.push("Viento calmo");
         else if (effectiveWind < 28) factors.push("Viento moderado");
         else factors.push("Viento fuerte");
+
+        /* RÁFAGAS — castigo aunque el viento medio sea bajo */
+        if (gustyWind) {
+            const g = SUP_CONFIG.gusts;
+            score -= windGusts >= g.strong ? g.strongPenalty : g.penalty;
+            factors.push(windGusts >= g.strong ? "Ráfagas fuertes" : "Viento arrachado");
+            if (isOffshore) {
+                score -= g.offshorePenalty;
+                factors.push("Ráfagas hacia el mar");
+            }
+        }
 
         /* DIRECCIÓN DEL VIENTO — penalización
            onshore: sin penalización · cross: leve · offshore: te aleja de la costa */
@@ -366,6 +393,7 @@ export const useRatings = (
         const {
             windSpeed,
             windDirection,
+            windGusts,
             waveHeight,
             swellHeight,
             swellDirection,
@@ -420,6 +448,12 @@ export const useRatings = (
         if (windSpeed >= hs.advanced) {
             // ← no es HIGH, no es peligro inmediato, pero no es para cualquiera
             return { score: 1, factors: ["Viento fuerte"], dangerLevel: "ADVANCED", isGlassy: false }
+        }
+
+        /* RÁFAGAS */
+        if (hasStrongGusts(windSpeed, windGusts, SWIM_CONFIG.gusts)) {
+            score -= SWIM_CONFIG.gusts.penalty
+            factors.push("Ráfagas fuertes")
         }
 
         /* SWELL WINDOW */
@@ -896,6 +930,7 @@ export const useRatings = (
                 wavePeriod: data.hourly.wind_wave_period?.[i] ?? 0,
                 windSpeed: forecastData?.hourly?.wind_speed_10m?.[i] ?? 0,     // ✅
                 windDirection: forecastData?.hourly?.wind_direction_10m?.[i],   // ✅
+                windGusts: forecastData?.hourly?.wind_gusts_10m?.[i],
                 seaLevelHeightMsl: data.hourly.sea_level_height_msl[i],
                 seaLevelHeightMslPrevious: data.hourly.sea_level_height_msl[i - 1] ?? 0,
             };

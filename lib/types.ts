@@ -150,6 +150,8 @@ export interface ForecastData {
     wind_direction_120m: number[];
     temperature_80m?: number[];
     apparent_temperature: number[];
+    wind_gusts_10m: number[];
+    weather_code: number[];
   },
   daily: {
     time: Date[];

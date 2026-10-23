@@ -43,6 +43,15 @@ export const SUP_CONFIG = {
     strong: 40,
     offshoreDanger: 34,
   },
+  // Ráfagas (km/h): desestabilizan la tabla aunque el viento medio sea bajo
+  gusts: {
+    hardStop: 40,           // ráfaga por encima → no salir
+    strong: 30,             // ráfaga por encima → castigo fuerte
+    spread: 15,             // ráfaga − viento medio por encima → castigo (viento irregular)
+    penalty: 2,             // viento irregular
+    strongPenalty: 3,       // ráfagas de 30 a 40
+    offshorePenalty: 1,     // extra si además sopla hacia el mar
+  },
 } as const;
 
 export const SWIM_CONFIG = {
@@ -56,5 +65,10 @@ export const SWIM_CONFIG = {
     veryStrong: 45,
     offshoreDanger: 28,
     advanced: 35,
+  },
+  // Al nadador lo afecta el mar más que la ráfaga: solo cuenta el valor absoluto
+  gusts: {
+    strong: 35,
+    penalty: 1,
   },
 } as const;

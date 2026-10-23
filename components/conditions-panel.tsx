@@ -178,16 +178,18 @@ const degToCompass = (deg: number) => {
               }
             />
             {
-              ordenado[0].weatherCode && (
-                <ConditionItem
-                  label="Weather"
-                  value={
-                    <span className="flex items-center gap-1">
-                      <Eye className="h-3 w-3" />
-                      {getWeatherDescription(ordenado[0].weatherCode)}
-                    </span>
-                  }
-                />
+              ordenado[0].weatherCode != null && (
+                <div className="col-span-2">
+                  <ConditionItem
+                    label="Clima"
+                    value={
+                      <span className="flex items-center gap-1">
+                        <Eye className="h-3 w-3 shrink-0" />
+                        {getWeatherDescription(ordenado[0].weatherCode)}
+                      </span>
+                    }
+                  />
+                </div>
               )
             }
           </div>
