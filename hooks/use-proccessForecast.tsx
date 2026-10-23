@@ -17,7 +17,21 @@ export interface HourlySummary {
     apparent_temperature: number;
     time: string;
     fecha: string;
+    // Todavía no se piden a Open-Meteo: Racha y Clima quedan vacíos
+    wind_gusts_10m?: number;
+    weatherCode?: number;
 }
+
+/** Inicio de la hora (minutos y segundos en cero) para comparar fechas completas */
+export const inicioDeHora = (fecha: Date | string): number => {
+    const d = new Date(fecha);
+    d.setMinutes(0, 0, 0);
+    return d.getTime();
+};
+
+/** Fecha local "YYYY-MM-DD" (toISOString usaría UTC y corre el día 3 horas) */
+const fechaLocal = (d: Date): string =>
+    `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
 
 export interface ProcessedForecast {
     hoy: HourlySummary[];
@@ -43,7 +57,7 @@ export const useProcessForecast = (data?: ForecastData): ProcessedForecast | nul
 
     // Hora a hora para hoy
 
-    const hoyStr = new Date().toISOString().split("T")[0]; // "2026-03-02"
+    const hoyStr = fechaLocal(new Date()); // "2026-03-02"
 
     const hoy: HourlySummary[] = data.hourly.time
         .map((t, i) => {
@@ -54,7 +68,7 @@ export const useProcessForecast = (data?: ForecastData): ProcessedForecast | nul
                 wind_speed_10m: data.hourly.wind_speed_10m[i],
                 wind_direction_10m: data.hourly.wind_direction_10m[i],
                 humedad: data.hourly.relative_humidity_2m[i],
-                fecha: date.toISOString().split("T")[0], // agregamos la fecha para filtrar
+                fecha: fechaLocal(date), // fecha local, no UTC
                 apparent_temperature: data.hourly.apparent_temperature[i],
                 time: t instanceof Date ? t.toISOString() : t,
             };
@@ -64,7 +78,7 @@ export const useProcessForecast = (data?: ForecastData): ProcessedForecast | nul
     const mña = new Date(ahora);
     mña.setDate(ahora.getDate() + 1);
 
-    const mñaStr = mña.toISOString().split("T")[0];
+    const mñaStr = fechaLocal(mña);
 
     const mañana: HourlySummary[] = data.hourly.time
         .map((t, i) => {
@@ -75,7 +89,7 @@ export const useProcessForecast = (data?: ForecastData): ProcessedForecast | nul
                 wind_speed_10m: data.hourly.wind_speed_10m[i],
                 wind_direction_10m: data.hourly.wind_direction_10m[i],
                 humedad: data.hourly.relative_humidity_2m[i],
-                fecha: date.toISOString().split("T")[0], // agregamos la fecha para filtrar
+                fecha: fechaLocal(date), // fecha local, no UTC
                 apparent_temperature: data.hourly.apparent_temperature[i],
                 time: t instanceof Date ? t.toISOString() : t,
             }

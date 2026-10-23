@@ -2,7 +2,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import type { ForecastData, HourlyForecast as HourlyForecastType } from "@/lib/types";
 import { ArrowUp, Clock, ThermometerSun,Wind,} from "lucide-react";
 import { useProcessForecast } from "@/hooks/use-proccessForecast";
-import { HourlySummary } from "@/hooks/use-proccessForecast";
+import { HourlySummary, inicioDeHora } from "@/hooks/use-proccessForecast";
 
 interface HourlyForecastProps {
   forecast: ForecastData | undefined;
@@ -10,9 +10,8 @@ interface HourlyForecastProps {
 }
 
 export function HourlyForecast({ forecast, selectedHour }: HourlyForecastProps) {
-  if (!forecast?.hourly) return null;
-
   const processed = useProcessForecast(forecast);
+  if (!forecast?.hourly) return null;
   if (!processed) return null;
 
   const { hoy, mañana, semana } = processed;
@@ -22,33 +21,13 @@ export function HourlyForecast({ forecast, selectedHour }: HourlyForecastProps) 
     return directions[index];
   };
 
-  const ordenarHora = (hoy: HourlySummary[]) => {
-    const ahora = selectedHour ? selectedHour.getHours() : new Date().getHours();
-    const ordenado = hoy
-      .sort((a: any, b: any) => {
-        const ha = parseInt(a.hora.split(":")[0], 10);
-        const hb = parseInt(b.hora.split(":")[0], 10);
-        return ha - hb;
-      })
-      .filter((hour: any) => {
-        const hNum = parseInt(hour.hora.split(":")[0], 10);
-        return hNum >= ahora;
-      });
-    return ordenado;
-  };
-  const ordenarMañana = (hoy: HourlySummary[]) => {
-    const ahora = new Date().getHours();
-    const ordenado = hoy
-      .sort((a: any, b: any) => {
-        const ha = parseInt(a.hora.split(":")[0], 10);
-        const hb = parseInt(b.hora.split(":")[0], 10);
-        return ha - hb;
-      })
-    return ordenado;
-  };
+  // Mostramos desde la hora seleccionada (fecha completa) en adelante
+  const desde = inicioDeHora(selectedHour ?? new Date());
+  const desdeSeleccion = (horas: HourlySummary[]) =>
+    horas.filter((hour) => inicioDeHora(hour.time) >= desde);
 
-  const ordenado = ordenarHora(hoy);
-  const mañanaOrdenado = ordenarMañana(mañana);
+  const ordenado = desdeSeleccion(hoy);
+  const mañanaOrdenado = desdeSeleccion(mañana);
   return (
     <Card>
       <CardHeader>

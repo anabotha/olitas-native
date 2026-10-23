@@ -31,7 +31,7 @@ const ActivityCheck = (
 
       <div className="col-span-3">
 
-        {safety.color === "red" || safety.color === "yellow" && (
+        {(safety.color === "red" || safety.color === "yellow") && (
           <div className="flex items-center gap-3 rounded-xl border border-destructive/20 bg-destructive/5 px-5 py-4">
             <AlertCircle className="h-5 w-5 text-destructive" />
             <div>

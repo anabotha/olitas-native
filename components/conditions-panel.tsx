@@ -12,7 +12,7 @@ import {
 } from "@/lib/conditions";
 import { HugeiconsIcon } from '@hugeicons/react'
 import { FastWindIcon, ThermometerWarmIcon } from '@hugeicons/core-free-icons'
-import { useProcessForecast } from "@/hooks/use-proccessForecast";
+import { useProcessForecast, inicioDeHora } from "@/hooks/use-proccessForecast";
 import { processData } from '@/hooks/use-processData';
 
 interface ConditionsProps {
@@ -23,9 +23,9 @@ interface ConditionsProps {
 }
 
 export function ConditionsPanel({ forecast, conditions, selectedSpot, selectedHour }: ConditionsProps) {
+  const result = useProcessForecast(forecast);
   if (!forecast?.hourly) return null;
   if (!conditions) return null;
-  const result = useProcessForecast(forecast);
   if (!result) return null;
   const { hoy, semana, mañana } = result;
   const processedData = processData(conditions, forecast, selectedSpot?.orientation, selectedSpot?.name, selectedHour);
@@ -38,20 +38,6 @@ const degToCompass = (deg: number) => {
 };
 
 
-  const ordenarHora = (hoy: any[]) => {
-    const ahora = selectedHour ? selectedHour.getHours() : new Date().getHours();
-    const ordenado = hoy
-      .sort((a: any, b: any) => {
-        const ha = parseInt(a.hora.split(":")[0], 10);
-        const hb = parseInt(b.hora.split(":")[0], 10);
-        return ha - hb;
-      })
-      .filter((hour: any) => {
-        const hNum = parseInt(hour.hora.split(":")[0], 10);
-        return hNum == ahora;
-      });
-    return ordenado;
-  };
 
   const getHoyIndex = (forecast: ForecastData): number => {
     const ahora = new Date();
@@ -64,7 +50,10 @@ const degToCompass = (deg: number) => {
       );
     });
   };
-  const ordenado = ordenarHora(hoy);
+  // Buscamos la hora seleccionada por fecha completa, no solo por número de hora
+  const objetivo = inicioDeHora(selectedHour ?? new Date());
+  const ordenado = [...hoy, ...mañana].filter((hour) => inicioDeHora(hour.time) === objetivo);
+  if (ordenado.length === 0) return null;
   const hoyIndex = getHoyIndex(forecast!);
   return (
     <div className="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-3">
@@ -91,10 +80,11 @@ const degToCompass = (deg: number) => {
                 <span className="flex items-center gap-1">
                   <ArrowUp
                     className="h-3 w-3"
-                    style={{ transform: `rotate(${(processedData.current.waveDirection?? 0 + 180) % 360}deg)` }}
-
+                    style={{ transform: `rotate(${((processedData.current.waveDirection ?? 0) + 180) % 360}deg)` }}
                   />
-                  {processedData.current.waveDirection?.toFixed(0)}
+                  {processedData.current.waveDirection != null
+                    ? degToCompass(processedData.current.waveDirection)
+                    : "—"}
                 </span>
               }
             />
@@ -114,7 +104,7 @@ const degToCompass = (deg: number) => {
                       className="h-3 w-3"
                       style={{ transform: `rotate(${(processedData.current.swellDirection + 180) % 360}deg)` }}
                     />
-                    {processedData.current.swellDirection?.toFixed(0)}
+                    {degToCompass(processedData.current.swellDirection)}
                   </span>
                 }
               />
