@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from "react";
 import { Header } from "@/components/header";
+import { Footer } from "@/components/footer";
 import { ConditionsPanel } from "@/components/conditions-panel";
 import { HourlyForecast } from "@/components/hourly-forecast";
 import { SpotSelector } from "@/components/spot-selector";
@@ -60,6 +61,7 @@ export default function Home() {
   const activeSpot = spotReady ? selectedSpot : null
   const { data, error, isLoading } = useMarineWeather(activeSpot)
   const { forecastData, forecastIsLoading } = useForecast(activeSpot)
+  console.log("forecastData", forecastData)
   const showLoading = !spotReady || isLoading || forecastIsLoading
   const driverObj = driver({
     showProgress: true,
@@ -209,42 +211,10 @@ export default function Home() {
                 <SeaState data={data} forecast={forecastData} beach={selectedSpot} selectedHour={selectedHour} />
               </CollapsibleSection>
             </section>
-            {/* Footer note */}
-            <footer className="pb-8 text-center space-y-4">
-            
-              <div className="pt-2 text-center border-t border-border/40 max-w-xs mx-auto">
-                <a
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  href="mailto:josefinabotha@gmail.com"
-                  className="block text-xs font-medium underline underline-offset-4 text-blue-500 hover:text-blue-600 transition-colors duration-200"
-                >
-                  ¿Tenes dudas? ¡Contactame por aca!
-                </a> 
-                
-                  <a
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  href="https://anabotha.dev"
-                  className="block text-xs font-medium underline underline-offset-4 text-blue-500 hover:text-blue-600 transition-colors duration-200"
-                >
-                  Mi portfolio
-                </a>
-              </div>
-<br/>
-                <div className="space-y-1">
-                <p className="text-[10px] uppercase tracking-wider text-muted-foreground/60">
-                  Datos meteorológicos por Open-Meteo
-                </p>
-                <p className="text-xs font-medium text-destructive/60">
-                  Siempre chequeá las condiciones antes de salir al agua.
-                </p>
-              </div>
-
-            </footer>
           </div>
         )}
       </main>
+      <Footer />
     </div>
   );
 }
