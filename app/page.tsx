@@ -63,7 +63,7 @@ export default function Home() {
   const activeSpot = spotReady ? selectedSpot : null
   const { data, error, isLoading } = useMarineWeather(activeSpot)
   const { forecastData, forecastIsLoading } = useForecast(activeSpot)
-  console.log("forecastData", forecastData)
+  // console.log("forecastData", forecastData)
   const showLoading = !spotReady || isLoading || forecastIsLoading
   const driverObj = driver({
     showProgress: true,
