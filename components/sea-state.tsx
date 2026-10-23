@@ -5,10 +5,11 @@ import { useRatings } from "@/hooks/use-ratings";
 import { ForecastData, MarineWeatherData, SpotLocation } from "@/lib/types";
 import { HugeiconsIcon } from "@hugeicons/react";
 import { KayakIcon, SwimmingIcon, SurfboardIcon } from "@hugeicons/core-free-icons";
-import { ArrowDown, ArrowUp, Waves } from "lucide-react";
+import { ArrowDown, ArrowUp, Clock, Waves } from "lucide-react";
 import { getScoreBg, getScoreSegmentColor, getScoreTextColor } from "./activity-card";
 import { cn } from "@/lib/utils";
 import { InfoTip } from "./info-tip";
+import { CardHeading } from "./card-heading";
 
 // "Hoy 14:00" / "Mañana 7:00" / "Sáb 9:00"
 const formatWindowTime = (date: Date) => {
@@ -106,12 +107,20 @@ export const SeaState = ({ data, forecast, beach, selectedHour }: SeaStateProps)
             </CardHeader> */}
 
             <section className="grid divide-y divide-border md:grid-cols-2 md:divide-x md:divide-y-0">
-                <div className="space-y-2 p-5">
+                <div className="flex flex-col gap-4 p-5">
+                    <CardHeading
+                        icon={<Waves className="h-5 w-5" />}
+                        title="Mar y marea"
+                        subtitle="Cómo está el agua ahora"
+                    />
+                    <div className="flex flex-col gap-1.5">
                     <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">Condición</p>
-                    <p className={cn("inline-flex rounded-full px-3 py-1 text-base font-semibold", getConditionChip(seaState.condition))}>
+                    <p className={cn("inline-flex w-fit rounded-full px-3 py-1 text-base font-semibold", getConditionChip(seaState.condition))}>
                         {seaState.condition}
                     </p>
-                    <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground pt-3">Marea</p>
+                    </div>
+                    <div className="flex flex-col gap-1.5">
+                    <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">Marea</p>
                     {/* <p className="text-xl font-semibold">{seaState.tideInfo === "low" ? "Baja" : ""}{seaState.tideInfo === "high" ? "Alta" : ""}{seaState.tideInfo === "mid" ? "Media" : ""}</p> */}
                     <p className="flex items-center gap-1.5 text-xl font-semibold">
                         <TideArrow className="h-5 w-5 text-primary" aria-hidden />
@@ -122,16 +131,16 @@ export const SeaState = ({ data, forecast, beach, selectedHour }: SeaStateProps)
                             {nextTide.type} {formatWindowTime(nextTide.date).replace(/^Hoy /, "a las ").replace(/^Mañana/, "mañana")}
                         </p>
                     )}
-
+                    </div>
                 </div>
 
-                <div className="p-5">
-                    <div className="mb-3 flex items-center gap-1.5">
-                        <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
-                            Posibles Ventanas
-                        </p>
-                        <InfoTip text="Los mejores horarios para hacer deporte dentro de las próximas horas." />
-                    </div>
+                <div className="flex flex-col gap-4 p-5">
+                    <CardHeading
+                        icon={<Clock className="h-5 w-5" />}
+                        title="Posibles ventanas"
+                        subtitle="Entre las 6 y las 20 h"
+                        extra={<InfoTip text="Los mejores horarios para hacer deporte dentro de las próximas horas." />}
+                    />
 
                     <div className="space-y-2">
                         {validWindows.length > 0 ? (

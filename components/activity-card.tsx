@@ -1,6 +1,7 @@
 "use client";
 
 import { Card, CardContent } from "@/components/ui/card";
+import { CardHeading } from "./card-heading";
 import type { ActivityRating } from "@/lib/types";
 import { cn } from "@/lib/utils";
 import { StarIcon } from "@hugeicons/core-free-icons";
@@ -93,20 +94,18 @@ export function ActivityCard({
 
       <CardContent className="flex flex-col gap-4 p-5">
         {/* Activity identity */}
-        <div className="flex items-center gap-3">
-          <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-secondary text-secondary-foreground">
-            {icon}
-          </div>
-          <div>
-            <h3 className="text-base font-semibold text-foreground">{activity}</h3>
-            <p className="text-sm text-muted-foreground">
+        <CardHeading
+          icon={icon}
+          title={activity}
+          subtitle={
+            <>
               {rating.description}
               {activity === "Nado en aguas abiertas" && rating.score === 4 && (
                 <span> apto para avanzados</span>
               )}
-            </p>
-          </div>
-        </div>
+            </>
+          }
+        />
 
         {/* Score bar — convención clara */}
         <div className="flex flex-col gap-1.5">
