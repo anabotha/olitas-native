@@ -86,9 +86,9 @@ export interface activities {
     swimming: ActivityRating;
   };
   bestWindows?: {
-    surf: { time: string; score: number };
-    sup: { time: string; score: number };
-    swimming: { time: string; score: number };
+    surf: BestWindow;
+    sup: BestWindow;
+    swimming: BestWindow;
   };
 }
 export interface HourlyForecast {
@@ -157,4 +157,13 @@ export interface ForecastData {
     time: Date[];
     uv_index_max: number[];
   },
+}
+export interface BestWindow {
+  time: string;
+  /** Hora con mejor puntaje */
+  date: Date | null;
+  /** Rango de horas contiguas con puntaje similar al mejor */
+  start: Date | null;
+  end: Date | null;
+  score: number;
 }

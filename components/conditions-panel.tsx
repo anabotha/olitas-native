@@ -208,7 +208,7 @@ function ConditionItem({
 }) {
   return (
     <div className="flex flex-col gap-0.5">
-      <span className="text-[11px] uppercase tracking-wider text-muted-foreground">
+      <span className="text-xs uppercase tracking-wider text-muted-foreground">
         {label}
       </span>
       <span className="text-sm font-medium text-foreground">{value}</span>

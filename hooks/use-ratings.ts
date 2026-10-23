@@ -917,10 +917,14 @@ export const useRatings = (
 
     const getBestWindow = (data: any, activity: ActivityType, forecastData?: ForecastData) => {
         const nowIndex = data.hourly.time.findIndex((t: any) => new Date(t) >= new Date());
-        let bestHour = null;
-        let maxScore = 0;
+        const scores: { index: number; score: number }[] = [];
         // Recorremos solo las próximas 24 horas
         for (let i = nowIndex; i < nowIndex + 24 && i < data.hourly.time.length; i++) {
+            // Solo horas de luz: de 6 a 20
+            const hour = new Date(data.hourly.time[i]).getHours();
+            if (hour < 6 || hour > 20) continue;
+            // Marine y forecast no arrancan a la misma hora: buscamos el índice del forecast por tiempo
+            const f = forecastData ? findHourIndex(forecastData.hourly.time as unknown as Date[], new Date(data.hourly.time[i])) : -1;
             const hourlyStats = {
                 waveHeight: data.hourly.wave_height[i],
                 waveDirection: data.hourly.wave_direction[i],
@@ -928,9 +932,9 @@ export const useRatings = (
                 swellDirection: data.hourly.swell_wave_direction[i],
                 swellPeriod: data.hourly.swell_wave_period?.[i] ?? 0,
                 wavePeriod: data.hourly.wind_wave_period?.[i] ?? 0,
-                windSpeed: forecastData?.hourly?.wind_speed_10m?.[i] ?? 0,     // ✅
-                windDirection: forecastData?.hourly?.wind_direction_10m?.[i],   // ✅
-                windGusts: forecastData?.hourly?.wind_gusts_10m?.[i],
+                windSpeed: f >= 0 ? forecastData?.hourly?.wind_speed_10m?.[f] ?? 0 : 0,
+                windDirection: f >= 0 ? forecastData?.hourly?.wind_direction_10m?.[f] : undefined,
+                windGusts: f >= 0 ? forecastData?.hourly?.wind_gusts_10m?.[f] : undefined,
                 seaLevelHeightMsl: data.hourly.sea_level_height_msl[i],
                 seaLevelHeightMslPrevious: data.hourly.sea_level_height_msl[i - 1] ?? 0,
             };
@@ -939,11 +943,24 @@ export const useRatings = (
                 activity === "sup" ? getSupRating(hourlyStats, spot) :
                     getSwimmingRating(hourlyStats, spot);
 
-            if (score > maxScore) {
-                maxScore = score;
-                bestHour = data.hourly.time[i];
-            }
+            scores.push({ index: i, score });
         }
+
+        let best = -1;
+        let maxScore = 0;
+        scores.forEach((s, k) => {
+            if (s.score > maxScore) { maxScore = s.score; best = k; }
+        });
+
+        // Rango: horas contiguas a la mejor con un puntaje a lo sumo 1 punto menor
+        // (sin saltar la noche, que no está en `scores`)
+        const fits = (a: number, b: number) => scores[b].index === scores[a].index + 1 && scores[a].score >= maxScore - 1;
+        let from = best, to = best;
+        if (best >= 0) {
+            while (from > 0 && fits(from - 1, from)) from--;
+            while (to < scores.length - 1 && scores[to + 1].index === scores[to].index + 1 && scores[to + 1].score >= maxScore - 1) to++;
+        }
+        const bestHour = best >= 0 ? data.hourly.time[scores[best].index] : null;
 
         return {
             time: bestHour ? new Date(bestHour).toLocaleDateString('es-AR', {
@@ -953,6 +970,9 @@ export const useRatings = (
                 minute: '2-digit',
                 hour12: false
             }) : "N/A",
+            date: bestHour ? new Date(bestHour) : null,
+            start: best >= 0 ? new Date(data.hourly.time[scores[from].index]) : null,
+            end: best >= 0 ? new Date(data.hourly.time[scores[to].index]) : null,
             score: maxScore
         };
     };

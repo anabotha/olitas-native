@@ -50,7 +50,7 @@ export function HourlyForecast({ forecast, selectedHour }: HourlyForecastProps) 
               return (
                 <div
                   key={i}
-                  className="flex min-w-[80px] flex-col items-center gap-2 rounded-xl border-2 border-highlight-border bg-highlight px-3 py-3"
+                  className={`flex min-w-[80px] flex-col items-center gap-2 rounded-xl border px-3 py-3 ${i === 0 ? "border-highlight-border bg-highlight" : "border-border/60 bg-background/60"}`}
                 >
                   <span className="text-m font-medium text-muted-foreground">
                     {hour.hora}
@@ -88,7 +88,7 @@ export function HourlyForecast({ forecast, selectedHour }: HourlyForecastProps) 
             })}
            <div className="flex flex-col items-center gap-1 flex-shrink-0 px-1">
       <div className="h-full w-px flex-1 bg-border" style={{ minHeight: 80 }} />
-      <span className="text-[10px] text-muted-foreground whitespace-nowrap [writing-mode:vertical-rl] rotate-180">
+      <span className="text-xs text-muted-foreground whitespace-nowrap [writing-mode:vertical-rl] rotate-180">
         Mañana
       </span>
       <div className="h-full w-px flex-1 bg-border" style={{ minHeight: 80 }} />
@@ -99,7 +99,7 @@ export function HourlyForecast({ forecast, selectedHour }: HourlyForecastProps) 
               return (
                 <div
                   key={i}
-                  className=" border-2 border-highlight-border-subtle bg-highlight flex min-w-[80px] flex-col items-center gap-2 rounded-xl  px-3 py-3"
+                  className="flex min-w-[80px] flex-col items-center gap-2 rounded-xl border border-border/60 bg-background/60 px-3 py-3"
                 >
                   <span className="text-m font-medium text-muted-foreground">
                     {hour.hora}

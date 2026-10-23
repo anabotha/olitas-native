@@ -30,7 +30,6 @@ export async function getMarineWeather(latitude: number, longitude: number): Pro
 
     const responses = await fetchWeatherApi(url, params)
     const response = responses[0]
-    const utcOffsetSeconds = response.utcOffsetSeconds()
     const hourly = response.hourly()!
     const daily = response.daily()!
 
@@ -41,8 +40,7 @@ export async function getMarineWeather(latitude: number, longitude: number): Pro
                 (_, i) =>
                     new Date(
                         (Number(hourly.time()) +
-                            i * hourly.interval() +
-                            utcOffsetSeconds) *
+                            i * hourly.interval()) *
                         1000
                     )
             ),
@@ -77,8 +75,7 @@ export async function getMarineWeather(latitude: number, longitude: number): Pro
                 (_, i) =>
                     new Date(
                         (Number(daily.time()) +
-                            i * daily.interval() +
-                            utcOffsetSeconds) *
+                            i * daily.interval()) *
                         1000
                     )
             ),

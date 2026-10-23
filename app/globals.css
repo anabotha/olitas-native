@@ -4,7 +4,7 @@
 @custom-variant dark (&:is(.dark *));
 
 :root {
-  --background: oklch(0.97 0.005 200);
+  --background: oklch(0.955 0.012 210);
 
 
   --foreground: oklch(0.22 0.03 220);
@@ -13,11 +13,11 @@
   --popover: oklch(0.99 0.003 200);
   --popover-foreground: oklch(0.22 0.03 220);
   --primary: oklch(0.55 0.12 220);
-  --primary-foreground: oklch(89.841% 0.06243 196.187);
+  --primary-foreground: oklch(0.98 0.01 200);
   --secondary: oklch(0.93 0.015 190);
   --secondary-foreground: oklch(0.30 0.04 220);
   --muted: oklch(0.94 0.012 195);
-  --muted-foreground: oklch(0.50 0.03 220);
+  --muted-foreground: oklch(0.45 0.03 220);
   --accent: oklch(0.72 0.12 175);
   --accent-foreground: oklch(0.18 0.03 220);
   --destructive: oklch(0.577 0.245 27.325);
@@ -43,9 +43,10 @@
   /* Tokens semánticos propios de Olitas */
   --chrome: oklch(0.94 0.012 195 / 0.8);        /* fondo de header y footer */
   --chrome-border: oklch(0.22 0.03 220 / 0.1);
-  --highlight: oklch(0.95 0.03 230);            /* hora seleccionada / actual */
-  --highlight-border: oklch(0.70 0.14 245);
-  --highlight-border-subtle: oklch(0.88 0.06 240);
+  --highlight: oklch(0.955 0.018 215);           /* hora seleccionada / actual */
+  --highlight-border: oklch(0.72 0.08 220);
+  --highlight-border-subtle: oklch(0.90 0.025 215);
+  --card-shadow: 0 1px 2px oklch(0.30 0.04 230 / 0.05), 0 6px 20px -6px oklch(0.30 0.05 230 / 0.12);
   --warning: oklch(0.77 0.16 70);               /* avisos de seguridad */
   --warning-foreground: oklch(0.47 0.12 60);
 }
@@ -86,9 +87,10 @@
 
   --chrome: oklch(0.28 0.02 220 / 0.8);
   --chrome-border: oklch(0.93 0.01 200 / 0.1);
-  --highlight: oklch(0.28 0.08 255);
-  --highlight-border: oklch(0.62 0.14 245);
-  --highlight-border-subtle: oklch(0.38 0.08 250);
+  --highlight: oklch(0.26 0.035 220);
+  --highlight-border: oklch(0.55 0.08 215);
+  --highlight-border-subtle: oklch(0.34 0.03 220);
+  --card-shadow: 0 1px 2px oklch(0 0 0 / 0.25), 0 6px 20px -6px oklch(0 0 0 / 0.35);
   --warning: oklch(0.77 0.16 70);
   --warning-foreground: oklch(0.82 0.14 75);
 }
@@ -139,6 +141,7 @@
   --color-highlight-border-subtle: var(--highlight-border-subtle);
   --color-warning: var(--warning);
   --color-warning-foreground: var(--warning-foreground);
+  --shadow-card: var(--card-shadow);
 }
 
 @layer base {

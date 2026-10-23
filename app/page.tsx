@@ -9,7 +9,7 @@ import { SpotSelector } from "@/components/spot-selector";
 import { LoadingState } from "@/components/loading-state";
 import { DEFAULT_SPOTS} from "@/lib/spots";
 import type { SpotLocation } from "@/lib/types";
-import { AlertCircle, Info } from "lucide-react";
+import { AlertCircle } from "lucide-react";
 import { useMarineWeather } from "@/hooks/use-marineWeather";
 import ActivityCheck from "@/components/activity-check";
 import { useForecast } from "@/hooks/use-forecast";
@@ -17,6 +17,8 @@ import { SeaState } from "@/components/sea-state";
 import { CollapsibleSection } from "@/components/collapsible-section";
 import { HourSelector } from "@/components/hour-selector";
 import { PwaInstallPrompt } from "@/components/pwa-install-prompt";
+import { InfoTip } from "@/components/info-tip";
+import { ScoreLegend } from "@/components/score-legend";
 import "driver.js/dist/driver.css";
 
 import { driver } from "driver.js";
@@ -127,17 +129,7 @@ export default function Home() {
 
   return (
     <div className="min-h-screen bg-background">
-      <header id="header" >
-        <Header />
-
-        <button
-          onClick={() => driverObj.drive()}
-          className={`absolute top-4 right-4 text-muted-foreground hover:text-primary transition-colors p-2 rounded-full ${showGuideOnLoad ? 'ring-2 ring-primary animate-pulse' : ''
-            }`}
-        >
-          <Info size={24} />
-        </button>
-      </header>
+      <Header onOpenGuide={() => driverObj.drive()} highlightGuide={showGuideOnLoad} />
 
       <main className="mx-auto max-w-5xl px-6 pb-16 md:px-10">
         {/* Hero section */}
@@ -181,7 +173,11 @@ export default function Home() {
         {data && !error && !showLoading && (
           <div className="flex flex-col gap-8">
 
-            <CollapsibleSection title="actividad" defaultOpen={true}>
+            <CollapsibleSection
+              title="actividad"
+              defaultOpen={true}
+              info={<InfoTip label="Cómo leer el puntaje"><ScoreLegend /></InfoTip>}
+            >
               <div id="actividad">
 
                 {/* Activity cards */}

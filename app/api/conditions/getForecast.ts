@@ -32,7 +32,6 @@ export async function getForecast(latitude: number, longitude: number): Promise<
     const response = responses[0];
     // Validar que los métodos existen
     const elevation = typeof response.elevation === "function" ? response.elevation() : 0;
-    const utcOffsetSeconds = typeof response.utcOffsetSeconds === "function" ? response.utcOffsetSeconds() : 0;
 
     const hourly = response.hourly?.();
     const daily = response.daily?.();
@@ -45,7 +44,7 @@ export async function getForecast(latitude: number, longitude: number): Promise<
         hourly: {
             time: Array.from(
                 { length: (Number(hourly.timeEnd()) - Number(hourly.time())) / hourly.interval() },
-                (_, i) => new Date((Number(hourly.time()) + i * hourly.interval() + utcOffsetSeconds) * 1000)
+                (_, i) => new Date((Number(hourly.time()) + i * hourly.interval()) * 1000)
             ),
             temperature_2m: Array.from(hourly.variables(0)?.valuesArray() ?? []),
             relative_humidity_2m: Array.from(hourly.variables(1)?.valuesArray() ?? []),
@@ -62,7 +61,7 @@ export async function getForecast(latitude: number, longitude: number): Promise<
         daily: {
             time: Array.from(
                 { length: (Number(daily.timeEnd()) - Number(daily.time())) / daily.interval() },
-                (_, i) => new Date((Number(daily.time()) + i * daily.interval() + utcOffsetSeconds) * 1000)
+                (_, i) => new Date((Number(daily.time()) + i * daily.interval()) * 1000)
             ),
             uv_index_max: Array.from(daily.variables(0)?.valuesArray() ?? []),
         },

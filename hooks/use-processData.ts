@@ -72,10 +72,12 @@ const SPOT_TIDAL_CONFIG: Record<string, {
     "Caleta Córdova": { rangeScale: 1.05, midPoint: -0.05 }, // sin confirmar — ver nota de arriba, dato de "playa corta" sugeriría revisar esto
 };
 
-// Misma key de día que usa searchTodaysStats: toISOString ya viene con el
-// offset horario del spot "horneado" en el epoch (ver getMarineWeather), así
-// que comparar por fecha UTC acá equivale a comparar por fecha local.
-const dayKey = (date: Date | string): string => new Date(date).toISOString().split("T")[0];
+// Fecha local "YYYY-MM-DD". Los timestamps de Open-Meteo son instantes reales,
+// así que toISOString (UTC) correría el día 3 horas.
+const dayKey = (date: Date | string): string => {
+    const d = new Date(date);
+    return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
+};
 
 export const getTidalPhase = (
     sea_level_height_msl: number,
@@ -260,13 +262,9 @@ const getWorstSafetyNextHours = (
 export const processData = (data?: MarineWeatherData, forecastData?: ForecastData, beachOrientation?: number, beachName?: string, selectedHour?: Date): CombinedConditions | null => {
     if (!data) return null;
     // if (!forecastData) return null;
-    const getTime = (date: Date) => {
-        return date.toISOString().split("T")[1].split(":")[0]
-    }
+    const getTime = (date: Date) => String(new Date(date).getHours()).padStart(2, "0")
 
-    const getDate = (date: Date) => {
-        return date.toISOString().split("T")[0]
-    }
+    const getDate = (date: Date) => dayKey(date)
     const todaysforecast = useProcessForecast(forecastData);
     const searchTodaysStats = () => {
         if (!data) return null
@@ -278,14 +276,14 @@ export const processData = (data?: MarineWeatherData, forecastData?: ForecastDat
             (date) => getDate(date) === today
         )
         // console.log("index", index)
-        const hourly = data.hourly.time.findIndex((time) => getTime(time) === now)
+        const hourly = data.hourly.time.findIndex((time) => getDate(time) === today && getTime(time) === now)
         // console.log("hourly", hourly, selectedHour, now)
         if (index === -1) return null
 
         // El índice del forecast se busca por separado contra su propio array de tiempos,
         // porque puede tener un rango distinto al del marine API.
         const forecastHourly = forecastData
-            ? forecastData.hourly.time.findIndex((time) => getTime(new Date(time)) === now)
+            ? forecastData.hourly.time.findIndex((time) => getDate(new Date(time)) === today && getTime(new Date(time)) === now)
             : -1
 
         const processData = {
