@@ -2,9 +2,9 @@ import { Globe, Mail, MapPin, TriangleAlert } from "lucide-react";
 
 export function Footer() {
   return (
-    <footer className="mt-8 border-t border-black/10 bg-muted/80">
+    <footer className="mt-8 border-t border-chrome-border bg-chrome">
       <div className="mx-auto flex max-w-2xl flex-col items-center gap-5 px-4 py-6 text-center">
-        <div className="flex items-start gap-2 rounded-lg border border-amber-500/30 bg-amber-500/10 px-4 py-2.5 text-left text-xs font-medium text-amber-700 dark:text-amber-400">
+        <div className="flex items-start gap-2 rounded-lg border border-warning/30 bg-warning/10 px-4 py-2.5 text-left text-xs font-medium text-warning-foreground">
           <TriangleAlert className="mt-0.5 h-4 w-4 shrink-0" />
           <span>Siempre chequeá las condiciones antes de salir al agua.</span>
         </div>

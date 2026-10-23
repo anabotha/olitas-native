@@ -50,7 +50,7 @@ export function HourlyForecast({ forecast, selectedHour }: HourlyForecastProps) 
               return (
                 <div
                   key={i}
-                  className="flex min-w-[80px] flex-col items-center gap-2 rounded-xl border-2 border-blue-400 bg-blue-50 dark:bg-blue-950 px-3 py-3"
+                  className="flex min-w-[80px] flex-col items-center gap-2 rounded-xl border-2 border-highlight-border bg-highlight px-3 py-3"
                 >
                   <span className="text-m font-medium text-muted-foreground">
                     {hour.hora}
@@ -99,7 +99,7 @@ export function HourlyForecast({ forecast, selectedHour }: HourlyForecastProps) 
               return (
                 <div
                   key={i}
-                  className=" border-2 border-blue-200 bg-blue-50 dark:bg-blue-950  flex min-w-[80px] flex-col items-center gap-2 rounded-xl  px-3 py-3"
+                  className=" border-2 border-highlight-border-subtle bg-highlight flex min-w-[80px] flex-col items-center gap-2 rounded-xl  px-3 py-3"
                 >
                   <span className="text-m font-medium text-muted-foreground">
                     {hour.hora}

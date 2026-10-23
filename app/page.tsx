@@ -65,7 +65,7 @@ export default function Home() {
   const showLoading = !spotReady || isLoading || forecastIsLoading
   const driverObj = driver({
     showProgress: true,
-    popoverClass: 'bg-white rounded-[20px] shadow-2xl p-6 font-sans',
+    popoverClass: 'bg-popover text-popover-foreground rounded-[20px] shadow-2xl p-6 font-sans',
     nextBtnText: 'Siguiente',
     prevBtnText: 'Anterior',
     doneBtnText: 'Entendido',
@@ -132,7 +132,7 @@ export default function Home() {
 
         <button
           onClick={() => driverObj.drive()}
-          className={`absolute top-4 right-4 text-gray-400 hover:text-blue-600 transition-colors p-2 rounded-full ${showGuideOnLoad ? 'ring-2 ring-blue-400 animate-pulse' : ''
+          className={`absolute top-4 right-4 text-muted-foreground hover:text-primary transition-colors p-2 rounded-full ${showGuideOnLoad ? 'ring-2 ring-primary animate-pulse' : ''
             }`}
         >
           <Info size={24} />

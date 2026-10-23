@@ -120,8 +120,8 @@ export function PwaInstallPrompt() {
           </span>
           <button
             onClick={handleDismissIosTip}
-            className="bg-transparent border-none cursor-pointer text-base text-gray-400
-                       hover:text-gray-600 p-0 px-1 shrink-0"
+            className="bg-transparent border-none cursor-pointer text-base text-muted-foreground
+                       hover:text-foreground p-0 px-1 shrink-0"
             aria-label="Cerrar"
           >
             ✕

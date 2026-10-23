@@ -2,7 +2,7 @@ import { MapPin, Waves } from "lucide-react";
 
 export function Header() {
   return (
-    <header className="sticky top-0 z-40 mb-4 border-b border-black/10 bg-muted/80 shadow-sm backdrop-blur-md">
+    <header className="sticky top-0 z-40 mb-4 border-b border-chrome-border bg-chrome shadow-sm backdrop-blur-md">
       <div className="mx-auto flex items-center justify-between gap-4 px-4 py-3 md:px-10">
         <div className="flex items-center gap-3">
           <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-primary shadow-lg shadow-primary/20">
