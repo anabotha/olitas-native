@@ -256,7 +256,7 @@ export const useRatings = (
         } = stats;
 
         const factors: string[] = [];
-
+        
         /* OLA DE REFERENCIA — para SUP las olas son inestabilidad, no el objetivo */
         let waveRef = waveHeight ?? swellHeight ?? 0;
         if (!spot.exposed) waveRef *= SUP_CONFIG.exposureReduction;
@@ -371,6 +371,11 @@ export const useRatings = (
             factors.push("Chop");
         }
 
+        if (windGusts>=50){
+            score=0;
+            factors.push("Ráfagas extremas — peligroso");
+        }
+
         /* MAREA — informativa (no penaliza, igual que antes) */
         const tide = getTidalPhase(
             seaLevelHeightMsl,
@@ -430,6 +435,10 @@ export const useRatings = (
 
         /* HARD STOPS */
         const hs = SWIM_CONFIG.hardStop
+      if (windGusts>=50){
+            return { score: 0, factors: ["Viento extremo"], dangerLevel: "HIGH", isGlassy: false }
+            
+        }
         if (windSpeed == null) {
             return { score: 0, factors: ["Sin datos de viento"], dangerLevel: "HIGH", isGlassy: false }
         }
@@ -449,7 +458,7 @@ export const useRatings = (
             // ← no es HIGH, no es peligro inmediato, pero no es para cualquiera
             return { score: 1, factors: ["Viento fuerte"], dangerLevel: "ADVANCED", isGlassy: false }
         }
-
+        
         /* RÁFAGAS */
         if (hasStrongGusts(windSpeed, windGusts, SWIM_CONFIG.gusts)) {
             score -= SWIM_CONFIG.gusts.penalty
@@ -559,7 +568,7 @@ export const useRatings = (
             score -= 1
             factors.push("Swell energético")
         }
-
+         
         const finalScore = clampScore(score)
 
         return {
