@@ -9,7 +9,7 @@ import { SpotSelector } from "@/components/spot-selector";
 import { LoadingState } from "@/components/loading-state";
 import { DEFAULT_SPOTS} from "@/lib/spots";
 import type { SpotLocation } from "@/lib/types";
-import { AlertCircle } from "lucide-react";
+import { AlertCircle, ArrowUpRight, Waves } from "lucide-react";
 import { useMarineWeather } from "@/hooks/use-marineWeather";
 import ActivityCheck from "@/components/activity-check";
 import { useForecast } from "@/hooks/use-forecast";
@@ -210,12 +210,23 @@ export default function Home() {
           </div>
         )}
       </main>
- <a
-  href="mailto:josefinabotha@gmail.com"
-  className="flex items-start gap-2 rounded-lg border border-highlight-border bg-highlight m-4 px-4 py-3 text-left text-md font-medium text-primary transition-colors hover:border-primary/50"
->
-  <span>¿Tenés una carrera de aguas abiertas?<br/>Escribime y vemos cómo sumarla</span>
-</a>
+      <div className="mx-auto max-w-2xl px-4 pt-8">
+        <a
+          href="mailto:josefinabotha@gmail.com"
+          className="group flex items-center gap-3 rounded-lg border border-highlight-border bg-highlight px-4 py-3 text-left transition-colors hover:border-primary/50"
+        >
+          <Waves className="h-5 w-5 shrink-0 text-primary" />
+          <span className="flex-1">
+            <span className="block text-sm font-medium text-primary">
+              ¿Tenés una carrera de aguas abiertas?
+            </span>
+            <span className="block text-xs text-muted-foreground">
+              Escribime y vemos cómo sumarla.
+            </span>
+          </span>
+          <ArrowUpRight className="h-4 w-4 shrink-0 text-primary/60 transition-transform group-hover:-translate-y-0.5 group-hover:translate-x-0.5" />
+        </a>
+      </div>
       <Footer />
     </div>
   );
