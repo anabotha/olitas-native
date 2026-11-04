@@ -1,4 +1,3 @@
-"use client"
 
 import { ForecastData } from "@/lib/types"
 import { useMemo } from "react"

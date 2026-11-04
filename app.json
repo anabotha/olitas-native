@@ -1,0 +1,29 @@
+{
+  "expo": {
+    "name": "Olitas",
+    "slug": "olitas",
+    "version": "1.0.0",
+    "orientation": "portrait",
+    "icon": "./assets/icon.png",
+    "userInterfaceStyle": "automatic",
+    "splash": {
+      "image": "./assets/icon.png",
+      "resizeMode": "contain",
+      "backgroundColor": "#4a90a4"
+    },
+    "ios": {
+      "supportsTablet": true,
+      "bundleIdentifier": "dev.anabotha.olitas"
+    },
+    "android": {
+      "package": "dev.anabotha.olitas",
+      "adaptiveIcon": {
+        "backgroundColor": "#4a90a4",
+        "foregroundImage": "./assets/icon.png"
+      }
+    },
+    "web": {
+      "favicon": "./assets/icon.png"
+    }
+  }
+}

@@ -1,5 +1,5 @@
 import useSWR from "swr";
-import { getForecast } from "@/app/api/conditions/getForecast";
+import { getForecast } from "@/lib/api/getForecast";
 import type { SpotLocation } from "@/lib/types";
 
 export function useForecast(spot: SpotLocation | null) {

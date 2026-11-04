@@ -1,4 +1,3 @@
-"use client"
 
 import { CombinedConditions, MarineWeatherData, ForecastData } from "@/lib/types"
 import { use, useMemo } from "react"

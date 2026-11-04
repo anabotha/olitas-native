@@ -1,7 +1,7 @@
 // import { DEFAULT_SPOTS } from "@/lib/spots";
 // import { useMemo } from "react";
 import useSWR from "swr";
-import { getMarineWeather } from "@/app/api/conditions/getMarineWeather";
+import { getMarineWeather } from "@/lib/api/getMarineWeather";
 import type { SpotLocation } from "@/lib/types";
 
 // const params: any = useMemo(() => ({
