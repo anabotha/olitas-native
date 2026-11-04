@@ -210,6 +210,12 @@ export default function Home() {
           </div>
         )}
       </main>
+ <a
+  href="mailto:josefinabotha@gmail.com"
+  className="flex items-start gap-2 rounded-lg border border-highlight-border bg-highlight m-4 px-4 py-3 text-left text-md font-medium text-primary transition-colors hover:border-primary/50"
+>
+  <span>¿Tenés una carrera de aguas abiertas?<br/>Escribime y vemos cómo sumarla</span>
+</a>
       <Footer />
     </div>
   );
