@@ -322,6 +322,7 @@ export const processData = (data?: MarineWeatherData, forecastData?: ForecastDat
             wind_wave_height_max,
             sea_level_height_msl,
             windSpeed,
+            windDirection,
             previous_sea_level_height_msl,
         } = stats;
 
@@ -329,12 +330,26 @@ export const processData = (data?: MarineWeatherData, forecastData?: ForecastDat
         const isLowSwell = wave_height < 0.7;
         const isShortWindWave = wind_wave_height_max < 0.5;
 
+        // (A) Con viento offshore la ola de viento se aleja de la costa: en la orilla el mar
+        // queda limpio aunque el modelo (celda mar adentro) muestre ola de viento.
+        const windCond = windDirection != null
+            ? evaluateWind(windDirection, beachOrientation ?? 90).windCond
+            : null;
+        // (B) Ola de viento real por encima del swell; evita que diferencias mínimas
+        // dentro del error del modelo cuenten como mar picado.
+        const windSeaExcess = (wave_height ?? 0) - (swell_wave_height ?? 0);
+
         let condition = "Normal";
 
         if (isLowWind && isLowSwell && isShortWindWave) {
             condition = "Planchado"; // Efecto espejo o "Glassy"
         }
-        else if (windSpeed > 15 && wave_height > swell_wave_height * 1.5) {
+        else if (
+            windCond !== "offshore" &&
+            windSpeed > 15 &&
+            wave_height > swell_wave_height * 1.5 &&
+            windSeaExcess >= 0.3
+        ) {
             condition = "Picado"; // "Choppy"
         }
 
