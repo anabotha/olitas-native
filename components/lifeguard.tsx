@@ -27,8 +27,9 @@ export function Lifeguard({ selectedHour }: { selectedHour: Date }) {
         )}
         <p className="text-sm font-semibold text-foreground">{badge}</p>
       </div>
+      <h1 className="text-lg font-bold text-foreground text-accent"> Inicio de temporada: 1 de diciembre</h1>
       <p className="text-[13px] text-muted-foreground">
-        Horario: {LIFEGUARD_HOURS_LABEL}<br/>Temporada: {LIFEGUARD_SEASON_LABEL} 
+       Temporada: {LIFEGUARD_SEASON_LABEL}   <br/>Horario: {LIFEGUARD_HOURS_LABEL}
       </p>
     </div>
   );

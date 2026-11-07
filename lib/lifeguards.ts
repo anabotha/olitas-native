@@ -6,7 +6,7 @@ export const LIFEGUARD = {
   season: { startMonth: 12, endMonth: 3 }, // dic–mar (1 = enero)
 };
 
-const MONTHS = ["ene", "feb", "mar", "abr", "may", "jun", "jul", "ago", "sep", "oct", "nov", "dic"];
+const MONTHS = ["enero", "febrero", "Marzo", "abril", "mayo", "junio", "julio", "agosto", "septiembre", "octubre", "noviembre", "Diciembre"];
 
 const pad = (n: number) => String(n).padStart(2, "0");
 
