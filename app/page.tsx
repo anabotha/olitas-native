@@ -23,6 +23,7 @@ import { ScoreLegend } from "@/components/score-legend";
 import "driver.js/dist/driver.css";
 
 import { driver } from "driver.js";
+import { track } from "@/lib/analytics";
 
 export default function Home() {
   
@@ -48,12 +49,21 @@ export default function Home() {
       localStorage.setItem('olitas_guide_viewed', 'true');
     }
   const saved = localStorage.getItem("olitas_selected_spot");
+    let initialSpot = DEFAULT_SPOTS[0];
+    let fromSaved = false;
     if (saved) {
       try {
-        setSelectedSpot(JSON.parse(saved));
+        initialSpot = JSON.parse(saved);
+        fromSaved = true;
+        setSelectedSpot(initialSpot);
       } catch {}
     }
     setSpotReady(true);
+    track("spot_inicial", {
+      spot: initialSpot.name,
+      guardado: fromSaved,
+      primera_visita: !hasVisited,
+    });
   }
     , []);
 
@@ -72,6 +82,12 @@ export default function Home() {
     nextBtnText: 'Siguiente',
     prevBtnText: 'Anterior',
     doneBtnText: 'Entendido',
+    onDestroyStarted: (_el, _step, { driver: d }) => {
+      track(d.isLastStep() ? "guia_completada" : "guia_salteada", {
+        paso: (d.getActiveIndex() ?? 0) + 1,
+      });
+      d.destroy();
+    },
     steps: [
       {
         element: '#selector',
@@ -130,7 +146,10 @@ export default function Home() {
 
   return (
     <div className="min-h-screen bg-background">
-      <Header onOpenGuide={() => driverObj.drive()} highlightGuide={showGuideOnLoad} />
+      <Header onOpenGuide={() => {
+        track("guia_abierta", { primera_visita: showGuideOnLoad });
+        driverObj.drive();
+      }} highlightGuide={showGuideOnLoad} />
 
       <main className="mx-auto max-w-5xl px-6 pb-16 md:px-10">
         {/* Hero section */}

@@ -5,6 +5,7 @@ import { DEFAULT_SPOTS } from "@/lib/spots";
 import type { SpotLocation } from "@/lib/types";
 import { useState, useRef, useEffect } from "react";
 import { cn } from "@/lib/utils";
+import { track } from "@/lib/analytics";
 
 interface SpotSelectorProps {
   selectedSpot: SpotLocation;
@@ -77,6 +78,9 @@ export function SpotSelector({ selectedSpot, onSelectSpot }: SpotSelectorProps) 
                 key={spot.name}
                 onClick={() => {
                   localStorage.setItem("olitas_selected_spot", JSON.stringify(spot));
+                  if (spot.name !== selectedSpot.name) {
+                    track("spot_seleccionado", { spot: spot.name });
+                  }
                   onSelectSpot(spot);
                   setIsOpen(false);
                   setSearch("");

@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect, useCallback } from "react";
+import { track } from "@/lib/analytics";
 
 // ── Tipado del evento beforeinstallprompt ──
 interface BeforeInstallPromptEvent extends Event {
@@ -63,8 +64,10 @@ export function PwaInstallPrompt() {
   const handleInstall = useCallback(async () => {
     if (!deferredPrompt) return;
 
+    track("pwa_click_instalar");
     deferredPrompt.prompt();
     const { outcome } = await deferredPrompt.userChoice;
+    track(outcome === "accepted" ? "pwa_instalada" : "pwa_rechazada");
 
     if (outcome === "accepted") {
       setShowButton(false);
@@ -75,6 +78,7 @@ export function PwaInstallPrompt() {
   // ── Cerrar tip iOS ──
   const handleDismissIosTip = useCallback(() => {
     setShowIosTip(false);
+    track("pwa_tip_ios_cerrado");
     localStorage.setItem("pwa-ios-tip-dismissed", "1");
   }, []);
 

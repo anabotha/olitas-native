@@ -5,6 +5,7 @@ import type { SpotLocation } from "@/lib/types";
 import { useState, useRef, useEffect } from "react";
 import { cn } from "@/lib/utils";
 import { Clock } from "lucide-react";
+import { track } from "@/lib/analytics";
 
 
 
@@ -84,6 +85,13 @@ export function HourSelector({ selectedHour, onSelectHour, variant = "default" }
                             <button
                                 key={entry.date.getTime()}
                                 onClick={() => {
+                                    if (entry.date.getTime() !== selectedHour.getTime()) {
+                                        track("hora_cambiada", {
+                                            hora: entry.date.getHours(),
+                                            dia: entry.label.startsWith("hoy") ? "hoy" : "mañana",
+                                            horas_adelante: Math.round((entry.date.getTime() - hours[0].date.getTime()) / 3600000),
+                                        });
+                                    }
                                     onSelectHour(entry.date);
                                     setIsOpen(false);
                                 }}
