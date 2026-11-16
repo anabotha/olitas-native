@@ -3,14 +3,28 @@ import { Info, MapPin, Waves } from "lucide-react-native";
 import { useTheme } from "@/lib/theme";
 import { FORM_URL } from "@/lib/links";
 
-export function Header({ onOpenGuide, highlightGuide = false }: { onOpenGuide?: () => void; highlightGuide?: boolean }) {
+export function Header({
+  onOpenGuide,
+  onOpenMenu,
+  highlightGuide = false,
+}: {
+  onOpenGuide?: () => void;
+  onOpenMenu?: () => void;
+  highlightGuide?: boolean;
+}) {
   const c = useTheme();
   return (
     <View style={[styles.header, { backgroundColor: c.chrome, borderBottomColor: c.chromeBorder }]}>
       <View style={styles.brand}>
-        <View style={[styles.logo, { backgroundColor: c.primary }]}>
+        <Pressable
+          onPress={onOpenMenu}
+          disabled={!onOpenMenu}
+          accessibilityRole="button"
+          accessibilityLabel="Abrir configuración"
+          style={({ pressed }) => [styles.logo, { backgroundColor: c.primary, opacity: pressed ? 0.8 : 1 }]}
+        >
           <Waves size={20} color={c.primaryForeground} />
-        </View>
+        </Pressable>
         <View>
           <Text style={{ fontSize: 18, fontWeight: "600", color: c.foreground }}>Olitas</Text>
           <Text style={{ fontSize: 12, color: c.mutedForeground }}>No te comas el viaje</Text>

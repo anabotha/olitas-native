@@ -1,5 +1,6 @@
 import { StyleSheet, Text, View } from "react-native";
-import { CircleAlert, Droplets, Ship, ShieldOff, Waves } from "lucide-react-native";
+import { CircleAlert, ShieldOff, Waves } from "lucide-react-native";
+import { SupIcon, SwimIcon } from "./icons";
 import { LIFEGUARD_HOURS_LABEL, getLifeguardStatus } from "@/lib/lifeguard";
 import { processData } from "@/hooks/use-processData";
 import { useRatings } from "@/hooks/use-ratings";
@@ -81,8 +82,8 @@ function ActivityCheckContent({
           </View>
         </View>
       )}
-      <ActivityCard activity="Nado en aguas abiertas" icon={<Droplets {...iconProps} />} rating={actividad.activities.swimming} />
-      <ActivityCard activity="Sup tradicional" icon={<Ship {...iconProps} />} rating={actividad.activities.sup} />
+      <ActivityCard activity="Nado en aguas abiertas" icon={<SwimIcon {...iconProps} />} rating={actividad.activities.swimming} />
+      <ActivityCard activity="Sup tradicional" icon={<SupIcon {...iconProps} />} rating={actividad.activities.sup} />
       <ActivityCard activity="Surf y SupSurf" icon={<Waves {...iconProps} />} rating={actividad.activities.surf} />
     </View>
   );

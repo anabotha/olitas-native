@@ -1,11 +1,15 @@
-import { StyleSheet, Text, View } from "react-native";
-import { ArrowDown, ArrowUp, Clock, Droplets, Ship, Waves } from "lucide-react-native";
+import { useState } from "react";
+import { Pressable, StyleSheet, Text, View } from "react-native";
+import { ArrowDown, ArrowUp, Check, Clock, Waves } from "lucide-react-native";
+import { SupIcon, SwimIcon } from "./icons";
 import { processData } from "@/hooks/use-processData";
 import { useRatings } from "@/hooks/use-ratings";
 import type { ForecastData, MarineWeatherData, SpotLocation } from "@/lib/types";
 import { getScoreStyle, useIsDark, useTheme } from "@/lib/theme";
 import { Card, CardHeading, Label } from "./ui";
 import { InfoTip } from "./InfoTip";
+import { ShareWhatsAppButton, buildShareText } from "./ShareWhatsApp";
+import { StoryShareButton, type StoryData } from "./StoryShare";
 
 // "Hoy 14:00" / "Mañana 7:00" / "Sáb 9:00"
 const formatWindowTime = (date: Date) => {
@@ -56,6 +60,31 @@ const getNextTideTurn = (data: MarineWeatherData, from: Date) => {
   return null;
 };
 
+const nearestIndex = (times: Date[], target: Date) => {
+  let best = -1, min = Infinity;
+  times.forEach((t, i) => {
+    const d = Math.abs(new Date(t).getTime() - target.getTime());
+    if (d < min) { min = d; best = i; }
+  });
+  return best;
+};
+
+// Olas, viento y temperatura a una hora dada, para la imagen de la historia
+const statsAt = (data: MarineWeatherData, forecast: ForecastData | undefined, date: Date) => {
+  const i = nearestIndex(data.hourly.time, date);
+  const wave = data.hourly.wave_height?.[i] ?? data.hourly.swell_wave_height?.[i];
+  const f = forecast ? nearestIndex(forecast.hourly.time, date) : -1;
+  const wind = f >= 0 ? forecast!.hourly.wind_speed_10m?.[f] : undefined;
+  const temp = f >= 0 ? forecast!.hourly.temperature_2m?.[f] : undefined;
+  return [
+    { label: "Olas", value: wave != null ? `${wave.toFixed(1)} m` : "–" },
+    { label: "Viento", value: wind != null ? `${Math.round(wind)} km/h` : "–" },
+    { label: "Temp", value: temp != null ? `${Math.round(temp)}°` : "–" },
+  ];
+};
+
+const lowerDay = (s: string) => s.replace(/^Hoy/, "hoy").replace(/^Mañana/, "mañana");
+
 interface SeaStateProps {
   data: MarineWeatherData;
   forecast: ForecastData | undefined;
@@ -79,6 +108,8 @@ function SeaStateContent({
 }: SeaStateProps & { processedData: NonNullable<ReturnType<typeof processData>> }) {
   const c = useTheme();
   const dark = useIsDark();
+  // Ventanas elegidas para compartir (null = la mejor, por defecto)
+  const [picked, setPicked] = useState<string[] | null>(null);
   const ratings = useRatings(processedData, beach.name, beach.orientation ?? 90, beach, data, forecast, selectedHour);
   const bestWindows = ratings.bestWindows;
   const { seaState } = processedData;
@@ -89,13 +120,40 @@ function SeaStateContent({
 
   const iconProps = { size: 20, color: c.primary };
   const activities = [
-    { label: "Surf", data: bestWindows.surf, icon: <Waves {...iconProps} /> },
-    { label: "SUP", data: bestWindows.sup, icon: <Ship {...iconProps} /> },
-    { label: "Natación", data: bestWindows.swimming, icon: <Droplets {...iconProps} /> },
+    { label: "Surf", data: bestWindows.surf, Icon: Waves, verb: "surfear" },
+    { label: "SUP", data: bestWindows.sup, Icon: SupIcon, verb: "hacer SUP" },
+    { label: "Natación", data: bestWindows.swimming, Icon: SwimIcon, verb: "nadar" },
   ];
   const validWindows = activities
     .filter(a => a.data.date && a.data.score > 5 && a.data.date >= new Date())
     .sort((a, b) => (a.data.start ?? a.data.date!).getTime() - (b.data.start ?? b.data.date!).getTime());
+
+  // Por defecto se comparte la ventana con mejor puntaje; tocando las ventanas se eligen otras
+  const top = validWindows.reduce<(typeof validWindows)[number] | null>(
+    (best, a) => (!best || a.data.score > best.data.score ? a : best),
+    null,
+  );
+  const selectedLabels = picked ?? (top ? [top.label] : []);
+  const selected = validWindows.filter(a => selectedLabels.includes(a.label));
+  const toggle = (label: string) =>
+    setPicked(selectedLabels.includes(label) ? selectedLabels.filter(l => l !== label) : [...selectedLabels, label]);
+
+  const whenOf = (a: (typeof validWindows)[number]) =>
+    lowerDay(a.data.start && a.data.end ? formatWindowRange(a.data.start, a.data.end) : formatWindowTime(a.data.date!));
+  const shareText = selected.length
+    ? buildShareText(beach.name, selected.map(a => ({ verb: a.verb, when: whenOf(a) })))
+    : "";
+  const story: StoryData = {
+    spot: beach.name,
+    items: selected.map(a => ({
+      name: a.label,
+      verb: a.verb,
+      when: whenOf(a),
+      label: getWindowLabel(a.data.score),
+      icon: p => <a.Icon {...p} />,
+    })),
+    stats: selected[0] ? statsAt(data, forecast, selected[0].data.start ?? selected[0].data.date!) : [],
+  };
 
   // Chip suave por condición, reutilizando la escala de colores de las actividades
   const chip =
@@ -143,10 +201,24 @@ function SeaStateContent({
           {validWindows.length > 0 ? (
             validWindows.map((activity, idx) => {
               const s = getScoreStyle(activity.data.score, dark);
+              const on = selectedLabels.includes(activity.label);
               return (
-                <View key={`${activity.label}-${idx}`} style={[styles.window, { backgroundColor: c.highlight }]}>
+                <Pressable
+                  key={`${activity.label}-${idx}`}
+                  onPress={() => toggle(activity.label)}
+                  accessibilityRole="checkbox"
+                  accessibilityState={{ checked: on }}
+                  accessibilityLabel={`Compartir ventana de ${activity.label}`}
+                  style={[
+                    styles.window,
+                    { backgroundColor: c.highlight, borderColor: on ? c.highlightBorder : "transparent" },
+                  ]}
+                >
                   <View style={styles.inline}>
-                    {activity.icon}
+                    <View style={[styles.check, on ? { backgroundColor: c.primary, borderColor: c.primary } : { borderColor: c.highlightBorder }]}>
+                      {on && <Check size={12} color={c.primaryForeground} strokeWidth={3} />}
+                    </View>
+                    <activity.Icon {...iconProps} />
                     <Text style={{ color: c.foreground, fontWeight: "500" }}>{activity.label}</Text>
                   </View>
                   <View style={{ alignItems: "flex-end", gap: 2 }}>
@@ -162,7 +234,7 @@ function SeaStateContent({
                       </Text>
                     </View>
                   </View>
-                </View>
+                </Pressable>
               );
             })
           ) : (
@@ -175,6 +247,15 @@ function SeaStateContent({
             </View>
           )}
         </View>
+        {validWindows.length > 0 && (
+          <View style={{ gap: 8 }}>
+            <Text style={{ color: c.mutedForeground, fontSize: 13, textAlign: "center" }}>
+              {selected.length ? "Tocá las ventanas para elegir cuáles compartir" : "Elegí al menos una ventana para compartir"}
+            </Text>
+            <ShareWhatsAppButton text={shareText} disabled={!selected.length} />
+            <StoryShareButton data={story} disabled={!selected.length} />
+          </View>
+        )}
       </View>
     </Card>
   );
@@ -184,6 +265,7 @@ const styles = StyleSheet.create({
   inline: { flexDirection: "row", alignItems: "center", gap: 8 },
   chip: { alignSelf: "flex-start", fontSize: 16, fontWeight: "600", borderRadius: 999, paddingHorizontal: 12, paddingVertical: 4, overflow: "hidden" },
   sep: { height: 1 },
-  window: { flexDirection: "row", alignItems: "center", justifyContent: "space-between", borderRadius: 10, paddingHorizontal: 12, paddingVertical: 8 },
+  window: { flexDirection: "row", alignItems: "center", justifyContent: "space-between", borderRadius: 10, borderWidth: 1.5, paddingHorizontal: 12, paddingVertical: 8 },
+  check: { width: 18, height: 18, borderRadius: 5, borderWidth: 1.5, alignItems: "center", justifyContent: "center" },
   dot: { width: 8, height: 8, borderRadius: 4 },
 });

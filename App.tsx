@@ -1,12 +1,14 @@
-import { useEffect, useState } from "react";
-import { ScrollView, StyleSheet, Text, View } from "react-native";
+import { useCallback, useEffect, useState } from "react";
+import { AppState, ScrollView, StyleSheet, Text, View } from "react-native";
 import { StatusBar } from "expo-status-bar";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { SafeAreaProvider, SafeAreaView } from "react-native-safe-area-context";
 import { CircleAlert } from "lucide-react-native";
 import { DEFAULT_SPOTS } from "@/lib/spots";
 import type { SpotLocation } from "@/lib/types";
-import { GUIDE_STORAGE_KEY, SPOT_STORAGE_KEY } from "@/lib/storage";
+import { GUIDE_STORAGE_KEY } from "@/lib/storage";
+import { resolveSpot } from "@/lib/nearest-spot";
+import { refreshDailyNotification } from "@/lib/daily-notification";
 import { useIsDark, useTheme } from "@/lib/theme";
 import { useMarineWeather } from "@/hooks/use-marineWeather";
 import { useForecast } from "@/hooks/use-forecast";
@@ -24,6 +26,7 @@ import { HourlyForecast } from "@/components/HourlyForecast";
 import { SeaState } from "@/components/SeaState";
 import { GuideModal } from "@/components/GuideModal";
 import { Lifeguard } from "@/components/Lifeguard";
+import { Sidebar } from "@/components/Sidebar";
 
 function Home() {
   const c = useTheme();
@@ -36,6 +39,13 @@ function Home() {
   const [showGuideOnLoad, setShowGuideOnLoad] = useState(false);
   const [guideOpen, setGuideOpen] = useState(false);
   const [spotReady, setSpotReady] = useState(false);
+  const [menuOpen, setMenuOpen] = useState(false);
+
+  // Playa más cercana (si hay permiso de ubicación) o la última elegida
+  const loadSpot = useCallback(async () => {
+    setSelectedSpot(await resolveSpot());
+    setSpotReady(true);
+  }, []);
 
   useEffect(() => {
     (async () => {
@@ -45,12 +55,20 @@ function Home() {
           setShowGuideOnLoad(true);
           await AsyncStorage.setItem(GUIDE_STORAGE_KEY, "true");
         }
-        const saved = await AsyncStorage.getItem(SPOT_STORAGE_KEY);
-        if (saved) setSelectedSpot(JSON.parse(saved));
       } catch {}
-      setSpotReady(true);
+      await loadSpot();
     })();
-  }, []);
+  }, [loadSpot]);
+
+  // Recalcula el aviso de las 19 h al abrir la app y cada vez que vuelve a primer plano
+  useEffect(() => {
+    if (!spotReady) return;
+    refreshDailyNotification().catch(() => {});
+    const sub = AppState.addEventListener("change", state => {
+      if (state === "active") refreshDailyNotification().catch(() => {});
+    });
+    return () => sub.remove();
+  }, [spotReady, selectedSpot]);
 
   // No pedimos datos hasta leer el spot guardado, para evitar cargar el default y después recargar
   const activeSpot = spotReady ? selectedSpot : null;
@@ -61,7 +79,7 @@ function Home() {
 
   return (
     <SafeAreaView style={[styles.flex, { backgroundColor: c.chrome }]} edges={["top"]}>
-      <Header onOpenGuide={() => setGuideOpen(true)} highlightGuide={showGuideOnLoad} />
+      <Header onOpenGuide={() => setGuideOpen(true)} onOpenMenu={() => setMenuOpen(true)} highlightGuide={showGuideOnLoad} />
       <ScrollView style={{ backgroundColor: c.background }} contentContainerStyle={{ flexGrow: 1 }}>
         <View style={styles.main}>
           <View style={{ gap: 12 }}>
@@ -121,6 +139,7 @@ function Home() {
         <Footer />
       </ScrollView>
       <GuideModal visible={guideOpen} onClose={() => setGuideOpen(false)} />
+      <Sidebar visible={menuOpen} onClose={() => setMenuOpen(false)} onUseLocationChange={() => loadSpot()} />
     </SafeAreaView>
   );
 }

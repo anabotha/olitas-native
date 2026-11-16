@@ -24,6 +24,17 @@
     },
     "web": {
       "favicon": "./assets/icon.png"
-    }
+    },
+    "plugins": [
+      "expo-background-task",
+      "expo-notifications",
+      [
+        "expo-location",
+        {
+          "locationWhenInUsePermission": "Olitas usa tu ubicación para mostrarte la playa más cercana."
+        }
+      ],
+      "expo-sharing"
+    ]
   }
 }

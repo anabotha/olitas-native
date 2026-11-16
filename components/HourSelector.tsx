@@ -2,22 +2,28 @@ import { Clock } from "lucide-react-native";
 import { useTheme } from "@/lib/theme";
 import { Picker } from "./Picker";
 
-// Hoy desde la hora actual hasta las 23, y mañana desde las 0 hasta la hora actual
+// Desde 2 horas antes de la hora actual hasta 36 horas después
+const HOURS_BACK = 2;
+const HOURS_AHEAD = 36;
+
+const dayLabel = (d: Date, today: Date) => {
+  const diff = Math.round(
+    (new Date(d.getFullYear(), d.getMonth(), d.getDate()).getTime() -
+      new Date(today.getFullYear(), today.getMonth(), today.getDate()).getTime()) /
+      86_400_000,
+  );
+  if (diff === 0) return "hoy";
+  if (diff === 1) return "mañana";
+  return "pasado mañana";
+};
+
 function getHours() {
   const entries: { date: Date; label: string }[] = [];
   const now = new Date();
-  const currentHour = now.getHours();
-
-  for (let i = currentHour; i < 24; i++) {
-    const d = new Date(now);
-    d.setHours(i, 0, 0, 0);
-    entries.push({ date: d, label: `hoy ${i}:00` });
-  }
-  for (let i = 0; i < currentHour; i++) {
-    const d = new Date(now);
-    d.setDate(d.getDate() + 1);
-    d.setHours(i, 0, 0, 0);
-    entries.push({ date: d, label: `mañana ${i}:00` });
+  now.setMinutes(0, 0, 0);
+  for (let i = -HOURS_BACK; i <= HOURS_AHEAD; i++) {
+    const d = new Date(now.getTime() + i * 3_600_000);
+    entries.push({ date: d, label: `${dayLabel(d, now)} ${d.getHours()}:00` });
   }
   return entries;
 }
