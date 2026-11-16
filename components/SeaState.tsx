@@ -10,6 +10,7 @@ import { Card, CardHeading, Label } from "./ui";
 import { InfoTip } from "./InfoTip";
 import { ShareWhatsAppButton, buildShareText } from "./ShareWhatsApp";
 import { StoryShareButton, type StoryData } from "./StoryShare";
+import { statsAt } from "@/lib/share-stats";
 
 // "Hoy 14:00" / "Mañana 7:00" / "Sáb 9:00"
 const formatWindowTime = (date: Date) => {
@@ -58,29 +59,6 @@ const getNextTideTurn = (data: MarineWeatherData, from: Date) => {
     if (curr <= prev && curr < next) return { type: "Bajamar", date: new Date(times[i]) };
   }
   return null;
-};
-
-const nearestIndex = (times: Date[], target: Date) => {
-  let best = -1, min = Infinity;
-  times.forEach((t, i) => {
-    const d = Math.abs(new Date(t).getTime() - target.getTime());
-    if (d < min) { min = d; best = i; }
-  });
-  return best;
-};
-
-// Olas, viento y temperatura a una hora dada, para la imagen de la historia
-const statsAt = (data: MarineWeatherData, forecast: ForecastData | undefined, date: Date) => {
-  const i = nearestIndex(data.hourly.time, date);
-  const wave = data.hourly.wave_height?.[i] ?? data.hourly.swell_wave_height?.[i];
-  const f = forecast ? nearestIndex(forecast.hourly.time, date) : -1;
-  const wind = f >= 0 ? forecast!.hourly.wind_speed_10m?.[f] : undefined;
-  const temp = f >= 0 ? forecast!.hourly.temperature_2m?.[f] : undefined;
-  return [
-    { label: "Olas", value: wave != null ? `${wave.toFixed(1)} m` : "–" },
-    { label: "Viento", value: wind != null ? `${Math.round(wind)} km/h` : "–" },
-    { label: "Temp", value: temp != null ? `${Math.round(temp)}°` : "–" },
-  ];
 };
 
 const lowerDay = (s: string) => s.replace(/^Hoy/, "hoy").replace(/^Mañana/, "mañana");

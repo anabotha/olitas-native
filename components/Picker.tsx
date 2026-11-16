@@ -19,10 +19,12 @@ interface PickerProps<T> {
   onSelect: (value: T) => void;
   searchable?: boolean;
   icon?: ReactNode;
+  /** Algo al costado derecho de cada opción (ej. la estrella de favoritas) */
+  renderTrailing?: (option: PickerOption<T>) => ReactNode;
 }
 
 // Selector modal de lista: reemplaza a los dropdowns de la versión web
-export function Picker<T>({ title, options, selectedKey, buttonLabel, onSelect, searchable, icon }: PickerProps<T>) {
+export function Picker<T>({ title, options, selectedKey, buttonLabel, onSelect, searchable, icon, renderTrailing }: PickerProps<T>) {
   const c = useTheme();
   const [open, setOpen] = useState(false);
   const [search, setSearch] = useState("");
@@ -81,12 +83,15 @@ export function Picker<T>({ title, options, selectedKey, buttonLabel, onSelect, 
                     onSelect(item.value);
                     close();
                   }}
-                  style={[styles.item, item.key === selectedKey && { backgroundColor: c.secondary }]}
+                  style={[styles.item, styles.itemRow, item.key === selectedKey && { backgroundColor: c.secondary }]}
                 >
-                  <Text style={{ color: c.foreground, fontSize: 15, fontWeight: item.key === selectedKey ? "600" : "400" }}>
-                    {item.label}
-                  </Text>
-                  {item.sublabel ? <Text style={{ color: c.mutedForeground, fontSize: 12 }}>{item.sublabel}</Text> : null}
+                  <View style={{ flex: 1 }}>
+                    <Text style={{ color: c.foreground, fontSize: 15, fontWeight: item.key === selectedKey ? "600" : "400" }}>
+                      {item.label}
+                    </Text>
+                    {item.sublabel ? <Text style={{ color: c.mutedForeground, fontSize: 12 }}>{item.sublabel}</Text> : null}
+                  </View>
+                  {renderTrailing?.(item)}
                 </Pressable>
               )}
             />
@@ -98,6 +103,7 @@ export function Picker<T>({ title, options, selectedKey, buttonLabel, onSelect, 
 }
 
 const styles = StyleSheet.create({
+  itemRow: { flexDirection: "row", alignItems: "center", gap: 12 },
   button: {
     flexDirection: "row",
     alignItems: "center",

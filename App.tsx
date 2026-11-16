@@ -3,12 +3,13 @@ import { AppState, ScrollView, StyleSheet, Text, View } from "react-native";
 import { StatusBar } from "expo-status-bar";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { SafeAreaProvider, SafeAreaView } from "react-native-safe-area-context";
-import { CircleAlert } from "lucide-react-native";
+import { CircleAlert, WifiOff } from "lucide-react-native";
 import { DEFAULT_SPOTS } from "@/lib/spots";
 import type { SpotLocation } from "@/lib/types";
 import { GUIDE_STORAGE_KEY } from "@/lib/storage";
-import { resolveSpot } from "@/lib/nearest-spot";
-import { refreshDailyNotification } from "@/lib/daily-notification";
+import { ON_BEACH_KM, locateNearestSpot, resolveSpotWithDistance } from "@/lib/nearest-spot";
+import { refreshDailyNotification, syncBackgroundTask } from "@/lib/daily-notification";
+import { refreshHomeWidget } from "@/lib/home-widget";
 import { useIsDark, useTheme } from "@/lib/theme";
 import { useMarineWeather } from "@/hooks/use-marineWeather";
 import { useForecast } from "@/hooks/use-forecast";
@@ -27,6 +28,21 @@ import { SeaState } from "@/components/SeaState";
 import { GuideModal } from "@/components/GuideModal";
 import { Lifeguard } from "@/components/Lifeguard";
 import { Sidebar } from "@/components/Sidebar";
+import { BeachNow } from "@/components/BeachNow";
+
+// "hoy a las 18:40" / "ayer a las 9:05" / "el 14/11 a las 9:05"
+function offlineLabel(d: Date) {
+  const now = new Date();
+  const time = `${d.getHours()}:${String(d.getMinutes()).padStart(2, "0")}`;
+  const days = Math.round(
+    (new Date(now.getFullYear(), now.getMonth(), now.getDate()).getTime() -
+      new Date(d.getFullYear(), d.getMonth(), d.getDate()).getTime()) /
+      86_400_000,
+  );
+  if (days === 0) return `de hoy a las ${time}`;
+  if (days === 1) return `de ayer a las ${time}`;
+  return `del ${d.getDate()}/${d.getMonth() + 1} a las ${time}`;
+}
 
 function Home() {
   const c = useTheme();
@@ -40,11 +56,23 @@ function Home() {
   const [guideOpen, setGuideOpen] = useState(false);
   const [spotReady, setSpotReady] = useState(false);
   const [menuOpen, setMenuOpen] = useState(false);
+  // Playa en la que está parado el usuario (modo "estoy en la playa"), si está en una
+  const [onBeach, setOnBeach] = useState<SpotLocation | null>(null);
+  // Solo desarrollo: simular que estás en la playa elegida (para probar el modo playa desde casa)
+  const [simulateBeach, setSimulateBeach] = useState(false);
 
   // Playa más cercana (si hay permiso de ubicación) o la última elegida
   const loadSpot = useCallback(async () => {
-    setSelectedSpot(await resolveSpot());
+    const { spot, distanceKm } = await resolveSpotWithDistance();
+    setSelectedSpot(spot);
+    setOnBeach(distanceKm != null && distanceKm <= ON_BEACH_KM ? spot : null);
     setSpotReady(true);
+  }, []);
+
+  // Al volver a la app revisamos si llegaste (o te fuiste) de la playa, sin cambiar la playa elegida
+  const checkOnBeach = useCallback(async () => {
+    const nearest = await locateNearestSpot({ ask: false });
+    setOnBeach(nearest && nearest.distanceKm <= ON_BEACH_KM ? nearest.spot : null);
   }, []);
 
   useEffect(() => {
@@ -63,17 +91,30 @@ function Home() {
   // Recalcula el aviso de las 19 h al abrir la app y cada vez que vuelve a primer plano
   useEffect(() => {
     if (!spotReady) return;
-    refreshDailyNotification().catch(() => {});
+    // La tarea de segundo plano actualiza el aviso de las 19 h (si está prendido) y el widget
+    syncBackgroundTask(true);
+    const refresh = () => {
+      refreshDailyNotification().catch(() => {});
+      refreshHomeWidget().catch(() => {});
+    };
+    refresh();
     const sub = AppState.addEventListener("change", state => {
-      if (state === "active") refreshDailyNotification().catch(() => {});
+      if (state === "active") {
+        refresh();
+        checkOnBeach();
+      }
     });
     return () => sub.remove();
   }, [spotReady, selectedSpot]);
 
   // No pedimos datos hasta leer el spot guardado, para evitar cargar el default y después recargar
   const activeSpot = spotReady ? selectedSpot : null;
-  const { data, error, isLoading } = useMarineWeather(activeSpot);
-  const { forecastData, forecastIsLoading } = useForecast(activeSpot);
+  const { data, error, isLoading, offlineSince } = useMarineWeather(activeSpot);
+  const { forecastData, forecastIsLoading, forecastOfflineSince } = useForecast(activeSpot);
+  // Si alguno de los dos vino del caché, mostramos la hora del más viejo
+  const offlineAt = [offlineSince, forecastOfflineSince]
+    .filter((d): d is Date => !!d)
+    .sort((a, b) => a.getTime() - b.getTime())[0];
   const showLoading = !spotReady || isLoading || forecastIsLoading;
   const hourLabel = `${selectedHour.getHours()}:00hs`;
 
@@ -82,6 +123,11 @@ function Home() {
       <Header onOpenGuide={() => setGuideOpen(true)} onOpenMenu={() => setMenuOpen(true)} highlightGuide={showGuideOnLoad} />
       <ScrollView style={{ backgroundColor: c.background }} contentContainerStyle={{ flexGrow: 1 }}>
         <View style={styles.main}>
+          {/* Modo "estoy en la playa": cómo está ahora, arriba de todo */}
+          {(simulateBeach || onBeach?.name === selectedSpot.name) && data && !showLoading && (
+            <BeachNow spot={selectedSpot} data={data} forecast={forecastData} />
+          )}
+
           <View style={{ gap: 12 }}>
             <Text style={[styles.h2, { color: c.foreground }]}>¿Cómo está el mar?</Text>
             <View style={styles.selectors}>
@@ -92,6 +138,15 @@ function Home() {
           </View>
 
           {showLoading && !error && <LoadingState />}
+
+          {offlineAt && !showLoading && (
+            <View style={[styles.offline, { borderColor: c.warning + "55", backgroundColor: c.warning + "1a" }]}>
+              <WifiOff size={18} color={c.warningForeground} />
+              <Text style={{ flex: 1, color: c.foreground, fontSize: 13 }}>
+                Sin conexión. Te mostramos el pronóstico guardado {offlineLabel(offlineAt)}.
+              </Text>
+            </View>
+          )}
 
           {error && (
             <View style={[styles.error, { borderColor: c.destructive + "33", backgroundColor: c.destructive + "0d" }]}>
@@ -139,7 +194,13 @@ function Home() {
         <Footer />
       </ScrollView>
       <GuideModal visible={guideOpen} onClose={() => setGuideOpen(false)} />
-      <Sidebar visible={menuOpen} onClose={() => setMenuOpen(false)} onUseLocationChange={() => loadSpot()} />
+      <Sidebar
+        visible={menuOpen}
+        onClose={() => setMenuOpen(false)}
+        onUseLocationChange={() => loadSpot()}
+        simulateBeach={simulateBeach}
+        onSimulateBeachChange={setSimulateBeach}
+      />
     </SafeAreaView>
   );
 }
@@ -159,5 +220,6 @@ const styles = StyleSheet.create({
   main: { padding: 20, gap: 24 },
   h2: { fontSize: 28, fontWeight: "700", letterSpacing: -0.5 },
   selectors: { flexDirection: "row", flexWrap: "wrap", gap: 10 },
+  offline: { flexDirection: "row", alignItems: "center", gap: 10, borderWidth: 1, borderRadius: 12, paddingHorizontal: 14, paddingVertical: 10 },
   error: { flexDirection: "row", alignItems: "center", gap: 12, borderWidth: 1, borderRadius: 14, paddingHorizontal: 20, paddingVertical: 16 },
 });

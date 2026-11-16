@@ -23,12 +23,15 @@ export function CardHeading({
   subtitle,
   extra,
   iconBg,
+  right,
 }: {
   icon: ReactNode;
   title: string;
   subtitle?: ReactNode;
   extra?: ReactNode;
   iconBg?: string;
+  /** Algo alineado a la derecha del encabezado (ej. botón de compartir) */
+  right?: ReactNode;
 }) {
   const c = useTheme();
   return (
@@ -41,6 +44,7 @@ export function CardHeading({
         </View>
         {subtitle ? <Text style={{ color: c.mutedForeground, fontSize: 14 }}>{subtitle}</Text> : null}
       </View>
+      {right}
     </View>
   );
 }

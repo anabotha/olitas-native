@@ -15,7 +15,12 @@ function distanceKm(lat1: number, lon1: number, lat2: number, lon2: number) {
   return 6371 * 2 * Math.asin(Math.sqrt(a));
 }
 
-export function findNearestSpot(latitude: number, longitude: number, spots = DEFAULT_SPOTS): SpotLocation {
+export interface NearestSpot {
+  spot: SpotLocation;
+  distanceKm: number;
+}
+
+export function findNearestSpotWithDistance(latitude: number, longitude: number, spots = DEFAULT_SPOTS): NearestSpot {
   let nearest = spots[0];
   let min = Infinity;
   for (const spot of spots) {
@@ -25,8 +30,15 @@ export function findNearestSpot(latitude: number, longitude: number, spots = DEF
       nearest = spot;
     }
   }
-  return nearest;
+  return { spot: nearest, distanceKm: min };
 }
+
+export function findNearestSpot(latitude: number, longitude: number, spots = DEFAULT_SPOTS): SpotLocation {
+  return findNearestSpotWithDistance(latitude, longitude, spots).spot;
+}
+
+// A menos de esto de una playa consideramos que el usuario "está en la playa"
+export const ON_BEACH_KM = 2;
 
 /** Por defecto usamos la ubicación; el usuario lo puede apagar desde el panel */
 export async function getUseLocation() {
@@ -49,16 +61,22 @@ export async function setUseLocation(value: boolean) {
  * no se puede mostrar el diálogo). Devuelve null sin permiso o sin posición.
  */
 export async function getNearestSpotFromLocation({ ask = true } = {}): Promise<SpotLocation | null> {
+  return (await locateNearestSpot({ ask }))?.spot ?? null;
+}
+
+/** Igual que getNearestSpotFromLocation, pero también devuelve a cuántos km está */
+export async function locateNearestSpot({ ask = true } = {}): Promise<NearestSpot | null> {
   try {
     const { granted } = ask
       ? await Location.requestForegroundPermissionsAsync()
       : await Location.getForegroundPermissionsAsync();
     if (!granted) return null;
-    // La última posición conocida es instantánea; si no hay, pedimos una de baja precisión
+    // La última posición conocida es instantánea; si es de hace más de 10 min (puede que ya
+    // no estés ahí) o no hay, pedimos una nueva de precisión media
     const position =
-      (await Location.getLastKnownPositionAsync().catch(() => null)) ??
+      (await Location.getLastKnownPositionAsync({ maxAge: 10 * 60_000 }).catch(() => null)) ??
       (await Location.getCurrentPositionAsync({ accuracy: Location.Accuracy.Balanced }));
-    return findNearestSpot(position.coords.latitude, position.coords.longitude);
+    return findNearestSpotWithDistance(position.coords.latitude, position.coords.longitude);
   } catch {
     return null;
   }
@@ -74,11 +92,18 @@ export async function getSavedSpot(): Promise<SpotLocation | null> {
   }
 }
 
-/** Playa a usar: la más cercana si está activada la ubicación; si no, la guardada; si no, la primera */
-export async function resolveSpot({ ask = true } = {}): Promise<SpotLocation> {
+/**
+ * Playa a usar: la más cercana si está activada la ubicación; si no, la guardada; si no, la primera.
+ * `distanceKm` es null si no se usó la ubicación.
+ */
+export async function resolveSpotWithDistance({ ask = true } = {}): Promise<{ spot: SpotLocation; distanceKm: number | null }> {
   if (await getUseLocation()) {
-    const nearest = await getNearestSpotFromLocation({ ask });
+    const nearest = await locateNearestSpot({ ask });
     if (nearest) return nearest;
   }
-  return (await getSavedSpot()) ?? DEFAULT_SPOTS[0];
+  return { spot: (await getSavedSpot()) ?? DEFAULT_SPOTS[0], distanceKm: null };
+}
+
+export async function resolveSpot({ ask = true } = {}): Promise<SpotLocation> {
+  return (await resolveSpotWithDistance({ ask })).spot;
 }

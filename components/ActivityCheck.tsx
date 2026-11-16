@@ -82,9 +82,21 @@ function ActivityCheckContent({
           </View>
         </View>
       )}
-      <ActivityCard activity="Nado en aguas abiertas" icon={<SwimIcon {...iconProps} />} rating={actividad.activities.swimming} />
-      <ActivityCard activity="Sup tradicional" icon={<SupIcon {...iconProps} />} rating={actividad.activities.sup} />
-      <ActivityCard activity="Surf y SupSurf" icon={<Waves {...iconProps} />} rating={actividad.activities.surf} />
+      <ActivityCard
+        activity="Nado en aguas abiertas"
+        icon={<SwimIcon {...iconProps} />}
+        rating={actividad.activities.swimming}
+      />
+      <ActivityCard
+        activity="Sup tradicional"
+        icon={<SupIcon {...iconProps} />}
+        rating={actividad.activities.sup}
+      />
+      <ActivityCard
+        activity="Surf y SupSurf"
+        icon={<Waves {...iconProps} />}
+        rating={actividad.activities.surf}
+      />
     </View>
   );
 }

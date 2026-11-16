@@ -1,6 +1,7 @@
 import { ReactNode, useEffect, useRef, useState } from "react";
 import {
   Animated,
+  Easing,
   Linking,
   Modal,
   Platform,
@@ -27,7 +28,6 @@ import {
   refreshDailyNotification,
   requestNotificationPermission,
   sendTestNotification,
-  syncBackgroundTask,
   type DailyMessage,
 } from "@/lib/daily-notification";
 import { DANGER_WIND_KMH } from "@/lib/day-outlook";
@@ -45,32 +45,49 @@ type SidebarProps = {
   visible: boolean;
   onClose: () => void;
   onUseLocationChange?: (value: boolean) => void;
+  /** Solo desarrollo: forzar el modo "estoy en la playa" para probarlo desde cualquier lado */
+  simulateBeach?: boolean;
+  onSimulateBeachChange?: (value: boolean) => void;
 };
 
 // El Modal abre una vista nativa aparte: en iOS necesita su propio SafeAreaProvider
 // para conocer el notch y la barra de estado (si no, el panel queda corrido hacia arriba)
+// La animación (panel + fondo) la maneja el panel con un solo valor, así van sincronizados;
+// el Modal no anima por su cuenta.
 export function Sidebar(props: SidebarProps) {
+  // El botón "atrás" de Android cierra con la misma animación que el resto
+  const closeRef = useRef<() => void>(props.onClose);
   return (
     <Modal
       transparent
       visible={props.visible}
-      animationType="fade"
+      animationType="none"
       statusBarTranslucent
       navigationBarTranslucent
-      onRequestClose={props.onClose}
+      onRequestClose={() => closeRef.current()}
     >
       <SafeAreaProvider>
-        <SidebarPanel {...props} />
+        <SidebarPanel {...props} closeRef={closeRef} />
       </SafeAreaProvider>
     </Modal>
   );
 }
 
-function SidebarPanel({ visible, onClose, onUseLocationChange }: SidebarProps) {
+function SidebarPanel({
+  visible,
+  onClose,
+  onUseLocationChange,
+  simulateBeach,
+  onSimulateBeachChange,
+  closeRef,
+}: SidebarProps & { closeRef: { current: () => void } }) {
   const c = useTheme();
   const insets = useSafeAreaInsets();
   const width = Math.min(340, useWindowDimensions().width * 0.85);
-  const slide = useRef(new Animated.Value(-width)).current;
+  // 0 = cerrado, 1 = abierto
+  const progress = useRef(new Animated.Value(0)).current;
+  const closing = useRef(false);
+  const translateX = progress.interpolate({ inputRange: [0, 1], outputRange: [-width, 0] });
 
   const [prefs, setPrefs] = useState<NotificationPrefs>(DEFAULT_NOTIFICATION_PREFS);
   const [useLocation, setUseLocationState] = useState(true);
@@ -83,12 +100,27 @@ function SidebarPanel({ visible, onClose, onUseLocationChange }: SidebarProps) {
     loadNotificationPrefs().then(setPrefs);
     getUseLocation().then(setUseLocationState);
     setPreview(null);
-    Animated.timing(slide, { toValue: 0, duration: 220, useNativeDriver: Platform.OS !== "web" }).start();
+    closing.current = false;
+    progress.setValue(0);
+    Animated.timing(progress, {
+      toValue: 1,
+      duration: 240,
+      easing: Easing.out(Easing.cubic),
+      useNativeDriver: Platform.OS !== "web",
+    }).start();
   }, [visible]);
 
   const close = () => {
-    Animated.timing(slide, { toValue: -width, duration: 180, useNativeDriver: Platform.OS !== "web" }).start(onClose);
+    if (closing.current) return;
+    closing.current = true;
+    Animated.timing(progress, {
+      toValue: 0,
+      duration: 200,
+      easing: Easing.in(Easing.cubic),
+      useNativeDriver: Platform.OS !== "web",
+    }).start(() => onClose());
   };
+  closeRef.current = close;
 
   const update = async (next: NotificationPrefs) => {
     if (next.enabled && !prefs.enabled) {
@@ -98,7 +130,6 @@ function SidebarPanel({ visible, onClose, onUseLocationChange }: SidebarProps) {
     }
     setPrefs(next);
     await saveNotificationPrefs(next);
-    await syncBackgroundTask(next.enabled);
     refreshDailyNotification().catch(() => {});
   };
 
@@ -122,10 +153,14 @@ function SidebarPanel({ visible, onClose, onUseLocationChange }: SidebarProps) {
 
   return (
     <View style={styles.root}>
+        {/* Fondo oscuro detrás de todo, con la misma animación que el panel */}
+        <Animated.View style={[StyleSheet.absoluteFill, styles.backdrop, { opacity: progress }]}>
+          <Pressable style={StyleSheet.absoluteFill} onPress={close} accessibilityLabel="Cerrar panel" />
+        </Animated.View>
         <Animated.View
           style={[
             styles.panel,
-            { width, backgroundColor: c.background, borderRightColor: c.border, transform: [{ translateX: slide }] },
+            { width, backgroundColor: c.background, borderRightColor: c.border, transform: [{ translateX }] },
           ]}
         >
           <View style={{ flex: 1, paddingTop: insets.top, paddingBottom: insets.bottom, paddingLeft: insets.left }}>
@@ -211,11 +246,19 @@ function SidebarPanel({ visible, onClose, onUseLocationChange }: SidebarProps) {
                   value={useLocation}
                   onChange={toggleLocation}
                 />
+                {/* Solo aparece en desarrollo (Expo Go), no en la app instalada */}
+                {__DEV__ && onSimulateBeachChange && (
+                  <Row
+                    label="Simular que estoy en la playa"
+                    hint="Solo para probar: muestra el modo playa con la playa elegida."
+                    value={!!simulateBeach}
+                    onChange={onSimulateBeachChange}
+                  />
+                )}
               </Section>
             </ScrollView>
           </View>
         </Animated.View>
-        <Pressable style={styles.backdrop} onPress={close} accessibilityLabel="Cerrar panel" />
     </View>
   );
 }
@@ -263,7 +306,7 @@ function Row({
 
 const styles = StyleSheet.create({
   root: { flex: 1, flexDirection: "row" },
-  backdrop: { flex: 1, backgroundColor: "#00000066" },
+  backdrop: { backgroundColor: "#00000066" },
   panel: { alignSelf: "stretch", borderRightWidth: 1 },
   header: { flexDirection: "row", alignItems: "center", gap: 12, padding: 16, borderBottomWidth: 1 },
   logo: { width: 40, height: 40, borderRadius: 12, alignItems: "center", justifyContent: "center" },

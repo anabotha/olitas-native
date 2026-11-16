@@ -34,7 +34,26 @@
           "locationWhenInUsePermission": "Olitas usa tu ubicación para mostrarte la playa más cercana."
         }
       ],
-      "expo-sharing"
+      "expo-sharing",
+      [
+        "expo-widgets",
+        {
+          "widgets": [
+            {
+              "name": "OlitasWidget",
+              "displayName": "Olitas",
+              "description": "La mejor ventana de las próximas horas en tu playa.",
+              "ios": {
+                "supportedFamilies": [
+                  "systemSmall",
+                  "systemMedium"
+                ],
+                "initialLayout": "./widgets/OlitasWidget.tsx"
+              }
+            }
+          ]
+        }
+      ]
     ]
   }
 }

@@ -11,13 +11,14 @@ import * as Sharing from "expo-sharing";
 import * as Clipboard from "expo-clipboard";
 import { Camera, Copy, Share2, Waves, X } from "lucide-react-native";
 import { useTheme } from "@/lib/theme";
-import { capitalize, goodPhrase, joinEs } from "@/lib/phrases";
+import { capitalize, goodPhrase, joinEs, phraseForScore } from "@/lib/phrases";
 
 export interface StoryItem {
   name: string; // "Natación"
   verb: string; // "nadar", "surfear", "hacer SUP"
   when: string; // "mañana 7–8 h"
   label: string; // "Muy bueno"
+  score?: number; // 0–10: si está flojo la frase lo dice ("Hoy no da para nadar")
   icon: (props: { size: number; color: string }) => ReactNode;
 }
 
@@ -33,11 +34,32 @@ const H = 480;
 
 type Mode = "sticker" | "story";
 
-export function StoryShareButton({ data, disabled }: { data: StoryData; disabled?: boolean }) {
+export function StoryShareButton({
+  data,
+  disabled,
+  compact,
+}: {
+  data: StoryData;
+  disabled?: boolean;
+  /** Solo el ícono, para el encabezado de una tarjeta */
+  compact?: boolean;
+}) {
   const c = useTheme();
   const [open, setOpen] = useState(false);
   return (
     <>
+      {compact ? (
+        <Pressable
+          onPress={() => setOpen(true)}
+          disabled={disabled}
+          hitSlop={8}
+          accessibilityRole="button"
+          accessibilityLabel={`Compartir ${data.items.map(i => i.name).join(" y ")}`}
+          style={({ pressed }) => [styles.iconBtn, { backgroundColor: c.secondary, opacity: pressed ? 0.7 : 1 }]}
+        >
+          <Share2 size={16} color={c.secondaryForeground} />
+        </Pressable>
+      ) : (
       <Pressable
         onPress={() => setOpen(true)}
         disabled={disabled}
@@ -51,6 +73,7 @@ export function StoryShareButton({ data, disabled }: { data: StoryData; disabled
         <Camera size={18} color={c.primary} />
         <Text style={{ color: c.primary, fontWeight: "600", fontSize: 15 }}>Subilo a tu historia</Text>
       </Pressable>
+      )}
       {/* El Modal abre una vista nativa aparte: necesita su propio SafeAreaProvider en iOS */}
       <Modal transparent visible={open} animationType="fade" statusBarTranslucent onRequestClose={() => setOpen(false)}>
         <SafeAreaProvider>
@@ -72,7 +95,11 @@ function StoryShareSheet({ visible, onClose, data }: { visible: boolean; onClose
   const [message, setMessage] = useState<{ text: string; ok: boolean } | null>(null);
   // Una frase por apertura, para que la vista previa y la imagen coincidan
   const verbs = joinEs(data.items.map(i => i.verb));
-  const phrase = useMemo(() => capitalize(goodPhrase(verbs)), [visible, verbs]);
+  const minScore = Math.min(...data.items.map(i => i.score ?? 10));
+  const phrase = useMemo(
+    () => capitalize(minScore >= 6 ? goodPhrase(verbs) : phraseForScore(verbs, minScore)),
+    [visible, verbs, minScore],
+  );
 
   // PNG de la vista activa: la historia a 1080×1920; el sticker a 4× su tamaño, con fondo transparente
   const capture = (result: "tmpfile" | "base64") => {
@@ -318,6 +345,7 @@ const styles = StyleSheet.create({
     paddingVertical: 10,
     paddingHorizontal: 16,
   },
+  iconBtn: { width: 34, height: 34, borderRadius: 17, alignItems: "center", justifyContent: "center" },
   backdrop: { flex: 1, backgroundColor: "#000000d9", alignItems: "center", justifyContent: "center", gap: 16, paddingHorizontal: 16 },
   close: {
     position: "absolute",

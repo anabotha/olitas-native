@@ -24,3 +24,14 @@ export function joinEs(items: string[]) {
   if (items.length <= 1) return items[0] ?? "";
   return `${items.slice(0, -1).join(", ")} y ${items[items.length - 1]}`;
 }
+
+/**
+ * Frase según el puntaje (0–10): con buen puntaje usa las frases de día bueno;
+ * si no, dice la verdad: "Se puede nadar" / "Flojo para nadar" / "Hoy no da para nadar".
+ */
+export function phraseForScore(verb: string, score: number) {
+  if (score >= 6) return goodPhrase(verb);
+  if (score >= 5) return `se puede ${verb}`;
+  if (score >= 3) return `flojo para ${verb}`;
+  return `hoy no da para ${verb}`;
+}

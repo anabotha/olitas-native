@@ -9,8 +9,11 @@ import * as Notifications from "expo-notifications";
 import * as TaskManager from "expo-task-manager";
 import * as BackgroundTask from "expo-background-task";
 import { resolveSpot } from "@/lib/nearest-spot";
+import { loadFavoriteSpots } from "@/lib/favorites";
+import { refreshHomeWidget } from "@/lib/home-widget";
 import { getMarineWeather } from "@/lib/api/getMarineWeather";
 import { getForecast } from "@/lib/api/getForecast";
+import { fetchWithOfflineCache } from "@/lib/offline-cache";
 import type { SpotLocation } from "@/lib/types";
 import { goodPhrase } from "@/lib/phrases";
 import { DANGER_WIND_KMH, GOOD_SCORE, evaluateDay, type DayOutlook } from "./day-outlook";
@@ -33,22 +36,38 @@ const range = (start: Date, end: Date) =>
 
 export type DailyMessage = { title: string; body: string };
 
-/** Arma el mensaje (o null si no hay nada que avisar). El viento peligroso tiene prioridad. */
-export function buildDailyMessage(outlook: DayOutlook, spot: SpotLocation, prefs: NotificationPrefs): DailyMessage | null {
-  if (prefs.windAlerts && outlook.maxWind >= DANGER_WIND_KMH) {
+export interface SpotOutlook {
+  spot: SpotLocation;
+  outlook: DayOutlook;
+}
+
+/**
+ * Arma el mensaje (o null si no hay nada que avisar). El viento peligroso en la playa principal
+ * tiene prioridad. Para los días buenos compara la playa principal con las favoritas y avisa
+ * la que tenga la mejor ventana.
+ */
+export function buildDailyMessage(main: SpotOutlook, others: SpotOutlook[], prefs: NotificationPrefs): DailyMessage | null {
+  if (prefs.windAlerts && main.outlook.maxWind >= DANGER_WIND_KMH) {
     return {
       title: "Mañana jodidísimo para tabla 💨",
-      body: `Viento de hasta ${outlook.maxWind} km/h en ${spot.name}. Cuidate y metete otro día!`,
+      body: `Viento de hasta ${main.outlook.maxWind} km/h en ${main.spot.name}. Cuidate y metete otro día!`,
     };
   }
-  const best = outlook.best;
-  if (prefs.goodDays && best && best.score >= GOOD_SCORE) {
-    return {
-      title: `Che... mañana ${goodPhrase(VERB[best.activity])} 🌊`,
-      body: `Caete a ${spot.name} de ${range(best.start, best.end)}, no te lo pierdas 🤙`,
-    };
+  if (!prefs.goodDays) return null;
+
+  // Mejor ventana entre todas; ante empate gana la playa principal
+  let top = main;
+  for (const o of others) {
+    if ((o.outlook.best?.score ?? 0) > (top.outlook.best?.score ?? 0)) top = o;
   }
-  return null;
+  const best = top.outlook.best;
+  if (!best || best.score < GOOD_SCORE) return null;
+
+  const better = top !== main && (main.outlook.best?.score ?? 0) < best.score ? ` Pinta mejor que ${main.spot.name}.` : "";
+  return {
+    title: `Che... mañana ${goodPhrase(VERB[best.activity])} 🌊`,
+    body: `Caete a ${top.spot.name} de ${range(best.start, best.end)}, no te lo pierdas 🤙${better}`,
+  };
 }
 
 /** Próximo horario de aviso: hoy a las 19 si todavía no pasó, si no mañana */
@@ -58,18 +77,31 @@ function nextNotifyDate(now = new Date()) {
   return d;
 }
 
-/** Evalúa el día siguiente a `notifyAt` y devuelve el mensaje a mostrar */
+async function outlookFor(spot: SpotLocation, day: Date, activities: NotifActivity[]): Promise<SpotOutlook> {
+  const [data, forecast] = await Promise.all([
+    fetchWithOfflineCache("marine", spot.latitude, spot.longitude, () => getMarineWeather(spot.latitude, spot.longitude)).then(r => r.data),
+    fetchWithOfflineCache("forecast", spot.latitude, spot.longitude, () => getForecast(spot.latitude, spot.longitude))
+      .then(r => r.data)
+      .catch(() => undefined),
+  ]);
+  return { spot, outlook: evaluateDay(day, spot, data, forecast, activities) };
+}
+
+/** Evalúa el día siguiente a `notifyAt` (playa principal + favoritas) y devuelve el mensaje a mostrar */
 async function computeMessage(notifyAt: Date, prefs: NotificationPrefs): Promise<DailyMessage | null> {
   // Sin pedir permiso: esto también corre en segundo plano
   const spot = await resolveSpot({ ask: false });
-  const [data, forecast] = await Promise.all([
-    getMarineWeather(spot.latitude, spot.longitude),
-    getForecast(spot.latitude, spot.longitude).catch(() => undefined),
-  ]);
+  const favorites = (await loadFavoriteSpots()).filter(f => f.name !== spot.name);
   const day = new Date(notifyAt);
   day.setDate(day.getDate() + 1);
   const activities = (Object.keys(prefs.activities) as NotifActivity[]).filter(a => prefs.activities[a]);
-  return buildDailyMessage(evaluateDay(day, spot, data, forecast, activities), spot, prefs);
+
+  const main = await outlookFor(spot, day, activities);
+  // Si una favorita falla (sin datos, sin red), se ignora y se avisa con las demás
+  const others = (await Promise.allSettled(favorites.map(f => outlookFor(f, day, activities))))
+    .filter((r): r is PromiseFulfilledResult<SpotOutlook> => r.status === "fulfilled")
+    .map(r => r.value);
+  return buildDailyMessage(main, others, prefs);
 }
 
 export async function hasNotificationPermission() {
@@ -107,7 +139,10 @@ export async function refreshDailyNotification() {
 /** Manda ya el aviso que saldría a las 19:00, para probar desde el panel */
 export async function sendTestNotification(): Promise<DailyMessage | null> {
   const prefs = await loadNotificationPrefs();
-  const message = await computeMessage(nextNotifyDate(), { ...prefs, enabled: true });
+  // La prueba siempre habla de mañana (aunque ya hayan pasado las 19 y el próximo aviso sea de pasado)
+  const now = new Date();
+  const todayAt = new Date(now.getFullYear(), now.getMonth(), now.getDate(), NOTIFY_HOUR);
+  const message = await computeMessage(todayAt, { ...prefs, enabled: true });
   const content = message ?? {
     title: "Mañana nada especial 🤷",
     body: "No hay ventanas muy buenas ni viento fuerte. A las 19 no te vamos a molestar.",
@@ -124,7 +159,8 @@ export async function sendTestNotification(): Promise<DailyMessage | null> {
 if (supported) {
   TaskManager.defineTask(BACKGROUND_TASK, async () => {
     try {
-      await refreshDailyNotification();
+      // El widget se actualiza aunque los avisos estén apagados
+      await Promise.allSettled([refreshDailyNotification(), refreshHomeWidget()]);
       return BackgroundTask.BackgroundTaskResult.Success;
     } catch {
       return BackgroundTask.BackgroundTaskResult.Failed;
@@ -141,7 +177,7 @@ if (supported) {
   });
 }
 
-/** Activa o desactiva la actualización en segundo plano según las preferencias */
+/** Registra (o quita) la actualización en segundo plano del aviso diario y el widget */
 export async function syncBackgroundTask(enabled: boolean) {
   if (!supported) return;
   try {

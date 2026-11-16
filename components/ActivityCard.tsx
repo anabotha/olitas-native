@@ -3,6 +3,7 @@ import { StyleSheet, Text, View } from "react-native";
 import type { ActivityRating } from "@/lib/types";
 import { getScoreStyle, useIsDark, useTheme } from "@/lib/theme";
 import { Card, CardHeading, Label } from "./ui";
+import { ShareableCard } from "./CardShare";
 
 // Más tags que esto sobrecarga la card
 const MAX_TAGS = 5;
@@ -16,7 +17,15 @@ const sortFactors = (factors: string[]) =>
 
 const SCORE_SEGMENTS = 5;
 
-export function ActivityCard({ activity, icon, rating }: { activity: string; icon: ReactNode; rating: ActivityRating }) {
+export function ActivityCard({
+  activity,
+  icon,
+  rating,
+}: {
+  activity: string;
+  icon: ReactNode;
+  rating: ActivityRating;
+}) {
   const c = useTheme();
   const dark = useIsDark();
   const score = getScoreStyle(rating.score, dark);
@@ -29,10 +38,14 @@ export function ActivityCard({ activity, icon, rating }: { activity: string; ico
   const filledSegments = Math.max(1, Math.ceil((rating.score / 10) * SCORE_SEGMENTS));
 
   return (
+    // Se puede compartir como imagen idéntica a la tarjeta
+    <ShareableCard>
+      {shareButton => (
     <Card>
       <CardHeading
         icon={icon}
         title={activity}
+        right={shareButton}
         subtitle={
           <>
             {rating.description}
@@ -73,6 +86,8 @@ export function ActivityCard({ activity, icon, rating }: { activity: string; ico
         <View style={[styles.dot, { backgroundColor: score.dot }]} />
       </View>
     </Card>
+      )}
+    </ShareableCard>
   );
 }
 
