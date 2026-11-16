@@ -39,7 +39,7 @@ const findClosestHourIndex = (timeArray: Date[], target: Date): number => {
     const wind_direction = forecast.hourly.wind_direction_10m?.[forecastIdx];
     const sea_level_height_msl = marine.hourly.sea_level_height_msl?.[marineIdx];
     const previous_sea_level_height_msl = marine.hourly.sea_level_height_msl?.[marineIdx - 1];
-
+    const windgusts = forecast.hourly.wind_gusts_10m?.[forecastIdx] ?? 0;
     if (!isValid(wind_speed) || !isValid(wind_direction)) {
         return {
             color: "green",
@@ -53,6 +53,11 @@ const findClosestHourIndex = (timeArray: Date[], target: Date): number => {
 
     // OFFSHORE
     if (windCond === "offshore") {
+        if (windgusts >= 50) return {
+            color: "red",
+            label: "PELIGRO",
+            message: "Ráfagas extremas. Riesgo de deriva mar adentro."
+        };
         if (wind_speed > 45) return {
             color: "red",
             label: "PELIGRO",

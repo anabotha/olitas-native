@@ -1,16 +1,20 @@
+import { cn } from "@/lib/utils";
+
 interface CardHeadingProps {
     icon: React.ReactNode;
     title: string;
     subtitle?: React.ReactNode;
     /** Al lado del título (ej. un InfoTip) */
     extra?: React.ReactNode;
+    /** Reemplaza el color de la caja del ícono (ej. para reflejar un estado) */
+    iconClassName?: string;
 }
 
 // Encabezado de card compartido: ícono en caja + título + subtítulo (estilo de las cards de actividad)
-export function CardHeading({ icon, title, subtitle, extra }: CardHeadingProps) {
+export function CardHeading({ icon, title, subtitle, extra, iconClassName }: CardHeadingProps) {
     return (
         <div className="flex items-center gap-3">
-            <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-secondary text-secondary-foreground">
+            <div className={cn("flex h-10 w-10 shrink-0 items-center justify-center rounded-lg", iconClassName ?? "bg-secondary text-secondary-foreground")}>
                 {icon}
             </div>
             <div>

@@ -9,7 +9,7 @@ import { SpotSelector } from "@/components/spot-selector";
 import { LoadingState } from "@/components/loading-state";
 import { DEFAULT_SPOTS} from "@/lib/spots";
 import type { SpotLocation } from "@/lib/types";
-import { AlertCircle } from "lucide-react";
+import { AlertCircle, ArrowUpRight, Waves } from "lucide-react";
 import { useMarineWeather } from "@/hooks/use-marineWeather";
 import ActivityCheck from "@/components/activity-check";
 import { useForecast } from "@/hooks/use-forecast";
@@ -23,6 +23,7 @@ import { ScoreLegend } from "@/components/score-legend";
 import "driver.js/dist/driver.css";
 
 import { driver } from "driver.js";
+import { track } from "@/lib/analytics";
 
 export default function Home() {
   
@@ -48,12 +49,21 @@ export default function Home() {
       localStorage.setItem('olitas_guide_viewed', 'true');
     }
   const saved = localStorage.getItem("olitas_selected_spot");
+    let initialSpot = DEFAULT_SPOTS[0];
+    let fromSaved = false;
     if (saved) {
       try {
-        setSelectedSpot(JSON.parse(saved));
+        initialSpot = JSON.parse(saved);
+        fromSaved = true;
+        setSelectedSpot(initialSpot);
       } catch {}
     }
     setSpotReady(true);
+    track("spot_inicial", {
+      spot: initialSpot.name,
+      guardado: fromSaved,
+      primera_visita: !hasVisited,
+    });
   }
     , []);
 
@@ -72,6 +82,12 @@ export default function Home() {
     nextBtnText: 'Siguiente',
     prevBtnText: 'Anterior',
     doneBtnText: 'Entendido',
+    onDestroyStarted: (_el, _step, { driver: d }) => {
+      track(d.isLastStep() ? "guia_completada" : "guia_salteada", {
+        paso: (d.getActiveIndex() ?? 0) + 1,
+      });
+      d.destroy();
+    },
     steps: [
       {
         element: '#selector',
@@ -130,7 +146,10 @@ export default function Home() {
 
   return (
     <div className="min-h-screen bg-background">
-      <Header onOpenGuide={() => driverObj.drive()} highlightGuide={showGuideOnLoad} />
+      <Header onOpenGuide={() => {
+        track("guia_abierta", { primera_visita: showGuideOnLoad });
+        driverObj.drive();
+      }} highlightGuide={showGuideOnLoad} />
 
       <main className="mx-auto max-w-5xl px-6 pb-16 md:px-10">
         {/* Hero section */}
@@ -216,6 +235,23 @@ export default function Home() {
           </div>
         )}
       </main>
+      <div className="mx-auto max-w-2xl px-4 pt-8">
+        <a
+          href="mailto:josefinabotha@gmail.com"
+          className="group flex items-center gap-3 rounded-lg border border-highlight-border bg-highlight px-4 py-3 text-left transition-colors hover:border-primary/50"
+        >
+          <Waves className="h-5 w-5 shrink-0 text-primary" />
+          <span className="flex-1">
+            <span className="block text-sm font-medium text-primary">
+              ¿Tenés una carrera de aguas abiertas?
+            </span>
+            <span className="block text-xs text-muted-foreground">
+              Escribime y vemos cómo sumarla.
+            </span>
+          </span>
+          <ArrowUpRight className="h-4 w-4 shrink-0 text-primary/60 transition-transform group-hover:-translate-y-0.5 group-hover:translate-x-0.5" />
+        </a>
+      </div>
       <Footer />
     </div>
   );

@@ -1,7 +1,7 @@
 import React, { JSX, useState } from 'react'
 import { ActivityCard } from './activity-card'
 import { WavesIcon, Ship, PersonStanding, AlertCircle, ShieldOff } from 'lucide-react'
-import { LIFEGUARD_HOURS_LABEL, getLifeguardStatus } from '@/lib/lifeguard'
+import { LIFEGUARD_HOURS_LABEL, getLifeguardStatus } from '@/lib/lifeguards'
 import { MarineWeatherData, ForecastData } from '@/lib/types'
 import { processData } from '@/hooks/use-processData'
 import { SpotLocation } from '@/lib/types'
