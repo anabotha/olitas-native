@@ -1,6 +1,7 @@
 import React, { JSX, useState } from 'react'
 import { ActivityCard } from './activity-card'
-import { WavesIcon, Ship, PersonStanding, AlertCircle } from 'lucide-react'
+import { WavesIcon, Ship, PersonStanding, AlertCircle, ShieldOff } from 'lucide-react'
+import { LIFEGUARD_HOURS_LABEL, getLifeguardStatus } from '@/lib/lifeguard'
 import { MarineWeatherData, ForecastData } from '@/lib/types'
 import { processData } from '@/hooks/use-processData'
 import { SpotLocation } from '@/lib/types'
@@ -26,6 +27,7 @@ const ActivityCheck = (
   if (!processedData || !selectedSpot) return <div>Hubo un error, proba mas tarde!</div>;
   const actividad = useRatings(processedData, selectedSpot?.name ?? "", selectedSpot?.orientation ?? 90, selectedSpot, data, forecastData, selectedHour);
   const safety = useCurrentSafety(data, forecastData, selectedSpot, selectedHour);
+  const lifeguard = getLifeguardStatus(selectedHour);
   return (
     <section>
 
@@ -40,6 +42,19 @@ const ActivityCheck = (
               </p>
               <p className="text-xs text-muted-foreground">
                 {safety.message}
+              </p>
+            </div>
+          </div>
+        )}
+        {lifeguard === "outside-hours" && (
+          <div className="mt-4 flex items-center gap-3 rounded-xl border border-amber-500/30 bg-amber-500/10 px-5 py-4">
+            <ShieldOff className="h-5 w-5 text-amber-500" />
+            <div>
+              <p className="text-sm font-medium text-foreground">
+                Sin guardavidas a las {selectedHour.getHours()}:00hs
+              </p>
+              <p className="text-xs text-muted-foreground">
+                Horario de guardavidas: {LIFEGUARD_HOURS_LABEL}
               </p>
             </div>
           </div>

@@ -18,6 +18,7 @@ import { CollapsibleSection } from "@/components/collapsible-section";
 import { HourSelector } from "@/components/hour-selector";
 import { PwaInstallPrompt } from "@/components/pwa-install-prompt";
 import { InfoTip } from "@/components/info-tip";
+import { Lifeguard } from "@/components/lifeguard";
 import { ScoreLegend } from "@/components/score-legend";
 import "driver.js/dist/driver.css";
 
@@ -200,6 +201,11 @@ export default function Home() {
             <section id="pronostico">
               <CollapsibleSection title={`Pronostico ${selectedHour?.getHours()}:00hs`} defaultOpen={true}>
                 <HourlyForecast forecast={forecastData} selectedHour={selectedHour} />
+              </CollapsibleSection>
+            </section>
+            <section id="guardavidas">
+              <CollapsibleSection title="Guardavidas" defaultOpen={true}>
+                <Lifeguard selectedHour={selectedHour} />
               </CollapsibleSection>
             </section>
             <section id="estado-del-mar">
