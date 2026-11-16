@@ -22,16 +22,18 @@ export function CardHeading({
   title,
   subtitle,
   extra,
+  iconBg,
 }: {
   icon: ReactNode;
   title: string;
   subtitle?: ReactNode;
   extra?: ReactNode;
+  iconBg?: string;
 }) {
   const c = useTheme();
   return (
     <View style={styles.heading}>
-      <View style={[styles.iconBox, { backgroundColor: c.secondary }]}>{icon}</View>
+      <View style={[styles.iconBox, { backgroundColor: iconBg ?? c.secondary }]}>{icon}</View>
       <View style={{ flex: 1 }}>
         <View style={styles.row}>
           <Text style={[styles.title, { color: c.foreground }]}>{title}</Text>
