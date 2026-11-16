@@ -10,3 +10,8 @@ web-build/
 *.mobileprovision
 .env*.local
 .DS_Store
+
+
+.claude
+.agents
+Todo.md
