@@ -1,3 +1,4 @@
+import { useCompact } from "@/lib/use-compact";
 import { useState } from "react";
 import { Pressable, StyleSheet, Text, View } from "react-native";
 import { ArrowDown, ArrowUp, Check, Clock, Waves } from "lucide-react-native";
@@ -85,6 +86,7 @@ function SeaStateContent({
   processedData,
 }: SeaStateProps & { processedData: NonNullable<ReturnType<typeof processData>> }) {
   const c = useTheme();
+  const compact = useCompact();
   const dark = useIsDark();
   // Ventanas elegidas para compartir (null = la mejor, por defecto)
   const [picked, setPicked] = useState<string[] | null>(null);
@@ -144,7 +146,7 @@ function SeaStateContent({
   return (
     <Card>
       <View style={{ gap: 16 }}>
-        <CardHeading icon={<Waves size={20} color={c.secondaryForeground} />} title="Mar y marea" subtitle="Cómo está el agua ahora" />
+        <CardHeading icon={<Waves size={20} color={c.secondaryForeground} />} title="Mar y marea" subtitle={compact ? undefined : "Cómo está el agua ahora"} />
         <View style={{ gap: 6 }}>
           <Label>Condición</Label>
           <Text style={[styles.chip, { backgroundColor: chip.bg, color: chip.text }]}>{seaState.condition}</Text>
@@ -172,7 +174,7 @@ function SeaStateContent({
         <CardHeading
           icon={<Clock size={20} color={c.secondaryForeground} />}
           title="Posibles ventanas"
-          subtitle="Entre las 6 y las 20 h"
+          subtitle={compact ? undefined : "Entre las 6 y las 20 h"}
           extra={<InfoTip text="Los mejores horarios para hacer deporte dentro de las próximas horas." />}
         />
         <View style={{ gap: 8 }}>
@@ -192,15 +194,15 @@ function SeaStateContent({
                     { backgroundColor: c.highlight, borderColor: on ? c.highlightBorder : "transparent" },
                   ]}
                 >
-                  <View style={styles.inline}>
+                  <View style={[styles.inline, { flexShrink: 1 }]}>
                     <View style={[styles.check, on ? { backgroundColor: c.primary, borderColor: c.primary } : { borderColor: c.highlightBorder }]}>
                       {on && <Check size={12} color={c.primaryForeground} strokeWidth={3} />}
                     </View>
                     <activity.Icon {...iconProps} />
-                    <Text style={{ color: c.foreground, fontWeight: "500" }}>{activity.label}</Text>
+                    <Text style={{ color: c.foreground, fontWeight: "500", flexShrink: 1 }}>{activity.label}</Text>
                   </View>
-                  <View style={{ alignItems: "flex-end", gap: 2 }}>
-                    <Text style={{ color: c.foreground, fontSize: 14, fontWeight: "500" }}>
+                  <View style={styles.windowWhen}>
+                    <Text style={{ color: c.foreground, fontSize: 14, fontWeight: "500", textAlign: "right" }}>
                       {activity.data.start && activity.data.end
                         ? formatWindowRange(activity.data.start, activity.data.end)
                         : activity.data.date && formatWindowTime(activity.data.date)}
@@ -243,7 +245,9 @@ const styles = StyleSheet.create({
   inline: { flexDirection: "row", alignItems: "center", gap: 8 },
   chip: { alignSelf: "flex-start", fontSize: 16, fontWeight: "600", borderRadius: 999, paddingHorizontal: 12, paddingVertical: 4, overflow: "hidden" },
   sep: { height: 1 },
-  window: { flexDirection: "row", alignItems: "center", justifyContent: "space-between", borderRadius: 10, borderWidth: 1.5, paddingHorizontal: 12, paddingVertical: 8 },
+  // Con wrap: en pantallas chicas o letra grande el horario baja a otra línea en vez de cortarse
+  window: { flexDirection: "row", flexWrap: "wrap", alignItems: "center", justifyContent: "space-between", columnGap: 12, rowGap: 4, borderRadius: 10, borderWidth: 1.5, paddingHorizontal: 12, paddingVertical: 8 },
   check: { width: 18, height: 18, borderRadius: 5, borderWidth: 1.5, alignItems: "center", justifyContent: "center" },
+  windowWhen: { marginLeft: "auto", alignItems: "flex-end", gap: 2 },
   dot: { width: 8, height: 8, borderRadius: 4 },
 });

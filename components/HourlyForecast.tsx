@@ -1,3 +1,4 @@
+import { useCompact } from "@/lib/use-compact";
 import { ScrollView, StyleSheet, Text, View } from "react-native";
 import { ArrowUp, Clock, ThermometerSun, Wind } from "lucide-react-native";
 import type { ForecastData } from "@/lib/types";
@@ -43,6 +44,7 @@ function HourCell({ hour, uv, highlighted }: { hour: HourlySummary; uv: number; 
 }
 
 export function HourlyForecast({ forecast, selectedHour }: { forecast: ForecastData | undefined; selectedHour?: Date }) {
+  const compact = useCompact();
   const c = useTheme();
   const processed = useProcessForecast(forecast);
   if (!forecast?.hourly || !processed) return null;
@@ -61,7 +63,7 @@ export function HourlyForecast({ forecast, selectedHour }: { forecast: ForecastD
       <CardHeading
         icon={<Clock size={20} color={c.secondaryForeground} />}
         title="Próximas horas"
-        subtitle="Temperatura, viento y UV hora a hora"
+        subtitle={compact ? undefined : "Temperatura, viento y UV hora a hora"}
       />
       <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.row}>
         {hoyOrdenado.map((hour, i) => (

@@ -83,7 +83,7 @@ function SidebarPanel({
 }: SidebarProps & { closeRef: { current: () => void } }) {
   const c = useTheme();
   const insets = useSafeAreaInsets();
-  const width = Math.min(340, useWindowDimensions().width * 0.85);
+  const width = Math.min(340, useWindowDimensions().width * 0.9);
   // 0 = cerrado, 1 = abierto
   const progress = useRef(new Animated.Value(0)).current;
   const closing = useRef(false);
@@ -226,7 +226,7 @@ function SidebarPanel({
                   style={[styles.testBtn, { borderColor: c.primary + "66", backgroundColor: c.primary + "1a" }]}
                 >
                   <Send size={14} color={c.primary} />
-                  <Text style={{ color: c.primary, fontWeight: "600", fontSize: 14 }}>
+                  <Text style={{ color: c.primary, fontWeight: "600", fontSize: 14, flexShrink: 1, textAlign: "center" }}>
                     {testing ? "Calculando..." : "Probar aviso de mañana"}
                   </Text>
                 </Pressable>
@@ -298,7 +298,7 @@ function Row({
         value={value}
         onValueChange={onChange}
         trackColor={{ true: c.primary, false: c.border }}
-        thumbColor={Platform.OS === "android" ? c.card : undefined}
+        thumbColor={Platform.OS === "android" ? (value ? "#ffffff" : "#f4f4f5") : undefined}
       />
     </View>
   );
@@ -327,6 +327,7 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderRadius: 999,
     paddingVertical: 10,
+    paddingHorizontal: 16,
   },
   preview: { borderWidth: 1, borderRadius: 12, padding: 12, gap: 4 },
 });

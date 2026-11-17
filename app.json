@@ -20,7 +20,11 @@
       "adaptiveIcon": {
         "backgroundColor": "#4a90a4",
         "foregroundImage": "./assets/icon.png"
-      }
+      },
+      "permissions": [
+        "android.permission.ACCESS_COARSE_LOCATION",
+        "android.permission.ACCESS_FINE_LOCATION"
+      ]
     },
     "web": {
       "favicon": "./assets/icon.png"
@@ -54,6 +58,28 @@
           ]
         }
       ]
-    ]
+    ],
+    "extra": {
+      "eas": {
+        "build": {
+          "experimental": {
+            "ios": {
+              "appExtensions": [
+                {
+                  "targetName": "ExpoWidgetsTarget",
+                  "bundleIdentifier": "dev.anabotha.olitas.ExpoWidgetsTarget",
+                  "entitlements": {
+                    "com.apple.security.application-groups": [
+                      "group.dev.anabotha.olitas"
+                    ]
+                  }
+                }
+              ]
+            }
+          }
+        },
+        "projectId": "50b7eb88-e5f1-473e-b0c6-8b5f603d52db"
+      }
+    }
   }
 }

@@ -29,6 +29,7 @@ import { GuideModal } from "@/components/GuideModal";
 import { Lifeguard } from "@/components/Lifeguard";
 import { Sidebar } from "@/components/Sidebar";
 import { BeachNow } from "@/components/BeachNow";
+import { useCompact } from "@/lib/use-compact";
 
 // "hoy a las 18:40" / "ayer a las 9:05" / "el 14/11 a las 9:05"
 function offlineLabel(d: Date) {
@@ -46,6 +47,7 @@ function offlineLabel(d: Date) {
 
 function Home() {
   const c = useTheme();
+  const compact = useCompact();
   const [selectedSpot, setSelectedSpot] = useState<SpotLocation>(DEFAULT_SPOTS[0]);
   const [selectedHour, setSelectedHour] = useState<Date>(() => {
     const now = new Date();
@@ -134,7 +136,9 @@ function Home() {
               <HourSelector selectedHour={selectedHour} onSelectHour={setSelectedHour} />
               <SpotSelector selectedSpot={selectedSpot} onSelectSpot={setSelectedSpot} />
             </View>
-            <Text style={{ color: c.mutedForeground, fontSize: 16 }}>Oleaje, viento y temperatura para tu próxima sesión.</Text>
+            {!compact && (
+              <Text style={{ color: c.mutedForeground, fontSize: 16 }}>Oleaje, viento y temperatura para tu próxima sesión.</Text>
+            )}
           </View>
 
           {showLoading && !error && <LoadingState />}
