@@ -480,6 +480,7 @@ export const useRatings = (
             factors.push("Mar calmo")
         } else if (totalWave < 0.5) {
             score += 1
+            factors.push("Mar tranquilo")
         } else if (totalWave < 0.7) {
             score += 0
         } else if (totalWave < 1.0) {
@@ -506,10 +507,13 @@ export const useRatings = (
         }
 
         /* VIENTO */
+        // Con buen día también se dice por qué (si no la tarjeta queda sin tags)
         if (effectiveWind < 10) {
             score += 2
+            factors.push("Viento suave")
         } else if (effectiveWind < 18) {
             score += 1
+            factors.push("Viento leve")
         } else if (effectiveWind > 30 && isOnshore) {
             score -= 2
             factors.push("Viento de frente")

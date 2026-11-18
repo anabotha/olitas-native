@@ -60,6 +60,12 @@ export function ShareableCard({ children }: { children: (shareButton: ReactNode)
     <>
       <View ref={ref} collapsable={false}>
         {children(button)}
+        {/* Publicidad gratis, como Strava: solo sale en la imagen */}
+        {capturing && (
+          <View style={styles.footer}>
+            <Text style={[styles.footerText, { color: c.mutedForeground }]}>olitas.anabotha.dev</Text>
+          </View>
+        )}
       </View>
       <Modal transparent visible={!!shot} animationType="fade" statusBarTranslucent onRequestClose={() => setShot(null)}>
         <SafeAreaProvider>
@@ -141,6 +147,8 @@ function ShareSheet({ shot, initialError, onClose }: { shot: Capture; initialErr
 }
 
 const styles = StyleSheet.create({
+  footer: { alignItems: "center", paddingTop: 8 },
+  footerText: { fontSize: 12, fontWeight: "600" },
   iconBtn: { width: 34, height: 34, borderRadius: 17, alignItems: "center", justifyContent: "center" },
   backdrop: { flex: 1, backgroundColor: "#000000d9", alignItems: "center", justifyContent: "center", gap: 16, paddingHorizontal: 16 },
   close: {

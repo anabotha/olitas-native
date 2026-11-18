@@ -233,7 +233,8 @@ function StoryShareSheet({ visible, onClose, data }: { visible: boolean; onClose
 // Sticker sin fondo: texto blanco con sombra para que se lea arriba de cualquier foto
 function StickerCard({ data, phrase }: { data: StoryData; phrase: string }) {
   return (
-    <View style={{ gap: 8, alignItems: "center" }}>
+    // Panel oscuro translúcido detrás de los datos para que se lean sobre cualquier foto
+    <View style={styles.stickerPanel}>
       <View style={styles.brand}>
         <View style={styles.logo}>
           <Waves size={14} color="#0f3d52" />
@@ -375,7 +376,9 @@ const styles = StyleSheet.create({
   sticker: { width: W - 40, paddingVertical: 12, paddingHorizontal: 8 },
   stickerIcon: { width: 44, height: 44, borderRadius: 22, backgroundColor: "#ffffff", alignItems: "center", justifyContent: "center" },
   stickerWhen: { color: "#ffffff", fontSize: 13, fontWeight: "700" },
-  shadow: { textShadowColor: "#00000080", textShadowOffset: { width: 0, height: 1 }, textShadowRadius: 4 },
+  // Sombra marcada: el sticker va arriba de fotos de playa con cielo claro
+  shadow: { textShadowColor: "#000000cc", textShadowOffset: { width: 0, height: 1 }, textShadowRadius: 6 },
+  stickerPanel: { gap: 8, alignItems: "center", backgroundColor: "#00000066", borderRadius: 22, paddingHorizontal: 16, paddingVertical: 20 },
   actions: { flexDirection: "row", gap: 10 },
   shareBtn: { flexDirection: "row", alignItems: "center", gap: 8, borderRadius: 999, paddingVertical: 12, paddingHorizontal: 22 },
   message: { color: "#fecaca", fontSize: 13, textAlign: "center", maxWidth: 300 },

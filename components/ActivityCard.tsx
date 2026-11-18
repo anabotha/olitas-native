@@ -7,6 +7,8 @@ import { ShareableCard } from "./CardShare";
 
 // Más tags que esto sobrecarga la card
 const MAX_TAGS = 5;
+// Con buen puntaje alcanza con dos que digan por qué está bien
+const MAX_TAGS_GOOD = 2;
 
 // Palabras que marcan un factor desfavorable. Los factores son texto libre desde use-ratings,
 // así que se detectan por palabra clave para mostrarlos primero (explican por qué baja el puntaje).
@@ -69,7 +71,7 @@ export function ActivityCard({
       {rating.factors && rating.factors.length > 0 && (
         <View style={styles.tags}>
           {sortFactors(rating.factors)
-            .slice(0, MAX_TAGS)
+            .slice(0, rating.score >= 6 ? MAX_TAGS_GOOD : MAX_TAGS)
             .map((factor, i) => (
               <Text
                 key={i}
