@@ -91,6 +91,8 @@ function StoryShareSheet({ visible, onClose, data }: { visible: boolean; onClose
   const sticker = useRef<ComponentRef<typeof View>>(null);
   const stickerSize = useRef({ width: 0, height: 0 });
   const [mode, setMode] = useState<Mode>("sticker");
+  // Panel oscuro detrás del sticker: opcional, apagado por defecto
+  const [panel, setPanel] = useState(false);
   const [busy, setBusy] = useState(false);
   const [message, setMessage] = useState<{ text: string; ok: boolean } | null>(null);
   // Una frase por apertura, para que la vista previa y la imagen coincidan
@@ -187,9 +189,28 @@ function StoryShareSheet({ visible, onClose, data }: { visible: boolean; onClose
             onLayout={e => (stickerSize.current = e.nativeEvent.layout)}
             style={styles.sticker}
           >
-            <StickerCard data={data} phrase={phrase} />
+            <StickerCard data={data} phrase={phrase} panel={panel} />
           </View>
         </View>
+      )}
+
+      {mode === "sticker" && (
+        <Pressable
+          onPress={() => {
+            setPanel(p => !p);
+            setMessage(null);
+          }}
+          accessibilityRole="switch"
+          accessibilityState={{ checked: panel }}
+          accessibilityLabel="Fondo oscuro detrás del sticker"
+          hitSlop={6}
+          style={styles.toggle}
+        >
+          <View style={[styles.toggleTrack, panel && { backgroundColor: c.primary }]}>
+            <View style={[styles.toggleThumb, panel && { alignSelf: "flex-end" }]} />
+          </View>
+          <Text style={styles.toggleText}>Fondo oscuro</Text>
+        </Pressable>
       )}
 
       <View style={styles.actions}>
@@ -231,10 +252,10 @@ function StoryShareSheet({ visible, onClose, data }: { visible: boolean; onClose
 }
 
 // Sticker sin fondo: texto blanco con sombra para que se lea arriba de cualquier foto
-function StickerCard({ data, phrase }: { data: StoryData; phrase: string }) {
+function StickerCard({ data, phrase, panel }: { data: StoryData; phrase: string; panel: boolean }) {
   return (
-    // Panel oscuro translúcido detrás de los datos para que se lean sobre cualquier foto
-    <View style={styles.stickerPanel}>
+    // Con `panel`, un fondo oscuro translúcido detrás de los datos para fotos muy claras
+    <View style={[styles.stickerPanel, panel && styles.stickerPanelDark]}>
       <View style={styles.brand}>
         <View style={styles.logo}>
           <Waves size={14} color="#0f3d52" />
@@ -378,7 +399,12 @@ const styles = StyleSheet.create({
   stickerWhen: { color: "#ffffff", fontSize: 13, fontWeight: "700" },
   // Sombra marcada: el sticker va arriba de fotos de playa con cielo claro
   shadow: { textShadowColor: "#000000cc", textShadowOffset: { width: 0, height: 1 }, textShadowRadius: 6 },
-  stickerPanel: { gap: 8, alignItems: "center", backgroundColor: "#00000066", borderRadius: 22, paddingHorizontal: 16, paddingVertical: 20 },
+  stickerPanel: { gap: 8, alignItems: "center", borderRadius: 22, paddingHorizontal: 16, paddingVertical: 20 },
+  stickerPanelDark: { backgroundColor: "#00000066" },
+  toggle: { flexDirection: "row", alignItems: "center", gap: 8 },
+  toggleTrack: { width: 36, height: 20, borderRadius: 10, padding: 2, backgroundColor: "#ffffff40" },
+  toggleThumb: { width: 16, height: 16, borderRadius: 8, backgroundColor: "#ffffff" },
+  toggleText: { color: "#ffffff", fontSize: 13, fontWeight: "600" },
   actions: { flexDirection: "row", gap: 10 },
   shareBtn: { flexDirection: "row", alignItems: "center", gap: 8, borderRadius: 999, paddingVertical: 12, paddingHorizontal: 22 },
   message: { color: "#fecaca", fontSize: 13, textAlign: "center", maxWidth: 300 },
